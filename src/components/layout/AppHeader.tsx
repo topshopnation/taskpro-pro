@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
+import { useNavigate } from "react-router-dom"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,16 +18,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 interface AppHeaderProps {
   title: string
   setIsMobileMenuOpen: (open: boolean) => void
-  isMobileMenuOpen?: boolean
 }
 
 export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps) {
   const isMobile = useIsMobile()
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   
-  const userInitials = user?.email 
-    ? user.email.substring(0, 2).toUpperCase() 
-    : "U"
+  // Generate user initials based on email or name
+  const userInitials = user?.firstName 
+    ? `${user.firstName.charAt(0)}${user.lastName ? user.lastName.charAt(0) : ''}`
+    : user?.email 
+      ? user.email.substring(0, 2).toUpperCase() 
+      : "U"
+
+  const displayName = user?.firstName 
+    ? `${user.firstName} ${user.lastName || ''}`
+    : user?.email?.split('@')[0] || "User"
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -59,9 +67,9 @@ export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{displayName}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => signOut()}>

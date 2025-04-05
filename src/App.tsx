@@ -12,6 +12,7 @@ import CompletedTasks from "./pages/CompletedTasks";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./hooks/use-auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -27,6 +28,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
