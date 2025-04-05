@@ -16,7 +16,16 @@ import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./hooks/use-auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-const queryClient = new QueryClient();
+// Configure the query client with proper error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

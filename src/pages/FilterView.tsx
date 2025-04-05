@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
@@ -305,7 +304,7 @@ export default function FilterView() {
       // Explicitly cast the update object to include favorite
       const updateData = {
         favorite: newValue 
-      } as any // Using any here to bypass type checking for this specific operation
+      } as Partial<Filter>
       
       const { error } = await supabase
         .from('filters')
