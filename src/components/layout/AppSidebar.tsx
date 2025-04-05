@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,12 +72,10 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const { user } = useAuth();
 
-  // Create or ensure Inbox project exists for the user
   const ensureInboxProject = async () => {
     if (!user) return;
     
     try {
-      // Check if Inbox already exists
       const { data: existingInbox } = await supabase
         .from('projects')
         .select('*')
@@ -86,7 +83,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
         .eq('name', 'Inbox')
         .maybeSingle();
       
-      // If not, create it
       if (!existingInbox) {
         const { error } = await supabase
           .from('projects')
@@ -103,7 +99,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
     }
   };
 
-  // Fetch projects from Supabase
   const fetchProjects = async () => {
     if (!user) return;
     
@@ -122,7 +117,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       
       setProjects(data || []);
       
-      // Update favorites
       const favoriteProjects = (data || [])
         .filter(project => project.favorite)
         .map(project => ({ ...project, type: 'project' as const }));
@@ -135,7 +129,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
     }
   };
 
-  // Fetch filters from Supabase
   const fetchFilters = async () => {
     if (!user) return;
     
@@ -148,16 +141,13 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       
       if (error) throw error;
       
-      // Add standard filters (Today, Upcoming, Priority 1)
       const standardFilters: FilterItem[] = [
         { id: 'today', name: 'Today', favorite: true },
         { id: 'upcoming', name: 'Upcoming', favorite: false },
         { id: 'priority1', name: 'Priority 1', favorite: false }
       ];
       
-      // Process database filters to ensure they match FilterItem interface
-      // This is the fix: Map database filters to our FilterItem type, adding favorite if it doesn't exist
-      const dbFilters: FilterItem[] = (data || []).map(filter => ({
+      const dbFilters: FilterItem[] = (data || []).map((filter: DatabaseFilter) => ({
         id: filter.id,
         name: filter.name,
         favorite: filter.favorite ?? false
@@ -165,7 +155,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       
       setFilters([...standardFilters, ...dbFilters]);
       
-      // Update favorites
       const favoriteFilters = [...standardFilters, ...dbFilters]
         .filter(filter => filter.favorite)
         .map(filter => ({ ...filter, type: 'filter' as const }));
@@ -178,17 +167,13 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
     }
   };
 
-  // Update favorites section
   const updateFavorites = (items: FavoriteItem[], type: 'project' | 'filter') => {
     setFavoriteItems(prev => {
-      // Filter out the current type
       const filtered = prev.filter(item => item.type !== type);
-      // Add new items of this type
       return [...filtered, ...items];
     });
   };
 
-  // Fetch data when user changes
   useEffect(() => {
     if (user) {
       fetchProjects();
@@ -196,7 +181,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
     }
   }, [user]);
 
-  // Listen for real-time updates to projects
   useEffect(() => {
     if (!user) return;
     
@@ -214,7 +198,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
     };
   }, [user]);
 
-  // Listen for real-time updates to filters
   useEffect(() => {
     if (!user) return;
     
@@ -235,7 +218,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
   const SidebarContent = () => (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
-        {/* Favorites Section */}
         <SidebarGroup>
           <SidebarGroupLabel>Favorites</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -273,7 +255,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Main Nav Section */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -313,7 +294,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Projects Section */}
         <SidebarGroup>
           <div className="flex items-center justify-between mb-2">
             <SidebarGroupLabel>Projects</SidebarGroupLabel>
@@ -362,7 +342,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Filters Section */}
         <SidebarGroup>
           <div className="flex items-center justify-between mb-2">
             <SidebarGroupLabel>Filters</SidebarGroupLabel>
@@ -410,7 +389,6 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -442,12 +420,10 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <Sidebar className="hidden md:block border-r">
         <SidebarContent />
       </Sidebar>
 
-      {/* Mobile Sidebar (Sheet) */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="p-0 w-[280px]">
           <SidebarContent />
