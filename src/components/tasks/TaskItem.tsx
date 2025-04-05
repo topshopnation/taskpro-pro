@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { supabase } from "@/integrations/supabase/client"
 
 export interface Task {
   id: string
@@ -49,6 +50,7 @@ interface TaskItemProps {
 export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   // Priority colors for the flag icon
   const priorityColors: Record<number, string> = {
@@ -58,20 +60,62 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     4: "text-muted-foreground"
   }
 
-  const handleCompletionToggle = () => {
-    onComplete(task.id, !task.completed)
-    toast.success(task.completed ? "Task marked as incomplete" : "Task completed!")
+  const handleCompletionToggle = async () => {
+    setIsUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed: !task.completed })
+        .eq('id', task.id)
+      
+      if (error) throw error
+      
+      onComplete(task.id, !task.completed)
+      toast.success(task.completed ? "Task marked as incomplete" : "Task completed!")
+    } catch (error: any) {
+      toast.error(`Error updating task: ${error.message}`)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
-  const handleFavoriteToggle = () => {
-    onFavoriteToggle(task.id, !task.favorite)
-    toast.success(task.favorite ? "Removed from favorites" : "Added to favorites")
+  const handleFavoriteToggle = async () => {
+    setIsUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite: !task.favorite })
+        .eq('id', task.id)
+      
+      if (error) throw error
+      
+      onFavoriteToggle(task.id, !task.favorite)
+      toast.success(task.favorite ? "Removed from favorites" : "Added to favorites")
+    } catch (error: any) {
+      toast.error(`Error updating task: ${error.message}`)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
-  const handleDelete = () => {
-    setIsDeleteDialogOpen(false)
-    onDelete(task.id)
-    toast.success("Task deleted")
+  const handleDelete = async () => {
+    setIsUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', task.id)
+      
+      if (error) throw error
+      
+      setIsDeleteDialogOpen(false)
+      onDelete(task.id)
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error(`Error deleting task: ${error.message}`)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   return (
@@ -84,6 +128,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           <Checkbox 
             checked={task.completed} 
             onCheckedChange={handleCompletionToggle}
+            disabled={isUpdating}
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -145,6 +190,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
                   size="icon" 
                   className="h-7 w-7"
                   onClick={handleFavoriteToggle}
+                  disabled={isUpdating}
                 >
                   <Star 
                     className={cn(
@@ -169,6 +215,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
                     <DropdownMenuItem 
                       onClick={() => setIsDeleteDialogOpen(true)}
                       className="text-destructive focus:text-destructive"
+                      disabled={isUpdating}
                     >
                       <Trash className="h-4 w-4 mr-2" />
                       Delete
@@ -196,9 +243,9 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogCancel disabled={isUpdating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isUpdating}>
+              {isUpdating ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

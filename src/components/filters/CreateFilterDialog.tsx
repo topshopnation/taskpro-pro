@@ -9,6 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "sonner"
 import { Plus, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Condition {
   id: string
@@ -26,6 +28,8 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
   const [name, setName] = useState("")
   const [conditions, setConditions] = useState<Condition[]>([])
   const [logic, setLogic] = useState("and")
+  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useAuth()
   
   // For new condition form
   const [conditionType, setConditionType] = useState("due")
@@ -57,7 +61,7 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     setConditions(conditions.filter(condition => condition.id !== id))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       toast.error("Filter name is required")
       return
@@ -68,16 +72,39 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
       return
     }
 
-    // TODO: Add filter to Supabase database
-    console.log({
-      name,
-      conditions,
-      logic
-    })
+    if (!user) {
+      toast.error("You must be logged in to create a filter")
+      return
+    }
 
-    toast.success("Filter created successfully")
-    resetForm()
-    onOpenChange(false)
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase
+        .from('filters')
+        .insert({
+          name,
+          conditions: {
+            logic,
+            items: conditions.map(c => ({
+              type: c.type,
+              value: c.value,
+              operator: c.operator
+            }))
+          },
+          user_id: user.id
+        })
+
+      if (error) throw error
+
+      toast.success("Filter created successfully")
+      resetForm()
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(`Error creating filter: ${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const resetForm = () => {
@@ -288,7 +315,9 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Create Filter</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Creating..." : "Create Filter"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

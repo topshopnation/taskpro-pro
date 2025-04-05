@@ -1,48 +1,73 @@
 
-import { useState } from "react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Plus, Menu } from "lucide-react"
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
+import { useMobile } from "@/hooks/use-mobile"
+import { useAuth } from "@/hooks/use-auth"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface AppHeaderProps {
-  isMobileMenuOpen: boolean
+  title: string
   setIsMobileMenuOpen: (open: boolean) => void
 }
 
-export default function AppHeader({ isMobileMenuOpen, setIsMobileMenuOpen }: AppHeaderProps) {
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps) {
+  const { isMobile } = useMobile()
+  const { user, signOut } = useAuth()
+  
+  const userInitials = user?.email 
+    ? user.email.substring(0, 2).toUpperCase() 
+    : "U"
 
   return (
-    <header className="border-b bg-background sticky top-0 z-30">
-      <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="md:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
-          <div className="hidden md:block">
-            <SidebarTrigger />
-          </div>
-          <h1 className="text-xl font-bold">TaskPro</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => setIsCreateTaskOpen(true)}
-            className="gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Task</span>
-          </Button>
-          <ThemeToggle />
-        </div>
-        <CreateTaskDialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen} />
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2 md:hidden"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      )}
+      
+      <div className="flex-1">
+        <h1 className="text-xl font-semibold">{title}</h1>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar>
+                <AvatarImage src={user?.avatarUrl} />
+                <AvatarFallback>{userInitials}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut()}>
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "sonner"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
+import { useQuery } from "@tanstack/react-query"
 
 interface CreateTaskDialogProps {
   open: boolean
@@ -26,6 +29,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [priority, setPriority] = useState("4") // Default to lowest priority
   const [project, setProject] = useState("inbox")
   const [section, setSection] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useAuth()
 
   // Priority colors for the flag icon
   const priorityColors: Record<string, string> = {
@@ -35,27 +40,61 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     "4": "text-muted-foreground"
   }
 
-  const handleSubmit = () => {
+  // Fetch user's projects
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      if (!user) return []
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', user.id)
+      
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!user,
+  })
+
+  const handleSubmit = async () => {
     if (!title.trim()) {
       toast.error("Task title is required")
       return
     }
 
-    // TODO: Add task to Supabase database
-    console.log({
-      title,
-      notes,
-      dueDate,
-      priority: parseInt(priority),
-      project,
-      section: section || null,
-      completed: false,
-      favorite: false
-    })
+    if (!user) {
+      toast.error("You must be logged in to create a task")
+      return
+    }
 
-    toast.success("Task created successfully")
-    resetForm()
-    onOpenChange(false)
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          title,
+          notes,
+          due_date: dueDate ? dueDate.toISOString() : null,
+          priority: parseInt(priority),
+          project_id: project === "inbox" ? null : project,
+          section: section || null,
+          completed: false,
+          favorite: false,
+          user_id: user.id
+        })
+
+      if (error) throw error
+
+      toast.success("Task created successfully")
+      resetForm()
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(`Error creating task: ${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const resetForm = () => {
@@ -159,8 +198,11 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="inbox">Inbox</SelectItem>
-                  <SelectItem value="work">Work</SelectItem>
-                  <SelectItem value="personal">Personal</SelectItem>
+                  {projects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -183,7 +225,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Add Task</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Adding..." : "Add Task"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
