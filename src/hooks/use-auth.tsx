@@ -77,10 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Only run on auth page with hash parameters
       if (location.pathname === '/auth' && location.hash) {
         try {
-          const { data, error } = await supabase.auth.getSessionFromUrl();
-          if (error) throw error;
+          const hashParams = new URLSearchParams(location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
           
-          if (data?.session) {
+          if (accessToken) {
+            // If we have a hash with access_token, set the session manually
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: hashParams.get('refresh_token') || '',
+            });
+            
+            if (error) throw error;
+            
             // Hash redirect processed successfully, navigate to home
             navigate('/', { replace: true });
             toast({

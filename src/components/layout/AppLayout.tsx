@@ -22,7 +22,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <AppHeader 
             title="TaskPro"
             setIsMobileMenuOpen={setIsMobileMenuOpen} 
-            isMobileMenuOpen={isMobileMenuOpen}
           />
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
             {children}

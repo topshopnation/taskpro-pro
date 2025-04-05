@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,15 +10,30 @@ export default function AuthCallback() {
     // Process the OAuth callback
     const processCallback = async () => {
       try {
-        const { data, error } = await supabase.auth.getSessionFromUrl();
-        if (error) throw error;
+        // Since getSessionFromUrl is deprecated in newer versions, we use the appropriate
+        // method based on the URL hash
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
         
-        // If we have a session, redirect to the main app
-        if (data?.session) {
+        if (accessToken) {
+          // If we have a hash with access_token, set the session manually
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get('refresh_token') || '',
+          });
+          
+          if (error) throw error;
+          
           navigate("/", { replace: true });
         } else {
-          // If there's no session, redirect back to auth
-          navigate("/auth", { replace: true });
+          // Otherwise check existing session
+          const { data } = await supabase.auth.getSession();
+          
+          if (data?.session) {
+            navigate("/", { replace: true });
+          } else {
+            navigate("/auth", { replace: true });
+          }
         }
       } catch (error) {
         console.error("Error processing OAuth callback:", error);

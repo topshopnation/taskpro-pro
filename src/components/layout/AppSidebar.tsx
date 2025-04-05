@@ -30,6 +30,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { CreateFilterDialog } from "@/components/filters/CreateFilterDialog";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 interface Project {
   id: string;
@@ -43,6 +44,20 @@ interface FilterItem {
   favorite: boolean;
 }
 
+interface DatabaseFilter {
+  id: string;
+  name: string;
+  user_id: string;
+  conditions: Json;
+  created_at: string;
+  updated_at: string;
+  favorite?: boolean;
+}
+
+interface FavoriteItem extends Project {
+  type: 'project' | 'filter';
+}
+
 interface AppSidebarProps {
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -53,7 +68,7 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
   const [isCreateFilterOpen, setIsCreateFilterOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [filters, setFilters] = useState<FilterItem[]>([]);
-  const [favoriteItems, setFavoriteItems] = useState<(Project | FilterItem & { type: string })[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const { user } = useAuth();
@@ -110,7 +125,7 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       // Update favorites
       const favoriteProjects = (data || [])
         .filter(project => project.favorite)
-        .map(project => ({ ...project, type: 'project' }));
+        .map(project => ({ ...project, type: 'project' as const }));
       
       updateFavorites(favoriteProjects, 'project');
     } catch (error: any) {
@@ -134,20 +149,25 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       if (error) throw error;
       
       // Add standard filters (Today, Upcoming, Priority 1)
-      const standardFilters = [
+      const standardFilters: FilterItem[] = [
         { id: 'today', name: 'Today', favorite: true },
         { id: 'upcoming', name: 'Upcoming', favorite: false },
         { id: 'priority1', name: 'Priority 1', favorite: false }
       ];
       
-      const userFilters = data || [];
+      // Process database filters to ensure they match FilterItem interface
+      const dbFilters: FilterItem[] = (data || []).map(filter => ({
+        id: filter.id,
+        name: filter.name,
+        favorite: filter.favorite ?? false
+      }));
       
-      setFilters([...standardFilters, ...userFilters]);
+      setFilters([...standardFilters, ...dbFilters]);
       
       // Update favorites
-      const favoriteFilters = [...standardFilters, ...userFilters]
+      const favoriteFilters = [...standardFilters, ...dbFilters]
         .filter(filter => filter.favorite)
-        .map(filter => ({ ...filter, type: 'filter' }));
+        .map(filter => ({ ...filter, type: 'filter' as const }));
       
       updateFavorites(favoriteFilters, 'filter');
     } catch (error: any) {
@@ -158,7 +178,7 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
   };
 
   // Update favorites section
-  const updateFavorites = (items: any[], type: string) => {
+  const updateFavorites = (items: FavoriteItem[], type: 'project' | 'filter') => {
     setFavoriteItems(prev => {
       // Filter out the current type
       const filtered = prev.filter(item => item.type !== type);
