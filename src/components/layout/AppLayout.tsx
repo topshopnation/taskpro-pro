@@ -20,8 +20,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         />
         <div className="flex flex-col flex-1 overflow-hidden">
           <AppHeader 
-            isMobileMenuOpen={isMobileMenuOpen} 
+            title="TaskPro"
             setIsMobileMenuOpen={setIsMobileMenuOpen} 
+            isMobileMenuOpen={isMobileMenuOpen}
           />
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
             {children}

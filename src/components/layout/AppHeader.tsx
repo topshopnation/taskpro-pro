@@ -2,7 +2,7 @@
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useMobile } from "@/hooks/use-mobile"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
 import {
   DropdownMenu,
@@ -17,10 +17,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 interface AppHeaderProps {
   title: string
   setIsMobileMenuOpen: (open: boolean) => void
+  isMobileMenuOpen?: boolean
 }
 
 export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps) {
-  const { isMobile } = useMobile()
+  const isMobile = useIsMobile()
   const { user, signOut } = useAuth()
   
   const userInitials = user?.email 
