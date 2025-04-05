@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: error.message,
           variant: "destructive",
         });
-        return;
+        throw error;
       }
 
       toast({
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -97,6 +98,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
       });
 
       if (error) {
@@ -105,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: error.message,
           variant: "destructive",
         });
-        return;
+        throw error;
       }
 
       toast({
@@ -118,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -130,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: error.message,
           variant: "destructive",
         });
-        return;
+        throw error;
       }
       
       navigate("/auth");
@@ -144,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -152,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/`,
         },
       });
 
@@ -162,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: error.message,
           variant: "destructive",
         });
+        throw error;
       }
     } catch (error: any) {
       toast({
@@ -169,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
