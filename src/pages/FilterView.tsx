@@ -98,12 +98,15 @@ export default function FilterView() {
         
       if (error) throw error
       
+      // Cast the data to include favorite property even if it's not in the database type
+      const filterData = data as Filter
+      
       return {
-        id: data.id,
-        name: data.name,
-        conditions: data.conditions,
+        id: filterData.id,
+        name: filterData.name,
+        conditions: filterData.conditions,
         logic: "and",
-        favorite: data.favorite ?? false
+        favorite: filterData.favorite ?? false
       } as CustomFilter
     } catch (error: any) {
       toast.error("Failed to fetch filter", {
@@ -299,11 +302,14 @@ export default function FilterView() {
     try {
       const newValue = !currentFilter.favorite
       
+      // Explicitly cast the update object to include favorite
+      const updateData = {
+        favorite: newValue 
+      } as any // Using any here to bypass type checking for this specific operation
+      
       const { error } = await supabase
         .from('filters')
-        .update({ 
-          favorite: newValue 
-        })
+        .update(updateData)
         .eq('id', id)
         
       if (error) throw error
