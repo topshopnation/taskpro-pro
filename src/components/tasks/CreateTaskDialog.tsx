@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,9 +20,10 @@ import { useQuery } from "@tanstack/react-query"
 interface CreateTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  defaultProjectId?: string  // Made this optional with a ?
 }
 
-export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("")
   const [notes, setNotes] = useState("")
   const [dueDate, setDueDate] = useState<Date>()
@@ -31,6 +32,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [section, setSection] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
+
+  // Initialize project with defaultProjectId when available
+  useEffect(() => {
+    if (defaultProjectId && open) {
+      setProject(defaultProjectId)
+    }
+  }, [defaultProjectId, open])
 
   // Priority colors for the flag icon
   const priorityColors: Record<string, string> = {

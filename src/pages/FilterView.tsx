@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
@@ -36,7 +35,14 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
 
-// Standard filter definitions (not from database)
+interface CustomFilter {
+  id: string
+  name: string
+  conditions: any
+  logic: string
+  favorite: boolean
+}
+
 const standardFilters = [
   { 
     id: "today", 
@@ -70,15 +76,12 @@ export default function FilterView() {
   const [newFilterName, setNewFilterName] = useState("")
   const { user } = useAuth()
 
-  // Find current filter
   const isStandardFilter = standardFilters.some(filter => filter.id === id)
   
-  // Fetch filter from database if it's not a standard filter
   const fetchFilter = async () => {
-    // Return standard filter if it matches
     const standardFilter = standardFilters.find(filter => filter.id === id)
     if (standardFilter) {
-      return standardFilter
+      return standardFilter as CustomFilter
     }
     
     if (!user || !id) return null
@@ -97,9 +100,9 @@ export default function FilterView() {
         id: data.id,
         name: data.name,
         conditions: data.conditions,
-        logic: "and", // Default logic
-        favorite: data.favorite || false
-      }
+        logic: "and",
+        favorite: data.favorite ?? false
+      } as CustomFilter
     } catch (error: any) {
       toast.error("Failed to fetch filter", {
         description: error.message
@@ -109,7 +112,6 @@ export default function FilterView() {
     }
   }
   
-  // Fetch all tasks for filtering
   const fetchTasks = async () => {
     if (!user) return []
     
@@ -140,21 +142,18 @@ export default function FilterView() {
     }
   }
   
-  // Use React Query to fetch filter
   const { data: currentFilter, isLoading: isLoadingFilter } = useQuery({
     queryKey: ['filter', id, user?.id],
     queryFn: fetchFilter,
     enabled: !!user && !!id
   })
   
-  // Use React Query to fetch tasks
   const { data: allTasks, isLoading: isLoadingTasks } = useQuery({
     queryKey: ['allTasks', user?.id],
     queryFn: fetchTasks,
     enabled: !!user
   })
   
-  // Update local states when data is fetched
   useEffect(() => {
     if (allTasks) {
       setTasks(allTasks)
@@ -165,7 +164,6 @@ export default function FilterView() {
     }
   }, [allTasks, currentFilter])
   
-  // Subscribe to real-time updates
   useEffect(() => {
     if (!user) return
     
@@ -177,7 +175,6 @@ export default function FilterView() {
         table: 'tasks',
         filter: `user_id=eq.${user.id}`,
       }, async () => {
-        // Refetch tasks when changes occur
         const updatedTasks = await fetchTasks()
         setTasks(updatedTasks)
       })
@@ -188,7 +185,6 @@ export default function FilterView() {
     }
   }, [user])
   
-  // Filter tasks based on conditions
   const filterTasks = (tasks: Task[], filter: any) => {
     if (!filter || !filter.conditions || filter.conditions.length === 0) return tasks
 
@@ -222,7 +218,6 @@ export default function FilterView() {
         return false
       })
       
-      // Apply logic (AND/OR)
       if (filter.logic === "and") {
         return results.every(Boolean)
       } else {
@@ -242,7 +237,6 @@ export default function FilterView() {
         
       if (error) throw error
       
-      // Optimistic update
       setTasks(
         tasks.map((task) =>
           task.id === taskId ? { ...task, completed } : task
@@ -264,7 +258,6 @@ export default function FilterView() {
         
       if (error) throw error
       
-      // Optimistic update
       setTasks(tasks.filter((task) => task.id !== taskId))
       toast.success("Task deleted")
     } catch (error: any) {
@@ -283,7 +276,6 @@ export default function FilterView() {
         
       if (error) throw error
       
-      // Optimistic update
       setTasks(
         tasks.map((task) =>
           task.id === taskId ? { ...task, favorite } : task
@@ -307,7 +299,9 @@ export default function FilterView() {
       
       const { error } = await supabase
         .from('filters')
-        .update({ favorite: newValue })
+        .update({ 
+          favorite: newValue 
+        })
         .eq('id', id)
         
       if (error) throw error
@@ -364,7 +358,7 @@ export default function FilterView() {
       
       setIsDeleteFilterOpen(false)
       toast.success("Filter deleted successfully")
-      navigate('/') // Navigate to dashboard after deletion
+      navigate('/')
     } catch (error: any) {
       toast.error("Failed to delete filter", {
         description: error.message
@@ -458,7 +452,6 @@ export default function FilterView() {
           onFavoriteToggle={handleFavoriteToggle}
         />
 
-        {/* Dialogs */}
         <Dialog open={isEditFilterOpen} onOpenChange={setIsEditFilterOpen}>
           <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>

@@ -9,4 +9,15 @@ declare global {
   }
 }
 
+// For convenience, define filter type here that includes favorite field
+export interface Filter {
+  id: string;
+  name: string;
+  conditions: any;
+  created_at?: string;
+  updated_at?: string;
+  user_id: string;
+  favorite?: boolean;
+}
+
 export {};
