@@ -156,6 +156,7 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
       ];
       
       // Process database filters to ensure they match FilterItem interface
+      // This is the fix: Map database filters to our FilterItem type, adding favorite if it doesn't exist
       const dbFilters: FilterItem[] = (data || []).map(filter => ({
         id: filter.id,
         name: filter.name,
