@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
@@ -34,6 +35,7 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
+import { Filter } from "@/types/supabase"
 
 interface CustomFilter {
   id: string
