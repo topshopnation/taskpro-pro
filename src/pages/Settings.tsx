@@ -30,10 +30,10 @@ export default function Settings() {
     setIsRecording(true)
     
     // Get SpeechRecognition constructor
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
     
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition()
+    if (SpeechRecognitionAPI) {
+      const recognition = new SpeechRecognitionAPI()
       recognition.lang = 'en-US'
       recognition.continuous = false
       recognition.interimResults = false
