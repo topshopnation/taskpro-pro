@@ -1,6 +1,6 @@
 
-import { useState } from "react"
-import { useParams } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
 import { TaskList } from "@/components/tasks/TaskList"
 import { Task } from "@/components/tasks/TaskItem"
@@ -32,9 +32,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
+import { useQuery } from "@tanstack/react-query"
 
-// Mock data - replace with real data from Supabase
-const mockFilters = [
+// Standard filter definitions (not from database)
+const standardFilters = [
   { 
     id: "today", 
     name: "Today", 
@@ -58,66 +61,139 @@ const mockFilters = [
   },
 ]
 
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Finish project proposal",
-    notes: "Include all the requirements and budget estimation",
-    dueDate: new Date(),
-    priority: 1,
-    projectId: "work",
-    section: "todo",
-    completed: false,
-    favorite: true
-  },
-  {
-    id: "2",
-    title: "Schedule team meeting",
-    dueDate: new Date(),
-    priority: 2,
-    projectId: "work",
-    section: "todo",
-    completed: false,
-    favorite: false
-  },
-  {
-    id: "3",
-    title: "Research API documentation",
-    dueDate: new Date("2025-04-09"),
-    priority: 3,
-    projectId: "work",
-    section: "inprogress",
-    completed: false,
-    favorite: false
-  },
-  {
-    id: "4",
-    title: "Buy groceries",
-    dueDate: new Date("2025-04-06"),
-    priority: 3,
-    projectId: "personal",
-    completed: false,
-    favorite: false
-  }
-]
-
 export default function FilterView() {
   const { id } = useParams()
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  const navigate = useNavigate()
+  const [tasks, setTasks] = useState<Task[]>([])
   const [isEditFilterOpen, setIsEditFilterOpen] = useState(false)
   const [isDeleteFilterOpen, setIsDeleteFilterOpen] = useState(false)
   const [newFilterName, setNewFilterName] = useState("")
+  const { user } = useAuth()
 
   // Find current filter
-  const currentFilter = mockFilters.find(filter => filter.id === id) || 
-    { id: "unknown", name: "Unknown Filter", conditions: [], logic: "and", favorite: false }
+  const isStandardFilter = standardFilters.some(filter => filter.id === id)
+  
+  // Fetch filter from database if it's not a standard filter
+  const fetchFilter = async () => {
+    // Return standard filter if it matches
+    const standardFilter = standardFilters.find(filter => filter.id === id)
+    if (standardFilter) {
+      return standardFilter
+    }
+    
+    if (!user || !id) return null
+    
+    try {
+      const { data, error } = await supabase
+        .from('filters')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single()
+        
+      if (error) throw error
+      
+      return {
+        id: data.id,
+        name: data.name,
+        conditions: data.conditions,
+        logic: "and", // Default logic
+        favorite: data.favorite || false
+      }
+    } catch (error: any) {
+      toast.error("Failed to fetch filter", {
+        description: error.message
+      })
+      navigate('/')
+      return null
+    }
+  }
+  
+  // Fetch all tasks for filtering
+  const fetchTasks = async () => {
+    if (!user) return []
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        
+      if (error) throw error
+      
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        section: task.section,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }))
+    } catch (error: any) {
+      toast.error("Failed to fetch tasks", {
+        description: error.message
+      })
+      return []
+    }
+  }
+  
+  // Use React Query to fetch filter
+  const { data: currentFilter, isLoading: isLoadingFilter } = useQuery({
+    queryKey: ['filter', id, user?.id],
+    queryFn: fetchFilter,
+    enabled: !!user && !!id
+  })
+  
+  // Use React Query to fetch tasks
+  const { data: allTasks, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['allTasks', user?.id],
+    queryFn: fetchTasks,
+    enabled: !!user
+  })
+  
+  // Update local states when data is fetched
+  useEffect(() => {
+    if (allTasks) {
+      setTasks(allTasks)
+    }
+    
+    if (currentFilter) {
+      setNewFilterName(currentFilter.name)
+    }
+  }, [allTasks, currentFilter])
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user) return
+    
+    const channel = supabase
+      .channel('all-tasks-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `user_id=eq.${user.id}`,
+      }, async () => {
+        // Refetch tasks when changes occur
+        const updatedTasks = await fetchTasks()
+        setTasks(updatedTasks)
+      })
+      .subscribe()
+      
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
   
   // Filter tasks based on conditions
-  const filterTasks = (tasks: Task[], filter: typeof currentFilter) => {
-    if (filter.conditions.length === 0) return tasks
+  const filterTasks = (tasks: Task[], filter: any) => {
+    if (!filter || !filter.conditions || filter.conditions.length === 0) return tasks
 
     return tasks.filter(task => {
-      const results = filter.conditions.map(condition => {
+      const results = filter.conditions.map((condition: any) => {
         if (condition.type === "due" && condition.value === "today" && task.dueDate) {
           const today = new Date()
           const taskDate = new Date(task.dueDate)
@@ -155,49 +231,166 @@ export default function FilterView() {
     })
   }
 
-  const filteredTasks = filterTasks(tasks, currentFilter).filter(task => !task.completed)
+  const filteredTasks = currentFilter ? filterTasks(tasks, currentFilter).filter(task => !task.completed) : []
 
-  const handleComplete = (taskId: string, completed: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed } : task
+  const handleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, completed } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleDelete = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId))
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(tasks.filter((task) => task.id !== taskId))
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error("Failed to delete task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFavoriteToggle = (taskId: string, favorite: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, favorite } : task
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, favorite } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFilterFavoriteToggle = () => {
-    // TODO: Update filter in Supabase database
-    toast.success(currentFilter.favorite ? "Removed from favorites" : "Added to favorites")
+  const handleFilterFavoriteToggle = async () => {
+    if (!currentFilter || isStandardFilter) {
+      toast.error("Cannot modify standard filters")
+      return
+    }
+    
+    try {
+      const newValue = !currentFilter.favorite
+      
+      const { error } = await supabase
+        .from('filters')
+        .update({ favorite: newValue })
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      toast.success(newValue ? "Added to favorites" : "Removed from favorites")
+    } catch (error: any) {
+      toast.error("Failed to update filter", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFilterRename = () => {
+  const handleFilterRename = async () => {
     if (!newFilterName.trim()) {
       toast.error("Filter name is required")
       return
     }
+    
+    if (isStandardFilter) {
+      toast.error("Cannot modify standard filters")
+      return
+    }
 
-    // TODO: Update filter in Supabase database
-    setIsEditFilterOpen(false)
-    toast.success("Filter renamed successfully")
+    try {
+      const { error } = await supabase
+        .from('filters')
+        .update({ name: newFilterName })
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      setIsEditFilterOpen(false)
+      toast.success("Filter renamed successfully")
+    } catch (error: any) {
+      toast.error("Failed to rename filter", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFilterDelete = () => {
-    // TODO: Delete filter from Supabase database
-    setIsDeleteFilterOpen(false)
-    toast.success("Filter deleted successfully")
-    // Navigate to dashboard after deletion
+  const handleFilterDelete = async () => {
+    if (isStandardFilter) {
+      toast.error("Cannot delete standard filters")
+      return
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('filters')
+        .delete()
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      setIsDeleteFilterOpen(false)
+      toast.success("Filter deleted successfully")
+      navigate('/') // Navigate to dashboard after deletion
+    } catch (error: any) {
+      toast.error("Failed to delete filter", {
+        description: error.message
+      })
+    }
+  }
+
+  if (isLoadingFilter || isLoadingTasks) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  if (!currentFilter) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-[80vh]">
+          <h1 className="text-2xl font-bold mb-4">Filter not found</h1>
+          <Button onClick={() => navigate('/')}>Go to Dashboard</Button>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
@@ -211,6 +404,7 @@ export default function FilterView() {
               size="icon"
               className="h-8 w-8"
               onClick={handleFilterFavoriteToggle}
+              disabled={isStandardFilter}
             >
               <Star 
                 className={
@@ -225,31 +419,33 @@ export default function FilterView() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">More options</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => {
-                  setNewFilterName(currentFilter.name)
-                  setIsEditFilterOpen(true)
-                }}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Rename Filter
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => setIsDeleteFilterOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete Filter
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!isStandardFilter && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">More options</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    setNewFilterName(currentFilter.name)
+                    setIsEditFilterOpen(true)
+                  }}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Rename Filter
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => setIsDeleteFilterOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete Filter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 

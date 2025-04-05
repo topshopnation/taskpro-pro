@@ -1,44 +1,88 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import AppLayout from "@/components/layout/AppLayout"
 import { TaskList } from "@/components/tasks/TaskList"
 import { Task } from "@/components/tasks/TaskItem"
 import { format, subDays } from "date-fns"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-
-// Mock data - replace with real data from Supabase
-const mockTasks: Task[] = [
-  {
-    id: "5",
-    title: "Review weekly reports",
-    priority: 2,
-    projectId: "work",
-    completed: true,
-    favorite: false
-  },
-  {
-    id: "6",
-    title: "Prepare presentation slides",
-    priority: 1,
-    projectId: "work",
-    section: "done",
-    completed: true,
-    favorite: false
-  },
-  {
-    id: "7",
-    title: "Pay electricity bill",
-    priority: 3,
-    projectId: "personal",
-    completed: true,
-    favorite: false
-  }
-]
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function CompletedTasks() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
   const [timeFilter, setTimeFilter] = useState("all")
+  const { user } = useAuth()
+
+  // Fetch completed tasks from Supabase
+  const fetchCompletedTasks = async () => {
+    if (!user) return []
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        
+      if (error) throw error
+      
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        section: task.section,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }))
+    } catch (error: any) {
+      toast.error("Failed to fetch completed tasks", {
+        description: error.message
+      })
+      return []
+    }
+  }
+  
+  // Use React Query to fetch tasks
+  const { data: completedTasks, isLoading } = useQuery({
+    queryKey: ['completedTasks', user?.id],
+    queryFn: fetchCompletedTasks,
+    enabled: !!user
+  })
+  
+  // Update local state when data is fetched
+  useEffect(() => {
+    if (completedTasks) {
+      setTasks(completedTasks)
+    }
+  }, [completedTasks])
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user) return
+    
+    const channel = supabase
+      .channel('completed-tasks-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `user_id=eq.${user.id}`,
+      }, async () => {
+        // Refetch tasks when changes occur
+        const updatedTasks = await fetchCompletedTasks()
+        setTasks(updatedTasks)
+      })
+      .subscribe()
+      
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
 
   const filteredTasks = tasks.filter(task => {
     if (!task.completed) return false
@@ -75,27 +119,71 @@ export default function CompletedTasks() {
     tasksByProject[projectId].push(task)
   })
 
-  const handleComplete = (taskId: string, completed: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed } : task
+  const handleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, completed } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleDelete = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId))
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(tasks.filter((task) => task.id !== taskId))
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error("Failed to delete task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFavoriteToggle = (taskId: string, favorite: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, favorite } : task
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, favorite } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
   const getProjectName = (projectId: string): string => {
+    // In a real app, you'd fetch this from the database
     const projectNames: Record<string, string> = {
       "inbox": "Inbox",
       "work": "Work",
@@ -103,6 +191,16 @@ export default function CompletedTasks() {
       "none": "No Project"
     }
     return projectNames[projectId] || projectId
+  }
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (

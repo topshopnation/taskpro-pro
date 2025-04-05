@@ -1,13 +1,12 @@
 
-import { useState } from "react"
-import { useParams } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
 import { TaskList } from "@/components/tasks/TaskList"
 import { Task } from "@/components/tasks/TaskItem"
 import { Plus, MoreHorizontal, Star, Edit, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
@@ -19,7 +18,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -36,149 +34,373 @@ import {
 } from "@/components/ui/alert-dialog"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { toast } from "sonner"
-
-// Mock data - replace with real data from Supabase
-const mockProjects = [
-  { id: "inbox", name: "Inbox", favorite: false },
-  { id: "work", name: "Work", favorite: true },
-  { id: "personal", name: "Personal", favorite: false },
-]
-
-const mockSections = [
-  { id: "todo", projectId: "work", name: "To Do" },
-  { id: "inprogress", projectId: "work", name: "In Progress" },
-  { id: "done", projectId: "work", name: "Done" },
-]
-
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Finish project proposal",
-    notes: "Include all the requirements and budget estimation",
-    dueDate: new Date("2025-04-10"),
-    priority: 1,
-    projectId: "work",
-    section: "todo",
-    completed: false,
-    favorite: true
-  },
-  {
-    id: "2",
-    title: "Schedule team meeting",
-    dueDate: new Date("2025-04-08"),
-    priority: 2,
-    projectId: "work",
-    section: "todo",
-    completed: false,
-    favorite: false
-  },
-  {
-    id: "3",
-    title: "Research API documentation",
-    dueDate: new Date("2025-04-09"),
-    priority: 3,
-    projectId: "work",
-    section: "inprogress",
-    completed: false,
-    favorite: false
-  },
-  {
-    id: "4",
-    title: "Check client feedback",
-    priority: 4,
-    projectId: "work",
-    section: "done",
-    completed: true,
-    favorite: false
-  }
-]
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
+import { useQuery } from "@tanstack/react-query"
 
 export default function ProjectView() {
   const { id } = useParams()
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  const navigate = useNavigate()
+  const [tasks, setTasks] = useState<Task[]>([])
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
   const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false)
   const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false)
   const [newSectionName, setNewSectionName] = useState("")
   const [newProjectName, setNewProjectName] = useState("")
+  const [sections, setSections] = useState<{id: string, name: string}[]>([])
+  const { user } = useAuth()
 
-  // Find current project
-  const currentProject = mockProjects.find(project => project.id === id) || { id: "inbox", name: "Inbox", favorite: false }
+  // Fetch project data
+  const fetchProject = async () => {
+    if (!user || !id) return null
+    
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single()
+        
+      if (error) throw error
+      
+      return {
+        id: data.id,
+        name: data.name,
+        favorite: data.favorite || false
+      }
+    } catch (error: any) {
+      toast.error("Failed to fetch project", {
+        description: error.message
+      })
+      navigate('/')
+      return null
+    }
+  }
   
-  // Get project sections
-  const projectSections = mockSections.filter(section => section.projectId === id)
+  // Fetch project tasks
+  const fetchTasks = async () => {
+    if (!user || !id) return []
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', id)
+        .eq('user_id', user.id)
+        
+      if (error) throw error
+      
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        section: task.section,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }))
+    } catch (error: any) {
+      toast.error("Failed to fetch tasks", {
+        description: error.message
+      })
+      return []
+    }
+  }
+  
+  // Use React Query to fetch project
+  const { data: currentProject, isLoading: isLoadingProject } = useQuery({
+    queryKey: ['project', id, user?.id],
+    queryFn: fetchProject,
+    enabled: !!user && !!id
+  })
+  
+  // Use React Query to fetch tasks
+  const { data: projectTasks, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['projectTasks', id, user?.id],
+    queryFn: fetchTasks,
+    enabled: !!user && !!id
+  })
+  
+  // Update local states when data is fetched
+  useEffect(() => {
+    if (projectTasks) {
+      setTasks(projectTasks)
+    }
+    
+    if (currentProject) {
+      setNewProjectName(currentProject.name)
+    }
+  }, [projectTasks, currentProject])
+  
+  // Generate sections from tasks
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const uniqueSections = Array.from(
+        new Set(tasks.filter(task => task.section).map(task => task.section))
+      ).map(sectionId => {
+        // Use section name from task or default to section ID
+        // In a real app, you'd want to store section names in the database
+        const sectionNames: Record<string, string> = {
+          'todo': 'To Do',
+          'inprogress': 'In Progress',
+          'done': 'Done'
+        }
+        
+        return {
+          id: sectionId as string,
+          name: sectionNames[sectionId as string] || sectionId as string
+        }
+      })
+      
+      setSections(uniqueSections)
+    }
+  }, [tasks])
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user || !id) return
+    
+    const channel = supabase
+      .channel('project-tasks-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `project_id=eq.${id}`
+      }, async () => {
+        // Refetch tasks when changes occur
+        const updatedTasks = await fetchTasks()
+        setTasks(updatedTasks)
+      })
+      .subscribe()
+      
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, id])
   
   // Get tasks for each section
   const getSectionTasks = (sectionId: string) => {
-    return tasks.filter(task => task.projectId === id && task.section === sectionId && !task.completed)
+    return tasks.filter(task => task.section === sectionId && !task.completed)
   }
   
   // Get tasks without sections
-  const unsectionedTasks = tasks.filter(task => task.projectId === id && !task.section && !task.completed)
+  const unsectionedTasks = tasks.filter(task => !task.section && !task.completed)
 
-  const handleComplete = (taskId: string, completed: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed } : task
+  const handleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, completed } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleDelete = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId))
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(tasks.filter((task) => task.id !== taskId))
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error("Failed to delete task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFavoriteToggle = (taskId: string, favorite: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, favorite } : task
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, favorite } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleProjectFavoriteToggle = () => {
-    // TODO: Update project in Supabase database
-    toast.success(currentProject.favorite ? "Removed from favorites" : "Added to favorites")
+  const handleProjectFavoriteToggle = async () => {
+    if (!currentProject) return
+    
+    try {
+      const newValue = !currentProject.favorite
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ favorite: newValue })
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      toast.success(newValue ? "Added to favorites" : "Removed from favorites")
+    } catch (error: any) {
+      toast.error("Failed to update project", {
+        description: error.message
+      })
+    }
   }
 
-  const handleProjectRename = () => {
+  const handleProjectRename = async () => {
     if (!newProjectName.trim()) {
       toast.error("Project name is required")
       return
     }
 
-    // TODO: Update project in Supabase database
-    setIsEditProjectOpen(false)
-    toast.success("Project renamed successfully")
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ name: newProjectName })
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      setIsEditProjectOpen(false)
+      toast.success("Project renamed successfully")
+    } catch (error: any) {
+      toast.error("Failed to rename project", {
+        description: error.message
+      })
+    }
   }
 
-  const handleProjectDelete = () => {
-    // TODO: Delete project from Supabase database
-    setIsDeleteProjectOpen(false)
-    toast.success("Project deleted successfully")
-    // Navigate to dashboard after deletion
+  const handleProjectDelete = async () => {
+    try {
+      // Delete all tasks in this project first
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('project_id', id)
+        
+      if (tasksError) throw tasksError
+      
+      // Then delete the project
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      setIsDeleteProjectOpen(false)
+      toast.success("Project deleted successfully")
+      navigate('/') // Navigate to dashboard after deletion
+    } catch (error: any) {
+      toast.error("Failed to delete project", {
+        description: error.message
+      })
+    }
   }
 
-  const handleCreateSection = () => {
+  const handleCreateSection = async () => {
     if (!newSectionName.trim()) {
       toast.error("Section name is required")
       return
     }
 
-    // TODO: Add section to Supabase database
-    setIsCreateSectionOpen(false)
-    setNewSectionName("")
-    toast.success("Section created successfully")
+    // Create a section ID from the name (lowercase, no spaces)
+    const sectionId = newSectionName.toLowerCase().replace(/\s+/g, '')
+    
+    // In a real app, you would create a sections table in the database
+    // For now, we'll just add a task with the new section to establish it
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          title: `${newSectionName} section created`,
+          user_id: user?.id,
+          project_id: id,
+          section: sectionId
+        })
+        
+      if (error) throw error
+      
+      setIsCreateSectionOpen(false)
+      setNewSectionName("")
+      toast.success("Section created successfully")
+    } catch (error: any) {
+      toast.error("Failed to create section", {
+        description: error.message
+      })
+    }
   }
 
-  const handleSectionChange = (taskId: string, sectionId: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, section: sectionId } : task
+  const handleSectionChange = async (taskId: string, sectionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ section: sectionId })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, section: sectionId } : task
+        )
       )
+      toast.success("Task moved to section")
+    } catch (error: any) {
+      toast.error("Failed to move task", {
+        description: error.message
+      })
+    }
+  }
+
+  if (isLoadingProject || isLoadingTasks) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </AppLayout>
     )
-    toast.success("Task moved to section")
+  }
+
+  if (!currentProject) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-[80vh]">
+          <h1 className="text-2xl font-bold mb-4">Project not found</h1>
+          <Button onClick={() => navigate('/')}>Go to Dashboard</Button>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
@@ -249,7 +471,7 @@ export default function ProjectView() {
         {unsectionedTasks.length > 0 && (
           <div className="mb-8">
             <TaskList
-              title={projectSections.length > 0 ? "Unsectioned Tasks" : "Tasks"}
+              title={sections.length > 0 ? "Unsectioned Tasks" : "Tasks"}
               tasks={unsectionedTasks}
               onComplete={handleComplete}
               onDelete={handleDelete}
@@ -259,7 +481,7 @@ export default function ProjectView() {
         )}
 
         {/* Sections */}
-        {projectSections.map(section => (
+        {sections.map(section => (
           <div key={section.id} className="mb-8">
             <TaskList
               title={section.name}
@@ -273,7 +495,11 @@ export default function ProjectView() {
         ))}
 
         {/* Dialogs */}
-        <CreateTaskDialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen} />
+        <CreateTaskDialog 
+          open={isCreateTaskOpen} 
+          onOpenChange={setIsCreateTaskOpen} 
+          defaultProjectId={id}
+        />
 
         <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
           <DialogContent className="sm:max-w-[400px]">

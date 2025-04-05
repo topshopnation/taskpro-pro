@@ -1,5 +1,6 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import AppLayout from "@/components/layout/AppLayout"
 import { TaskList } from "@/components/tasks/TaskList"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,77 +17,144 @@ import {
 } from "recharts"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
-
-// Mock data - replace with real data from Supabase
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Finish project proposal",
-    notes: "Include all the requirements and budget estimation",
-    dueDate: new Date("2025-04-10"),
-    priority: 1,
-    projectId: "work",
-    section: "todo",
-    completed: false,
-    favorite: true
-  },
-  {
-    id: "2",
-    title: "Buy groceries",
-    dueDate: new Date("2025-04-06"),
-    priority: 3,
-    projectId: "personal",
-    completed: false,
-    favorite: false
-  },
-  {
-    id: "3",
-    title: "Schedule team meeting",
-    dueDate: new Date("2025-04-08"),
-    priority: 2,
-    projectId: "work",
-    completed: false,
-    favorite: true
-  }
-]
-
-const stats = [
-  { name: 'Mon', completed: 4 },
-  { name: 'Tue', completed: 3 },
-  { name: 'Wed', completed: 5 },
-  { name: 'Thu', completed: 2 },
-  { name: 'Fri', completed: 6 },
-  { name: 'Sat', completed: 1 },
-  { name: 'Sun', completed: 0 },
-]
-
-const projectStats = [
-  { name: 'Work', completed: 12, total: 20 },
-  { name: 'Personal', completed: 8, total: 15 },
-  { name: 'Inbox', completed: 5, total: 7 },
-]
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const { user } = useAuth()
   
-  const handleComplete = (taskId: string, completed: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed } : task
+  // Fetch tasks from Supabase
+  const fetchTasks = async () => {
+    if (!user) return []
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        
+      if (error) {
+        throw error
+      }
+      
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        section: task.section,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }))
+    } catch (error: any) {
+      toast.error("Failed to fetch tasks", {
+        description: error.message
+      })
+      return []
+    }
+  }
+  
+  // Use React Query to fetch tasks
+  const { data: fetchedTasks, isLoading } = useQuery({
+    queryKey: ['tasks', user?.id],
+    queryFn: fetchTasks,
+    enabled: !!user
+  })
+  
+  // Update local state when data is fetched
+  useEffect(() => {
+    if (fetchedTasks) {
+      setTasks(fetchedTasks)
+    }
+  }, [fetchedTasks])
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user) return
+    
+    const channel = supabase
+      .channel('tasks-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `user_id=eq.${user.id}`
+      }, async () => {
+        // Refetch tasks when changes occur
+        const updatedTasks = await fetchTasks()
+        setTasks(updatedTasks)
+      })
+      .subscribe()
+      
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+  
+  const handleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, completed } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleDelete = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId))
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(tasks.filter((task) => task.id !== taskId))
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error("Failed to delete task", {
+        description: error.message
+      })
+    }
   }
 
-  const handleFavoriteToggle = (taskId: string, favorite: boolean) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, favorite } : task
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      // Optimistic update
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, favorite } : task
+        )
       )
-    )
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
   }
 
   // Get tasks due today
@@ -106,6 +174,70 @@ export default function Dashboard() {
 
   // Get high priority tasks (priority 1)
   const highPriorityTasks = tasks.filter(task => task.priority === 1 && !task.completed)
+
+  // Generate weekly stats based on completed tasks
+  const generateWeeklyStats = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = Sunday, 6 = Saturday
+    
+    const stats = days.map((name, index) => {
+      // Calculate date for this day of the week
+      const date = new Date(today)
+      const diff = index - dayOfWeek
+      date.setDate(date.getDate() + diff)
+      
+      // Count completed tasks for this day
+      const completedCount = tasks.filter(task => {
+        if (!task.completed) return false
+        const taskDate = new Date(task.dueDate || '')
+        return (
+          taskDate.getDate() === date.getDate() &&
+          taskDate.getMonth() === date.getMonth() &&
+          taskDate.getFullYear() === date.getFullYear()
+        )
+      }).length
+      
+      return { name, completed: completedCount }
+    })
+    
+    return stats
+  }
+
+  // Generate project stats based on task completion
+  const generateProjectStats = () => {
+    // Group tasks by project
+    const projectTaskMap: Record<string, { completed: number, total: number, name: string }> = {}
+    
+    tasks.forEach(task => {
+      const projectId = task.projectId || 'Inbox'
+      
+      if (!projectTaskMap[projectId]) {
+        projectTaskMap[projectId] = { completed: 0, total: 0, name: projectId }
+      }
+      
+      projectTaskMap[projectId].total++
+      
+      if (task.completed) {
+        projectTaskMap[projectId].completed++
+      }
+    })
+    
+    return Object.values(projectTaskMap)
+  }
+
+  const stats = generateWeeklyStats()
+  const projectStats = generateProjectStats()
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout>
