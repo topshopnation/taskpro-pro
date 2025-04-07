@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { Task } from "@/components/tasks/TaskItem"
-import { useTaskRealtime } from "@/hooks/useTaskRealtime"
 import { updateTaskCompletion, deleteTask, toggleTaskFavorite } from "@/utils/taskOperations"
 
 export function useInboxTasks() {
@@ -53,15 +52,41 @@ export function useInboxTasks() {
     enabled: !!user
   })
   
+  // Set up realtime subscription
+  useEffect(() => {
+    if (!user) return
+    
+    // Create a Supabase channel for real-time updates
+    const channel = supabase
+      .channel('public:tasks')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `user_id=eq.${user.id}`
+        },
+        async () => {
+          // Refetch tasks when database changes
+          const updatedTasks = await fetchTasks()
+          setTasks(updatedTasks)
+        }
+      )
+      .subscribe()
+    
+    // Clean up the subscription
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+  
   // Update local state when data is fetched
   useEffect(() => {
     if (inboxTasks) {
       setTasks(inboxTasks)
     }
   }, [inboxTasks])
-  
-  // Setup realtime updates
-  useTaskRealtime({ id: user?.id }, fetchTasks)
 
   // Handle task operations
   const handleComplete = async (taskId: string, completed: boolean) => {

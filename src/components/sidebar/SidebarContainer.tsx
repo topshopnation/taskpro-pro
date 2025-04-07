@@ -1,196 +1,77 @@
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { 
-  Sidebar,
-  SidebarContent as SidebarContentUI,
-} from "@/components/ui/sidebar";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { toast } from "sonner";
-import { Json } from "@/integrations/supabase/types";
-import { SidebarContentComponent } from "./SidebarContent";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { SidebarContent } from "@/components/sidebar/SidebarContent";
 
-interface Project {
-  id: string;
-  name: string;
-  favorite: boolean;
-}
-
-interface FilterItem {
-  id: string;
-  name: string;
-  favorite: boolean;
-}
-
-interface DatabaseFilter {
-  id: string;
-  name: string;
-  user_id: string;
-  conditions: Json;
-  created_at: string;
-  updated_at: string;
-  favorite?: boolean;
-}
-
-interface FavoriteItem extends Project {
-  type: 'project' | 'filter';
-}
-
-interface AppSidebarProps {
+interface SidebarContainerProps {
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
 }
 
-export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: AppSidebarProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [filters, setFilters] = useState<FilterItem[]>([]);
-  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
-  const { user } = useAuth();
-
-  const fetchProjects = async () => {
-    if (!user) return;
-    
-    setIsLoadingProjects(true);
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('favorite', { ascending: false })
-        .order('name');
-      
-      if (error) throw error;
-      
-      setProjects(data || []);
-      
-      const favoriteProjects = (data || [])
-        .filter(project => project.favorite)
-        .map(project => ({ ...project, type: 'project' as const }));
-      
-      updateFavorites(favoriteProjects, 'project');
-    } catch (error: any) {
-      toast.error(`Error loading projects: ${error.message}`);
-    } finally {
-      setIsLoadingProjects(false);
-    }
-  };
-
-  const fetchFilters = async () => {
-    if (!user) return;
-    
-    setIsLoadingFilters(true);
-    try {
-      const { data, error } = await supabase
-        .from('filters')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      const standardFilters: FilterItem[] = [
-        { id: 'today', name: 'Today', favorite: true },
-        { id: 'upcoming', name: 'Upcoming', favorite: false },
-        { id: 'priority1', name: 'Priority 1', favorite: false }
-      ];
-      
-      const dbFilters: FilterItem[] = (data || []).map((filter: DatabaseFilter) => ({
-        id: filter.id,
-        name: filter.name,
-        favorite: filter.favorite ?? false
-      }));
-      
-      setFilters([...standardFilters, ...dbFilters]);
-      
-      const favoriteFilters = [...standardFilters, ...dbFilters]
-        .filter(filter => filter.favorite)
-        .map(filter => ({ ...filter, type: 'filter' as const }));
-      
-      updateFavorites(favoriteFilters, 'filter');
-    } catch (error: any) {
-      toast.error(`Error loading filters: ${error.message}`);
-    } finally {
-      setIsLoadingFilters(false);
-    }
-  };
-
-  const updateFavorites = (items: FavoriteItem[], type: 'project' | 'filter') => {
-    setFavoriteItems(prev => {
-      const filtered = prev.filter(item => item.type !== type);
-      return [...filtered, ...items];
-    });
-  };
+const AppSidebarContainer = ({ 
+  isMobileMenuOpen, 
+  setIsMobileMenuOpen 
+}: SidebarContainerProps) => {
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchProjects();
-      fetchFilters();
-    }
-  }, [user]);
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const projectsChannel = supabase
-      .channel('projects-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'projects', filter: `user_id=eq.${user.id}` },
-        () => fetchProjects()
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(projectsChannel);
-    };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const filtersChannel = supabase
-      .channel('filters-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'filters', filter: `user_id=eq.${user.id}` },
-        () => fetchFilters()
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(filtersChannel);
-    };
-  }, [user]);
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
-      <Sidebar className="hidden md:block border-r">
-        <SidebarContentUI>
-          <SidebarContentComponent
-            projects={projects}
-            filters={filters}
-            favoriteItems={favoriteItems}
-            isLoadingProjects={isLoadingProjects}
-            isLoadingFilters={isLoadingFilters}
-            setMobileMenuOpen={setMobileMenuOpen}
-          />
-        </SidebarContentUI>
-      </Sidebar>
+      {/* Mobile Menu Trigger */}
+      <div className="fixed bottom-6 left-6 z-40 block md:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-background shadow-md"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </div>
 
+      {/* Mobile Sidebar (Sheet) */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="p-0 w-[280px]">
-          <SidebarContentComponent
-            projects={projects}
-            filters={filters}
-            favoriteItems={favoriteItems}
-            isLoadingProjects={isLoadingProjects}
-            isLoadingFilters={isLoadingFilters}
-            setMobileMenuOpen={setMobileMenuOpen}
-          />
+        <SheetContent side="left" className="w-[280px] p-0">
+          <div className="flex h-full flex-col">
+            <div className="h-full p-4 pt-0">
+              <SidebarContent onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
+            </div>
+            <div className="p-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Close Menu
+              </Button>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground md:block">
+        <div className="flex h-full flex-col">
+          <div className="p-4">
+            <SidebarContent onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
+          </div>
+        </div>
+      </aside>
     </>
   );
-}
+};
+
+export default AppSidebarContainer;
