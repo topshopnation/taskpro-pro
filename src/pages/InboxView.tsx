@@ -37,6 +37,7 @@ export default function InboxView() {
           onComplete={handleComplete}
           onDelete={handleDelete}
           onFavoriteToggle={handleFavoriteToggle}
+          title="Inbox Tasks"
         />
 
         <CreateTaskDialog

@@ -23,7 +23,7 @@ export function useInboxTasks() {
         .is('project_id', null)
         .eq('user_id', user.id)
         .eq('completed', false)
-        .order('due_date', { ascending: true, nullsLast: true })
+        .order('due_date', { ascending: true, nullsFirst: false })
         
       if (error) throw error
       
@@ -61,7 +61,7 @@ export function useInboxTasks() {
   }, [inboxTasks])
   
   // Setup realtime updates
-  useTaskRealtime(user, fetchTasks)
+  useTaskRealtime({ id: user?.id }, fetchTasks)
 
   // Handle task operations
   const handleComplete = async (taskId: string, completed: boolean) => {
