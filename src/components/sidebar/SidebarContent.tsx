@@ -8,7 +8,6 @@ import { SidebarNavigation } from "./SidebarNavigation";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarFilters } from "./SidebarFilters";
 import { SidebarSettings } from "./SidebarSettings";
-import { Filter, ListTodo } from "lucide-react";
 
 interface FavoriteItem {
   id: string;
@@ -29,55 +28,53 @@ interface FilterItem {
 }
 
 interface SidebarContentProps {
-  projects: Project[];
-  filters: FilterItem[];
-  favoriteItems: FavoriteItem[];
-  isLoadingProjects: boolean;
-  isLoadingFilters: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
+  onMobileMenuClose?: () => void;
+  projects?: Project[];
+  filters?: FilterItem[];
+  favoriteItems?: FavoriteItem[];
+  isLoadingProjects?: boolean;
+  isLoadingFilters?: boolean;
 }
 
-export function SidebarContentComponent({
-  projects,
-  filters,
-  favoriteItems,
-  isLoadingProjects,
-  isLoadingFilters,
-  setMobileMenuOpen
+export function SidebarContent({
+  projects = [],
+  filters = [],
+  favoriteItems = [],
+  isLoadingProjects = false,
+  isLoadingFilters = false,
+  onMobileMenuClose = () => {},
 }: SidebarContentProps) {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isCreateFilterOpen, setIsCreateFilterOpen] = useState(false);
-
-  const handleMobileMenuClose = () => setMobileMenuOpen(false);
 
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
         <SidebarFavorites 
           favoriteItems={favoriteItems} 
-          onMobileMenuClose={handleMobileMenuClose} 
+          onMobileMenuClose={onMobileMenuClose} 
         />
 
         <SidebarNavigation 
-          onMobileMenuClose={handleMobileMenuClose} 
+          onMobileMenuClose={onMobileMenuClose} 
         />
 
         <SidebarProjects 
           projects={projects}
           isLoadingProjects={isLoadingProjects}
           onOpenCreateProject={() => setIsCreateProjectOpen(true)}
-          onMobileMenuClose={handleMobileMenuClose}
+          onMobileMenuClose={onMobileMenuClose}
         />
 
         <SidebarFilters 
           filters={filters}
           isLoadingFilters={isLoadingFilters}
           onOpenCreateFilter={() => setIsCreateFilterOpen(true)}
-          onMobileMenuClose={handleMobileMenuClose}
+          onMobileMenuClose={onMobileMenuClose}
         />
 
         <SidebarSettings 
-          onMobileMenuClose={handleMobileMenuClose} 
+          onMobileMenuClose={onMobileMenuClose} 
         />
       </div>
       
