@@ -23,7 +23,8 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     dueDate: undefined,
     priority: "4",
     project: "inbox",
-    section: ""
+    section: "",
+    tags: []
   })
 
   useEffect(() => {
@@ -49,7 +50,8 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     setIsLoading(true)
 
     try {
-      const { error } = await supabase
+      // First, insert the task
+      const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
           title: formValues.title,
@@ -62,8 +64,25 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
           favorite: false,
           user_id: user.id
         })
+        .select('id')
+        .single()
 
-      if (error) throw error
+      if (taskError) throw taskError
+
+      // Then, if there are tags, create task-tag associations
+      if (formValues.tags.length > 0) {
+        const taskTagRelations = formValues.tags.map(tagId => ({
+          task_id: taskData.id,
+          tag_id: tagId,
+          user_id: user.id
+        }))
+
+        const { error: tagRelationError } = await supabase
+          .from('task_tags')
+          .insert(taskTagRelations)
+
+        if (tagRelationError) throw tagRelationError
+      }
 
       toast.success("Task created successfully")
       resetForm()
@@ -82,7 +101,8 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
       dueDate: undefined,
       priority: "4",
       project: "inbox",
-      section: ""
+      section: "",
+      tags: []
     })
   }
 

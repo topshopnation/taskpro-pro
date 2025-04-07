@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { TaskItemPriority } from "./TaskItemPriority"
@@ -10,6 +10,10 @@ import { TaskItemConfirmDelete } from "./TaskItemConfirmDelete"
 import { Tooltip, TooltipProvider } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
+import { Badge } from "@/components/ui/badge"
+import { Tag as TagIcon } from "lucide-react"
+import { Tag } from "./taskTypes"
 
 export interface Task {
   id: string
@@ -34,6 +38,32 @@ interface TaskItemProps {
 export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [taskTags, setTaskTags] = useState<Tag[]>([])
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const fetchTaskTags = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('task_tags')
+          .select('tags:tag_id(id, name, color)')
+          .eq('task_id', task.id)
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+        
+        // Extract tags from the nested structure
+        const tags = data.map(item => item.tags) as Tag[];
+        setTaskTags(tags);
+      } catch (error: any) {
+        console.error("Failed to fetch task tags:", error.message);
+      }
+    };
+    
+    fetchTaskTags();
+  }, [task.id, user]);
 
   const handleCompletionToggle = async () => {
     setIsUpdating(true)
@@ -113,6 +143,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           dueDate={task.dueDate}
           dueTime={task.dueTime}
           completed={task.completed}
+          tags={taskTags}
         />
         
         <div className="flex items-center space-x-1">

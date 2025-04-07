@@ -24,11 +24,36 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     dueDate: undefined,
     priority: "4",
     project: "inbox",
-    section: ""
+    section: "",
+    tags: []
   });
 
-  // Initialize form values when task changes
+  // Fetch task tags when task changes
   useEffect(() => {
+    const fetchTaskTags = async () => {
+      if (!task || !user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('task_tags')
+          .select('tag_id')
+          .eq('task_id', task.id)
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+        
+        setFormValues(prev => ({
+          ...prev,
+          tags: data.map(item => item.tag_id)
+        }));
+      } catch (error: any) {
+        toast.error("Failed to fetch task tags", {
+          description: error.message
+        });
+      }
+    };
+
+    // Initialize form values when task changes
     if (task) {
       setFormValues({
         title: task.title,
@@ -36,10 +61,13 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         dueDate: task.dueDate,
         priority: task.priority.toString(),
         project: task.projectId || "inbox",
-        section: task.section || ""
+        section: task.section || "",
+        tags: []  // Will be set by fetchTaskTags
       });
+      
+      fetchTaskTags();
     }
-  }, [task]);
+  }, [task, user]);
 
   const handleSubmit = async () => {
     if (!formValues.title.trim()) {
@@ -55,7 +83,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      // Update task
+      const { error: taskError } = await supabase
         .from('tasks')
         .update({
           title: formValues.title,
@@ -67,7 +96,31 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         })
         .eq('id', task.id);
 
-      if (error) throw error;
+      if (taskError) throw taskError;
+
+      // Delete all existing tag associations for this task
+      const { error: deleteError } = await supabase
+        .from('task_tags')
+        .delete()
+        .eq('task_id', task.id)
+        .eq('user_id', user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Create new tag associations
+      if (formValues.tags.length > 0) {
+        const taskTagRelations = formValues.tags.map(tagId => ({
+          task_id: task.id,
+          tag_id: tagId,
+          user_id: user.id
+        }));
+
+        const { error: tagRelationError } = await supabase
+          .from('task_tags')
+          .insert(taskTagRelations);
+
+        if (tagRelationError) throw tagRelationError;
+      }
 
       toast.success("Task updated successfully");
       onOpenChange(false);

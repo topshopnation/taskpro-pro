@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskFormValues, ProjectOption } from "@/components/tasks/taskTypes"
 import { TaskPrioritySelector } from "@/components/tasks/TaskPrioritySelector"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
+import { TagInput } from "@/components/tasks/TagInput"
 
 interface TaskFormContentProps {
   values: TaskFormValues;
@@ -121,6 +122,14 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
             </SelectContent>
           </Select>
         </div>
+      </div>
+      
+      <div className="grid gap-2">
+        <Label htmlFor="tags">Tags</Label>
+        <TagInput 
+          selectedTags={values.tags || []} 
+          onChange={(tags) => onChange({ tags })}
+        />
       </div>
     </div>
   )

@@ -1,9 +1,11 @@
 
-import { Calendar, Clock } from "lucide-react"
+import { Calendar, Clock, Tag as TagIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
+import { Tag } from "./taskTypes"
 
 interface TaskItemDetailsProps {
   title: string
@@ -11,6 +13,7 @@ interface TaskItemDetailsProps {
   dueDate?: Date
   dueTime?: string
   completed: boolean
+  tags?: Tag[]
 }
 
 export function TaskItemDetails({ 
@@ -18,7 +21,8 @@ export function TaskItemDetails({
   notes, 
   dueDate, 
   dueTime, 
-  completed 
+  completed,
+  tags = []
 }: TaskItemDetailsProps) {
   return (
     <div className="flex-1 min-w-0">
@@ -34,6 +38,21 @@ export function TaskItemDetails({
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {notes}
             </p>
+          )}
+          
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {tags.map(tag => (
+                <Badge 
+                  key={tag.id} 
+                  variant="outline"
+                  className="text-xs py-0 px-1"
+                >
+                  <TagIcon className="mr-1 h-2 w-2" />
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
           )}
         </div>
         <div className="flex items-center ml-2 space-x-1">
