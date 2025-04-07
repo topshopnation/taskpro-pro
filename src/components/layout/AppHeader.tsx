@@ -1,7 +1,7 @@
 
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { ThemeToggleSimple } from "@/components/theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
 import { useNavigate } from "react-router-dom"
@@ -55,7 +55,7 @@ export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps
       </div>
       
       <div className="flex items-center gap-2">
-        <ThemeToggle />
+        <ThemeToggleSimple />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

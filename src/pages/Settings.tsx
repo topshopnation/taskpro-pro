@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import AppLayout from "@/components/layout/AppLayout"
@@ -14,6 +13,7 @@ import { useTheme } from "@/components/theme-provider"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { ThemeToggle, ThemeToggleGroup } from "@/components/theme-toggle"
 
 export default function Settings() {
   const { theme, setTheme } = useTheme()
@@ -34,7 +34,6 @@ export default function Settings() {
     avatarUrl: user?.avatarUrl || "",
   })
   
-  // Update form data when user changes
   useEffect(() => {
     if (user) {
       setFormData({
@@ -45,7 +44,6 @@ export default function Settings() {
     }
   }, [user])
 
-  // Test voice recognition
   const testVoiceRecognition = () => {
     if (!isVoiceSupported) {
       toast.error("Voice recognition is not supported in your browser")
@@ -54,7 +52,6 @@ export default function Settings() {
 
     setIsRecording(true)
     
-    // Get SpeechRecognition constructor
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
     
     if (SpeechRecognitionAPI) {
@@ -81,7 +78,6 @@ export default function Settings() {
       
       recognition.start()
       
-      // Safety timeout
       setTimeout(() => {
         if (isRecording) {
           recognition.stop()
@@ -111,9 +107,7 @@ export default function Settings() {
   }
 
   const handleSubscribe = () => {
-    // In a real implementation, this would redirect to Stripe or other payment system
     toast.success("Redirecting to payment processor...")
-    // Simulate a successful upgrade
     setTimeout(() => {
       setIsUpgradeDialogOpen(false)
       toast.success("Subscription activated! Thank you for your support.")
@@ -121,11 +115,9 @@ export default function Settings() {
   }
 
   const clearAllData = () => {
-    // This would clear all data from Supabase in a real app
     toast.success("All data has been cleared")
   }
 
-  // Generate user initials
   const userInitials = user?.firstName 
     ? `${user.firstName.charAt(0)}${user.lastName ? user.lastName.charAt(0) : ''}`
     : user?.email 
@@ -140,7 +132,6 @@ export default function Settings() {
         </div>
 
         <div className="grid gap-6">
-          {/* User Profile Card */}
           <Card>
             <CardHeader>
               <CardTitle>User Profile</CardTitle>
@@ -172,7 +163,6 @@ export default function Settings() {
             </CardFooter>
           </Card>
 
-          {/* Subscription Card */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -239,33 +229,53 @@ export default function Settings() {
                 Customize how TaskPro looks on your device
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
                   <Label htmlFor="theme">Theme</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Select a theme for the application
                   </p>
+                  
+                  <div className="flex justify-center">
+                    <ThemeToggleGroup />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant={theme === "light" ? "default" : "outline"} 
-                    onClick={() => setTheme("light")}
-                  >
-                    Light
-                  </Button>
-                  <Button 
-                    variant={theme === "dark" ? "default" : "outline"} 
-                    onClick={() => setTheme("dark")}
-                  >
-                    Dark
-                  </Button>
-                  <Button 
-                    variant={theme === "system" ? "default" : "outline"} 
-                    onClick={() => setTheme("system")}
-                  >
-                    System
-                  </Button>
+                
+                <Separator />
+                
+                <div>
+                  <Label>Theme Presets</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Choose a theme preset or customize your own
+                  </p>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button 
+                      variant={theme === "light" ? "default" : "outline"} 
+                      onClick={() => setTheme("light")}
+                      className="flex flex-col gap-2 h-auto py-4"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-[#FFFFFF] border"></div>
+                      <span>Light</span>
+                    </Button>
+                    <Button 
+                      variant={theme === "dark" ? "default" : "outline"} 
+                      onClick={() => setTheme("dark")}
+                      className="flex flex-col gap-2 h-auto py-4"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-[#1A1F2C] border"></div>
+                      <span>Dark</span>
+                    </Button>
+                    <Button 
+                      variant={theme === "system" ? "default" : "outline"} 
+                      onClick={() => setTheme("system")}
+                      className="flex flex-col gap-2 h-auto py-4"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#FFFFFF] to-[#1A1F2C] border"></div>
+                      <span>System</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -380,7 +390,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Profile Edit Dialog */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -467,7 +476,6 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
 
-      {/* Upgrade Dialog */}
       <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
