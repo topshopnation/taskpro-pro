@@ -1,28 +1,30 @@
 
-import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Task } from "@/components/tasks/TaskItem"
-import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
-import { useAuth } from "@/hooks/use-auth"
-import { format, subDays } from "date-fns"
+import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Task } from "@/components/tasks/TaskItem";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { filterCompletedTasksByTime, groupTasksByProject } from "@/utils/taskFilterUtils";
+import { updateTaskCompletion, deleteTask, toggleTaskFavorite } from "@/utils/taskOperations";
+import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 
 export function useCompletedTasks(timeFilter: string = "all") {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const { user } = useAuth()
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const { user } = useAuth();
 
   // Fetch completed tasks from Supabase
-  const fetchCompletedTasks = async () => {
-    if (!user) return []
+  const fetchCompletedTasks = useCallback(async () => {
+    if (!user) return [];
     
     try {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('user_id', user.id)
-        .eq('completed', true)
+        .eq('completed', true);
         
-      if (error) throw error
+      if (error) throw error;
       
       return data.map((task: any) => ({
         id: task.id,
@@ -34,160 +36,85 @@ export function useCompletedTasks(timeFilter: string = "all") {
         section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
-      }))
+      }));
     } catch (error: any) {
       toast.error("Failed to fetch completed tasks", {
         description: error.message
-      })
-      return []
+      });
+      return [];
     }
-  }
+  }, [user]);
   
   // Use React Query to fetch tasks
   const { data: completedTasks, isLoading } = useQuery({
     queryKey: ['completedTasks', user?.id],
     queryFn: fetchCompletedTasks,
     enabled: !!user
-  })
+  });
   
   // Update local state when data is fetched
   useEffect(() => {
     if (completedTasks) {
-      setTasks(completedTasks)
+      setTasks(completedTasks);
     }
-  }, [completedTasks])
+  }, [completedTasks]);
   
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!user) return
-    
-    const channel = supabase
-      .channel('completed-tasks-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tasks',
-        filter: `user_id=eq.${user.id}`,
-      }, async () => {
-        // Refetch tasks when changes occur
-        const updatedTasks = await fetchCompletedTasks()
-        setTasks(updatedTasks)
-      })
-      .subscribe()
-      
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user])
+  // Setup realtime subscription
+  useTaskRealtime(user, async () => {
+    const updatedTasks = await fetchCompletedTasks();
+    setTasks(updatedTasks);
+  });
 
-  const filteredTasks = tasks.filter(task => {
-    if (!task.completed) return false
-    
-    // Apply time filter if needed
-    if (timeFilter === "today") {
-      if (!task.dueDate) return false
-      const today = new Date()
-      const taskDate = new Date(task.dueDate)
-      return (
-        taskDate.getDate() === today.getDate() &&
-        taskDate.getMonth() === today.getMonth() &&
-        taskDate.getFullYear() === today.getFullYear()
-      )
-    }
-    
-    if (timeFilter === "week") {
-      if (!task.dueDate) return false
-      const weekAgo = subDays(new Date(), 7)
-      return new Date(task.dueDate) >= weekAgo
-    }
-    
-    return true // "all" filter
-  })
-
-  // Group by project
-  const groupTasksByProject = () => {
-    const tasksByProject: Record<string, Task[]> = {}
-    
-    filteredTasks.forEach(task => {
-      const projectId = task.projectId || "none"
-      if (!tasksByProject[projectId]) {
-        tasksByProject[projectId] = []
-      }
-      tasksByProject[projectId].push(task)
-    })
-    
-    return tasksByProject
-  }
+  const filteredTasks = filterCompletedTasksByTime(tasks, timeFilter);
+  const tasksByProject = groupTasksByProject(filteredTasks);
 
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed })
-        .eq('id', taskId)
-        
-      if (error) throw error
+      await updateTaskCompletion(taskId, completed);
       
       // Optimistic update
       setTasks(
         tasks.map((task) =>
           task.id === taskId ? { ...task, completed } : task
         )
-      )
-    } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      })
+      );
+    } catch (error) {
+      // Error is already handled in updateTaskCompletion
     }
-  }
+  };
 
   const handleDelete = async (taskId: string) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId)
-        
-      if (error) throw error
+      await deleteTask(taskId);
       
       // Optimistic update
-      setTasks(tasks.filter((task) => task.id !== taskId))
-      toast.success("Task deleted")
-    } catch (error: any) {
-      toast.error("Failed to delete task", {
-        description: error.message
-      })
+      setTasks(tasks.filter((task) => task.id !== taskId));
+    } catch (error) {
+      // Error is already handled in deleteTask
     }
-  }
+  };
 
   const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ favorite })
-        .eq('id', taskId)
-        
-      if (error) throw error
+      await toggleTaskFavorite(taskId, favorite);
       
       // Optimistic update
       setTasks(
         tasks.map((task) =>
           task.id === taskId ? { ...task, favorite } : task
         )
-      )
-    } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      })
+      );
+    } catch (error) {
+      // Error is already handled in toggleTaskFavorite
     }
-  }
+  };
 
   return {
     tasks: filteredTasks,
-    tasksByProject: groupTasksByProject(),
+    tasksByProject,
     isLoading,
     handleComplete,
     handleDelete,
     handleFavoriteToggle
-  }
+  };
 }
