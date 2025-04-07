@@ -22,6 +22,7 @@ import {
   Plus, 
   ChevronRight,
   Loader2,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,40 +73,11 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const { user } = useAuth();
 
-  const ensureInboxProject = async () => {
-    if (!user) return;
-    
-    try {
-      const { data: existingInbox } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('name', 'Inbox')
-        .maybeSingle();
-      
-      if (!existingInbox) {
-        const { error } = await supabase
-          .from('projects')
-          .insert({
-            name: 'Inbox',
-            user_id: user.id,
-            favorite: true
-          });
-        
-        if (error) throw error;
-      }
-    } catch (error: any) {
-      console.error('Error ensuring inbox project:', error);
-    }
-  };
-
   const fetchProjects = async () => {
     if (!user) return;
     
     setIsLoadingProjects(true);
     try {
-      await ensureInboxProject();
-      
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -271,6 +243,22 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
                   >
                     <Home className="h-4 w-4" />
                     <span>Dashboard</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/inbox"
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                      }`
+                    }
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Inbox className="h-4 w-4" />
+                    <span>Inbox</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

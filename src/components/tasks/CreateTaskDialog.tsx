@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -8,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, Flag } from "lucide-react"
+import { CalendarIcon, Flag, Inbox } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -20,27 +19,25 @@ import { useQuery } from "@tanstack/react-query"
 interface CreateTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  defaultProjectId?: string  // Made this optional with a ?
+  defaultProjectId?: string
 }
 
 export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("")
   const [notes, setNotes] = useState("")
   const [dueDate, setDueDate] = useState<Date>()
-  const [priority, setPriority] = useState("4") // Default to lowest priority
+  const [priority, setPriority] = useState("4")
   const [project, setProject] = useState("inbox")
   const [section, setSection] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
 
-  // Initialize project with defaultProjectId when available
   useEffect(() => {
     if (defaultProjectId && open) {
       setProject(defaultProjectId)
     }
   }, [defaultProjectId, open])
 
-  // Priority colors for the flag icon
   const priorityColors: Record<string, string> = {
     "1": "text-taskpro-priority-1",
     "2": "text-taskpro-priority-2",
@@ -48,7 +45,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     "4": "text-muted-foreground"
   }
 
-  // Fetch user's projects
   const { data: projects } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -205,7 +201,10 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="inbox">Inbox</SelectItem>
+                  <SelectItem value="inbox" className="flex items-center gap-2">
+                    <Inbox className="h-4 w-4 inline-block" />
+                    <span>Inbox</span>
+                  </SelectItem>
                   {projects?.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
