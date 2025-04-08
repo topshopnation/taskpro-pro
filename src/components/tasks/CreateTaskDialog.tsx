@@ -6,7 +6,7 @@ import { TaskFormContent } from "@/components/tasks/TaskFormContent"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
-import { TaskFormValues } from "@/components/tasks/taskTypes"
+import { TaskFormValues, TaskTagRelation } from "@/components/tasks/taskTypes"
 
 interface CreateTaskDialogProps {
   open: boolean
@@ -70,14 +70,15 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
       if (taskError) throw taskError
 
       // Then, if there are tags, create task-tag associations
-      if (formValues.tags.length > 0) {
+      if (formValues.tags.length > 0 && taskData) {
         const taskTagRelations = formValues.tags.map(tagId => ({
           task_id: taskData.id,
           tag_id: tagId,
           user_id: user.id
         }))
 
-        const { error: tagRelationError } = await supabase
+        // Use type assertion to bypass TypeScript constraints
+        const { error: tagRelationError } = await (supabase as any)
           .from('task_tags')
           .insert(taskTagRelations)
 

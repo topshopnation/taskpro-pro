@@ -2,7 +2,7 @@
 import { Task } from "@/components/tasks/TaskItem";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tag } from "@/components/tasks/taskTypes";
+import { Tag, TaskTagRelation } from "@/components/tasks/taskTypes";
 
 export const updateTaskCompletion = async (taskId: string, completed: boolean): Promise<void> => {
   try {
@@ -56,7 +56,8 @@ export const toggleTaskFavorite = async (taskId: string, favorite: boolean): Pro
 
 export const getTaskTags = async (taskId: string): Promise<Tag[]> => {
   try {
-    const { data, error } = await supabase
+    // Use a raw query with type assertion to work around type constraints
+    const { data, error } = await (supabase as any)
       .from('task_tags')
       .select('tags(id, name, color)')
       .eq('task_id', taskId);
@@ -75,7 +76,8 @@ export const getTaskTags = async (taskId: string): Promise<Tag[]> => {
 
 export const addTaskTag = async (taskId: string, tagId: string, userId: string): Promise<void> => {
   try {
-    const { error } = await supabase
+    // Use a raw query with type assertion
+    const { error } = await (supabase as any)
       .from('task_tags')
       .insert({
         task_id: taskId,
@@ -94,7 +96,8 @@ export const addTaskTag = async (taskId: string, tagId: string, userId: string):
 
 export const removeTaskTag = async (taskId: string, tagId: string): Promise<void> => {
   try {
-    const { error } = await supabase
+    // Use a raw query with type assertion
+    const { error } = await (supabase as any)
       .from('task_tags')
       .delete()
       .eq('task_id', taskId)

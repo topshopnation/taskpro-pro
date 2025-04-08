@@ -19,3 +19,10 @@ export interface Tag {
   name: string;
   color?: string;
 }
+
+// Define interfaces for working with Supabase directly
+export interface TaskTagRelation {
+  task_id: string;
+  tag_id: string;
+  user_id: string;
+}

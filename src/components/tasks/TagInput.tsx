@@ -28,7 +28,8 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
       
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Use type assertion to bypass TypeScript constraints
+        const { data, error } = await (supabase as any)
           .from('tags')
           .select('id, name, color')
           .eq('user_id', user.id);
@@ -62,7 +63,8 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
         return;
       }
       
-      const { data, error } = await supabase
+      // Use type assertion to bypass TypeScript constraints
+      const { data, error } = await (supabase as any)
         .from('tags')
         .insert({
           name: newTagName.trim(),

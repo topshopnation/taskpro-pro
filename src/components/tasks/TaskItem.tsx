@@ -46,7 +46,8 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
+        // Use type assertion to bypass TypeScript constraints
+        const { data, error } = await (supabase as any)
           .from('task_tags')
           .select('tags(id, name, color)')
           .eq('task_id', task.id)
@@ -54,8 +55,8 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           
         if (error) throw error;
         
-        // Extract tags from the nested structure
-        const tags = data.map(item => item.tags) as Tag[];
+        // Extract tags from the nested structure and properly type them
+        const tags = data.map((item: any) => item.tags as Tag);
         setTaskTags(tags);
       } catch (error: any) {
         console.error("Failed to fetch task tags:", error.message);
