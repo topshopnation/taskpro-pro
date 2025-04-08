@@ -1,6 +1,8 @@
+
 import { Task } from "@/components/tasks/TaskItem";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tag } from "@/components/tasks/taskTypes";
 
 export const updateTaskCompletion = async (taskId: string, completed: boolean): Promise<void> => {
   try {
@@ -52,17 +54,17 @@ export const toggleTaskFavorite = async (taskId: string, favorite: boolean): Pro
   }
 };
 
-export const getTaskTags = async (taskId: string): Promise<any[]> => {
+export const getTaskTags = async (taskId: string): Promise<Tag[]> => {
   try {
     const { data, error } = await supabase
       .from('task_tags')
-      .select('tags:tag_id(id, name, color)')
+      .select('tags(id, name, color)')
       .eq('task_id', taskId);
       
     if (error) throw error;
     
     // Extract tags from the nested structure
-    return data.map(item => item.tags);
+    return data.map((item: any) => item.tags as Tag);
   } catch (error: any) {
     toast.error("Failed to fetch task tags", {
       description: error.message

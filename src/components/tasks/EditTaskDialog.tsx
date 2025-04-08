@@ -42,9 +42,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           
         if (error) throw error;
         
+        const tagIds = data.map(item => item.tag_id);
+        
         setFormValues(prev => ({
           ...prev,
-          tags: data.map(item => item.tag_id)
+          tags: tagIds
         }));
       } catch (error: any) {
         toast.error("Failed to fetch task tags", {

@@ -30,7 +30,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
       try {
         const { data, error } = await supabase
           .from('tags')
-          .select('*')
+          .select('id, name, color')
           .eq('user_id', user.id);
           
         if (error) throw error;

@@ -48,7 +48,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       try {
         const { data, error } = await supabase
           .from('task_tags')
-          .select('tags:tag_id(id, name, color)')
+          .select('tags(id, name, color)')
           .eq('task_id', task.id)
           .eq('user_id', user.id);
           
