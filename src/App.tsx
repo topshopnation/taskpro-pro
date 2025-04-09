@@ -41,8 +41,10 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               
-              {/* Protected Routes */}
+              {/* Root route will redirect to dashboard if authenticated, otherwise to auth */}
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              
+              {/* Protected Routes */}
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />

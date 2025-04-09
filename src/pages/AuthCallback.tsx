@@ -22,13 +22,26 @@ export default function AuthCallback() {
         console.log("Hash params:", Object.fromEntries(hashParams.entries()));
         console.log("Query params:", Object.fromEntries(queryParams.entries()));
         
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const code = queryParams.get('code');
+        // The core issue: we need to handle the session that's already being set by Supabase's auto-handling
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          throw sessionError;
+        }
+        
+        if (data?.session) {
+          console.log("Session exists after OAuth flow, navigating to dashboard");
+          // Success - redirect to dashboard
+          toast.success("Successfully signed in!");
+          navigate("/", { replace: true });
+          return;
+        }
+        
+        // If we don't have a session yet, we need to handle error cases
         const error = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
         
-        // Handle errors from the OAuth provider
         if (error) {
           console.error("OAuth Error:", error, errorDescription);
           setError(errorDescription || error);
@@ -37,57 +50,22 @@ export default function AuthCallback() {
           return;
         }
         
-        // Handle access token (implicit flow)
-        if (accessToken) {
-          console.log("Processing with access token");
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
-          
-          if (error) {
-            console.error("Error setting session:", error);
-            throw error;
-          }
-          
-          console.log("Session set successfully with access token");
-          navigate("/", { replace: true });
-        } 
-        // Handle code (code flow)
-        else if (code) {
-          console.log("Processing with authorization code");
-          
-          // For code flow, we let Supabase handle the token exchange
-          const { data, error } = await supabase.auth.getSession();
-          console.log("Session after code flow:", data?.session ? "Session exists" : "No session", error ? `Error: ${error.message}` : "No error");
-          
-          if (error) {
-            console.error("Error processing code:", error);
-            throw error;
-          }
-          
-          if (data?.session) {
-            console.log("Session exists, navigating to dashboard");
+        // If we get here and don't have a session or an error, wait a bit longer then redirect to auth
+        console.log("No session or error found, waiting a bit longer...");
+        
+        // Wait a bit longer for the session to be established
+        setTimeout(async () => {
+          const { data: delayedData } = await supabase.auth.getSession();
+          if (delayedData?.session) {
+            console.log("Session established after delay, navigating to dashboard");
+            toast.success("Successfully signed in!");
             navigate("/", { replace: true });
           } else {
-            console.log("No session found after code exchange, redirecting to auth");
+            console.log("No session established after delay, redirecting to auth");
             toast.error("Authentication failed. Please try again.");
             navigate("/auth", { replace: true });
           }
-        } 
-        // Check existing session otherwise
-        else {
-          console.log("No token or code found, checking for existing session");
-          const { data } = await supabase.auth.getSession();
-          
-          if (data?.session) {
-            console.log("Existing session found, redirecting to dashboard");
-            navigate("/", { replace: true });
-          } else {
-            console.log("No existing session, redirecting to auth");
-            navigate("/auth", { replace: true });
-          }
-        }
+        }, 2000);
       } catch (error) {
         console.error("Error processing OAuth callback:", error);
         setError("Authentication failed. Please try again.");

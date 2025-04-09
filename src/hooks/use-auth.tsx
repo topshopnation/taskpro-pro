@@ -115,17 +115,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
-    // Redirect logic
-    if (location.pathname === '/') {
-      if (!user && !loading) {
-        console.log("No user, redirecting to /auth from /");
-        navigate('/auth');
-      }
-    } else if (location.pathname === '/auth') {
-      if (user && !loading) {
-        console.log("User authenticated, redirecting to / from /auth");
-        navigate('/');
-      }
+    // Check if we're already on the auth page or callback page
+    const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
+    
+    // Redirect logic for authenticated users
+    if (user && isAuthPage) {
+      console.log("User authenticated, redirecting to dashboard from auth page");
+      navigate('/');
+    }
+    
+    // Redirect logic for unauthenticated users
+    if (!user && !isAuthPage && location.pathname !== '/') {
+      console.log("No user, redirecting to /auth from protected page");
+      navigate('/auth');
+    } else if (!user && location.pathname === '/') {
+      console.log("No user on root route, redirecting to /auth");
+      navigate('/auth');
     }
   }, [user, loading, location.pathname, navigate]);
 
@@ -233,6 +238,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider,
         options: {
           redirectTo,
+          // Add scopes that might be needed
+          scopes: provider === 'github' ? 'user:email' : undefined,
         },
       });
 
