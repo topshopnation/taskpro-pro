@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import FilterView from "./pages/FilterView";
-import InboxView from "./pages/InboxView"; // Added new import
+import InboxView from "./pages/InboxView";
 import CompletedTasks from "./pages/CompletedTasks";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -37,14 +37,19 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              {/* Auth Routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              
+              {/* Protected Routes */}
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
               <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              
+              {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

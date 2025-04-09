@@ -79,7 +79,14 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
 
         if (error) throw error;
 
-        setFilters(data || []);
+        // Map the database filters to the FilterItem format, ensuring favorite is included
+        const mappedFilters: FilterItem[] = (data || []).map(filter => ({
+          id: filter.id,
+          name: filter.name,
+          favorite: filter.favorite || false,
+        }));
+
+        setFilters(mappedFilters);
       } catch (error: any) {
         console.error('Error fetching filters:', error);
         toast.error('Failed to load filters');

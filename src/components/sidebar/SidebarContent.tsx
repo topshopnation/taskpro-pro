@@ -54,6 +54,7 @@ export function SidebarContent({
           onMobileMenuClose={onMobileMenuClose} 
         />
 
+        {/* Favorites section moved above Projects as requested */}
         <SidebarFavorites 
           favoriteItems={favoriteItems} 
           onMobileMenuClose={onMobileMenuClose} 

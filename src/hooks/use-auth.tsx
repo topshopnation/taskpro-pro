@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Provider } from "@supabase/supabase-js";
+import { Provider, Session } from "@supabase/supabase-js";
 import { useToast } from "./use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -15,6 +15,7 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
+  session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -72,12 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    console.log("Auth provider initializing");
+    
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await updateUserState(session.user);
+      async (event, newSession) => {
+        console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
+        
+        if (newSession?.user) {
+          setSession(newSession);
+          await updateUserState(newSession.user);
         } else {
+          setSession(null);
           setUser(null);
         }
         setLoading(false);
@@ -85,11 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        await updateUserState(session.user);
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      console.log("Initial session check:", existingSession ? "session exists" : "no session");
+      
+      if (existingSession?.user) {
+        setSession(existingSession);
+        await updateUserState(existingSession.user);
       } else {
         setUser(null);
+        setSession(null);
       }
       setLoading(false);
     });
@@ -99,8 +111,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Effect to handle redirects based on auth state
+  useEffect(() => {
+    if (loading) return;
+
+    // Redirect logic
+    if (location.pathname === '/') {
+      if (!user && !loading) {
+        console.log("No user, redirecting to /auth from /");
+        navigate('/auth');
+      }
+    } else if (location.pathname === '/auth') {
+      if (user && !loading) {
+        console.log("User authenticated, redirecting to / from /auth");
+        navigate('/');
+      }
+    }
+  }, [user, loading, location.pathname, navigate]);
+
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Signing in with email/password");
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -132,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      console.log("Signing up with email/password");
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -165,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("Signing out");
       const { error } = await supabase.auth.signOut();
       if (error) {
         toast({
@@ -175,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      navigate("/auth");
+      // We'll let the auth state change event handle the navigation
       toast({
         title: "Signed out",
         description: "You have been signed out.",
@@ -192,10 +225,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithProvider = async (provider: Provider) => {
     try {
+      console.log(`Signing in with ${provider}`);
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      console.log("Using redirect URL:", redirectTo);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo,
         },
       });
 
@@ -263,7 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signOut, signInWithProvider, updateProfile }}
+      value={{ user, session, loading, signIn, signUp, signOut, signInWithProvider, updateProfile }}
     >
       {children}
     </AuthContext.Provider>
