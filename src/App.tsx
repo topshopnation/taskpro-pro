@@ -9,7 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import FilterView from "./pages/FilterView";
 import InboxView from "./pages/InboxView";
-import CompletedTasks from "./pages/CompletedTasks";
+import TodayView from "./pages/TodayView";
+import OverdueView from "./pages/OverdueView";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -46,9 +47,10 @@ const App = () => (
               
               {/* Protected Routes */}
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
+              <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
+              <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
-              <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               
               {/* 404 Route */}

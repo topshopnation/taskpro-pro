@@ -1,5 +1,5 @@
 
-import { Home, CheckSquare, Inbox } from "lucide-react";
+import { Home, Inbox, CalendarClock, Clock } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarGroup,
@@ -53,7 +53,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <NavLink
-                to="/completed"
+                to="/today"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -61,8 +61,24 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 }
                 onClick={onMobileMenuClose}
               >
-                <CheckSquare className="h-4 w-4" />
-                <span>Completed</span>
+                <CalendarClock className="h-4 w-4" />
+                <span>Today</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to="/overdue"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  }`
+                }
+                onClick={onMobileMenuClose}
+              >
+                <Clock className="h-4 w-4" />
+                <span>Overdue</span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

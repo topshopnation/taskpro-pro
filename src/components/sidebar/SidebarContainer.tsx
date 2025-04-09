@@ -55,19 +55,6 @@ const AppSidebarContainer = ({
 
   return (
     <>
-      {/* Mobile Menu Trigger */}
-      <div className="fixed bottom-6 left-6 z-40 block md:hidden">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-background shadow-md"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
-          <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </div>
-
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="w-[280px] p-0">

@@ -1,13 +1,15 @@
 
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { CreateFilterDialog } from "@/components/filters/CreateFilterDialog";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { SidebarFavorites } from "./SidebarFavorites";
 import { SidebarNavigation } from "./SidebarNavigation";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarFilters } from "./SidebarFilters";
-import { SidebarSettings } from "./SidebarSettings";
 
 interface FavoriteItem {
   id: string;
@@ -44,17 +46,28 @@ export function SidebarContent({
   isLoadingFilters = false,
   onMobileMenuClose = () => {},
 }: SidebarContentProps) {
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isCreateFilterOpen, setIsCreateFilterOpen] = useState(false);
 
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
+        {/* Add Task Button at the top */}
+        <div className="mb-4">
+          <Button 
+            className="w-full flex items-center justify-center gap-2"
+            onClick={() => setIsCreateTaskOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Task</span>
+          </Button>
+        </div>
+
         <SidebarNavigation 
           onMobileMenuClose={onMobileMenuClose} 
         />
 
-        {/* Favorites section moved above Projects as requested */}
         <SidebarFavorites 
           favoriteItems={favoriteItems} 
           onMobileMenuClose={onMobileMenuClose} 
@@ -73,12 +86,9 @@ export function SidebarContent({
           onOpenCreateFilter={() => setIsCreateFilterOpen(true)}
           onMobileMenuClose={onMobileMenuClose}
         />
-
-        <SidebarSettings 
-          onMobileMenuClose={onMobileMenuClose} 
-        />
       </div>
       
+      <CreateTaskDialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen} />
       <CreateProjectDialog open={isCreateProjectOpen} onOpenChange={setIsCreateProjectOpen} />
       <CreateFilterDialog open={isCreateFilterOpen} onOpenChange={setIsCreateFilterOpen} />
     </ScrollArea>

@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { TaskList } from "@/components/tasks/TaskList";
@@ -8,9 +8,23 @@ import { useFilter } from "@/hooks/useFilter";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
 import { FilterHeader } from "@/components/filters/FilterHeader";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
+import { ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator 
+} from "@/components/ui/dropdown-menu"
+import { format } from "date-fns"
+import { Task } from "@/components/tasks/TaskItem"
 
 export default function FilterView() {
   const navigate = useNavigate();
+  const [sortBy, setSortBy] = useState<string>("title")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [groupBy, setGroupBy] = useState<string | null>(null)
+
   const {
     currentFilter,
     isLoading,
@@ -39,6 +53,68 @@ export default function FilterView() {
     }
   }, [currentFilter, setNewFilterName]);
 
+  // Sort and group functions
+  const sortTasks = (tasksToSort: Task[]) => {
+    return [...tasksToSort].sort((a, b) => {
+      if (sortBy === "title") {
+        return sortDirection === "asc" 
+          ? a.title.localeCompare(b.title)
+          : b.title.localeCompare(a.title)
+      } else if (sortBy === "dueDate") {
+        // Handle null or undefined dates
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return sortDirection === "asc" ? 1 : -1
+        if (!b.dueDate) return sortDirection === "asc" ? -1 : 1
+        
+        return sortDirection === "asc" 
+          ? a.dueDate.getTime() - b.dueDate.getTime()
+          : b.dueDate.getTime() - a.dueDate.getTime()
+      } else if (sortBy === "project") {
+        const projectA = a.projectId || "none"
+        const projectB = b.projectId || "none"
+        return sortDirection === "asc" 
+          ? projectA.localeCompare(projectB)
+          : projectB.localeCompare(projectA)
+      }
+      return 0
+    })
+  }
+
+  const groupTasks = (tasksToGroup: Task[]) => {
+    if (!groupBy) return { "All Tasks": sortTasks(tasksToGroup) }
+    
+    const grouped: Record<string, Task[]> = {}
+    
+    tasksToGroup.forEach(task => {
+      let groupKey = ""
+      
+      if (groupBy === "project") {
+        groupKey = task.projectId || "No Project"
+      } else if (groupBy === "dueDate") {
+        groupKey = task.dueDate 
+          ? format(task.dueDate, 'PPP') 
+          : "No Due Date"
+      } else if (groupBy === "title") {
+        // Group by first letter of title
+        groupKey = task.title.charAt(0).toUpperCase()
+      }
+      
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = []
+      }
+      grouped[groupKey].push(task)
+    })
+    
+    // Sort each group
+    Object.keys(grouped).forEach(key => {
+      grouped[key] = sortTasks(grouped[key])
+    })
+    
+    return grouped
+  }
+
+  const groupedTasks = groupTasks(filteredTasks);
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -63,24 +139,97 @@ export default function FilterView() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <FilterHeader
-          filter={currentFilter}
-          onFavoriteToggle={handleFilterFavoriteToggle}
-          onRenameClick={() => {
-            setNewFilterName(currentFilter.name);
-            setIsEditFilterOpen(true);
-          }}
-          onDeleteClick={() => setIsDeleteFilterOpen(true)}
-        />
+        <div className="flex items-center justify-between">
+          <FilterHeader
+            filter={currentFilter}
+            onFavoriteToggle={handleFilterFavoriteToggle}
+            onRenameClick={() => {
+              setNewFilterName(currentFilter.name);
+              setIsEditFilterOpen(true);
+            }}
+            onDeleteClick={() => setIsDeleteFilterOpen(true)}
+          />
+          <div className="flex items-center space-x-2">
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  {sortDirection === "asc" 
+                    ? <ArrowDownAZ className="h-4 w-4" /> 
+                    : <ArrowUpZA className="h-4 w-4" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
+                  Sort by Name (A-Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
+                  Sort by Name (Z-A)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
+                  Sort by Due Date (Earliest)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
+                  Sort by Due Date (Latest)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
+                  Sort by Project (A-Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
+                  Sort by Project (Z-A)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Group Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Layers className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setGroupBy(null)}>
+                  No Grouping
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setGroupBy("title")}>
+                  Group by Name
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy("project")}>
+                  Group by Project
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
+                  Group by Due Date
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
-        <TaskList
-          title="Filtered Tasks"
-          tasks={filteredTasks}
-          emptyMessage="No tasks match this filter"
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onFavoriteToggle={handleFavoriteToggle}
-        />
+        {/* Display grouped tasks */}
+        <div className="space-y-6">
+          {Object.keys(groupedTasks).length === 0 ? (
+            <div className="bg-muted/30 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium mb-2">No tasks match this filter</h3>
+              <p className="text-muted-foreground mb-4">Try adjusting your filter criteria.</p>
+            </div>
+          ) : (
+            Object.entries(groupedTasks).map(([group, groupTasks]) => (
+              <TaskList
+                key={group}
+                title={groupBy ? group : "Filtered Tasks"}
+                tasks={groupTasks}
+                emptyMessage="No tasks in this group"
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onFavoriteToggle={handleFavoriteToggle}
+              />
+            ))
+          )}
+        </div>
 
         <FilterDialogs
           isEditDialogOpen={isEditFilterOpen}

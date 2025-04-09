@@ -2,11 +2,14 @@
 import { useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
-import { useInboxTasks } from "@/hooks/useInboxTasks"
-import { TaskList } from "@/components/tasks/TaskList"
+import { useQuery } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { supabase } from "@/integrations/supabase/client"
+import { Task } from "@/components/tasks/TaskItem"
 import { Button } from "@/components/ui/button"
-import { Plus, Inbox, ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
+import { Plus, CalendarClock, ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
+import { TaskList } from "@/components/tasks/TaskList"
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -15,15 +18,112 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
-import { Task } from "@/components/tasks/TaskItem"
 
-export default function InboxView() {
+export default function TodayView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
-  const [sortBy, setSortBy] = useState<string>("title")
+  const [sortBy, setSortBy] = useState<string>("dueDate")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const { user } = useAuth()
-  const { tasks, isLoading, handleComplete, handleDelete, handleFavoriteToggle } = useInboxTasks()
+
+  // Create a function to get today's date in the format YYYY-MM-DD
+  const getTodayDate = () => {
+    const today = new Date()
+    return format(today, 'yyyy-MM-dd')
+  }
+
+  // Fetch tasks due today
+  const fetchTodayTasks = async () => {
+    if (!user) return []
+    
+    const todayDate = getTodayDate()
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('completed', false)
+        .gte('due_date', `${todayDate}T00:00:00`)
+        .lt('due_date', `${todayDate}T23:59:59`)
+        
+      if (error) throw error
+      
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        section: task.section,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }))
+    } catch (error: any) {
+      toast.error("Failed to fetch today's tasks", {
+        description: error.message
+      })
+      return []
+    }
+  }
+  
+  // Use React Query to fetch tasks
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ['today-tasks', user?.id],
+    queryFn: fetchTodayTasks,
+    enabled: !!user
+  })
+
+  // Handle task operations
+  const handleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      toast.success(completed ? "Task completed" : "Task uncompleted")
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
+  }
+
+  const handleDelete = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        
+      if (error) throw error
+      
+      toast.success("Task deleted")
+    } catch (error: any) {
+      toast.error("Failed to delete task", {
+        description: error.message
+      })
+    }
+  }
+
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        
+      if (error) throw error
+    } catch (error: any) {
+      toast.error("Failed to update task", {
+        description: error.message
+      })
+    }
+  }
 
   // Sort and group functions
   const sortTasks = (tasksToSort: Task[]) => {
@@ -41,6 +141,12 @@ export default function InboxView() {
         return sortDirection === "asc" 
           ? a.dueDate.getTime() - b.dueDate.getTime()
           : b.dueDate.getTime() - a.dueDate.getTime()
+      } else if (sortBy === "project") {
+        const projectA = a.projectId || "none"
+        const projectB = b.projectId || "none"
+        return sortDirection === "asc" 
+          ? projectA.localeCompare(projectB)
+          : projectB.localeCompare(projectA)
       }
       return 0
     })
@@ -54,13 +160,15 @@ export default function InboxView() {
     tasksToGroup.forEach(task => {
       let groupKey = ""
       
-      if (groupBy === "title") {
-        // Group by first letter of title
-        groupKey = task.title.charAt(0).toUpperCase()
+      if (groupBy === "project") {
+        groupKey = task.projectId || "No Project"
       } else if (groupBy === "dueDate") {
         groupKey = task.dueDate 
           ? format(task.dueDate, 'PPP') 
           : "No Due Date"
+      } else if (groupBy === "title") {
+        // Group by first letter of title
+        groupKey = task.title.charAt(0).toUpperCase()
       }
       
       if (!grouped[groupKey]) {
@@ -84,8 +192,8 @@ export default function InboxView() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Inbox className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Inbox</h1>
+            <CalendarClock className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Today</h1>
           </div>
           <div className="flex items-center space-x-2">
             {/* Sort Dropdown */}
@@ -111,6 +219,13 @@ export default function InboxView() {
                 <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
                   Sort by Due Date (Latest)
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
+                  Sort by Project (A-Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
+                  Sort by Project (Z-A)
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             
@@ -128,6 +243,9 @@ export default function InboxView() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setGroupBy("title")}>
                   Group by Name
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy("project")}>
+                  Group by Project
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
                   Group by Due Date
@@ -149,15 +267,15 @@ export default function InboxView() {
         <div className="space-y-6">
           {Object.keys(groupedTasks).length === 0 ? (
             <div className="bg-muted/30 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No tasks in inbox</h3>
-              <p className="text-muted-foreground mb-4">Add a task to get started!</p>
+              <h3 className="text-lg font-medium mb-2">No tasks due today</h3>
+              <p className="text-muted-foreground mb-4">Your schedule is clear for today.</p>
               <Button onClick={() => setIsCreateTaskOpen(true)}>Add a Task</Button>
             </div>
           ) : (
             Object.entries(groupedTasks).map(([group, groupTasks]) => (
               <TaskList
                 key={group}
-                title={groupBy ? group : "Inbox Tasks"}
+                title={groupBy ? group : "Today's Tasks"}
                 tasks={groupTasks}
                 isLoading={isLoading}
                 emptyMessage="No tasks in this group"
@@ -172,7 +290,6 @@ export default function InboxView() {
         <CreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}
-          defaultProjectId="inbox"
         />
       </div>
     </AppLayout>
