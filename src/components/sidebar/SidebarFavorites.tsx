@@ -14,6 +14,7 @@ interface FavoriteItem {
   id: string;
   name: string;
   type: 'project' | 'filter';
+  color?: string;
 }
 
 interface SidebarFavoritesProps {
@@ -45,9 +46,15 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
                     onClick={onMobileMenuClose}
                   >
                     {item.type === "project" ? (
-                      <ListTodo className="h-4 w-4" />
+                      <ListTodo 
+                        className="h-4 w-4" 
+                        style={item.color ? { color: item.color } : undefined}
+                      />
                     ) : (
-                      <Filter className="h-4 w-4" />
+                      <Filter 
+                        className="h-4 w-4" 
+                        style={item.color ? { color: item.color } : undefined}
+                      />
                     )}
                     <span>{item.name}</span>
                     <Star className="h-3 w-3 ml-auto text-yellow-400 fill-yellow-400" />

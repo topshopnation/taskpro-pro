@@ -15,18 +15,21 @@ interface FavoriteItem {
   id: string;
   name: string;
   type: 'project' | 'filter';
+  color?: string;
 }
 
 interface Project {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface FilterItem {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface SidebarContentProps {

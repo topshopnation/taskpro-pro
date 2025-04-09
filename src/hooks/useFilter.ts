@@ -16,6 +16,7 @@ export function useFilter() {
   const [isEditFilterOpen, setIsEditFilterOpen] = useState(false);
   const [isDeleteFilterOpen, setIsDeleteFilterOpen] = useState(false);
   const [newFilterName, setNewFilterName] = useState("");
+  const [filterColor, setFilterColor] = useState("");
   
   const fetchFilter = async () => {
     const standardFilter = standardFilters.find(filter => filter.id === id);
@@ -44,6 +45,7 @@ export function useFilter() {
         conditions: filterData.conditions,
         logic: "and",
         favorite: filterData.favorite ?? false,
+        color: filterData.color,
         user_id: filterData.user_id,
         created_at: filterData.created_at || "",
         updated_at: filterData.updated_at || ""
@@ -106,15 +108,18 @@ export function useFilter() {
     try {
       const { error } = await supabase
         .from('filters')
-        .update({ name: newFilterName })
+        .update({ 
+          name: newFilterName,
+          color: filterColor || currentFilter?.color 
+        })
         .eq('id', id);
         
       if (error) throw error;
       
       setIsEditFilterOpen(false);
-      toast.success("Filter renamed successfully");
+      toast.success("Filter updated successfully");
     } catch (error: any) {
-      toast.error("Failed to rename filter", {
+      toast.error("Failed to update filter", {
         description: error.message
       });
     }
@@ -143,6 +148,32 @@ export function useFilter() {
       });
     }
   };
+  
+  const handleFilterColorChange = async (color: string) => {
+    if (!currentFilter || isStandardFilter(currentFilter.id)) {
+      toast.error("Cannot modify standard filters");
+      return;
+    }
+    
+    setFilterColor(color);
+    
+    if (!isEditFilterOpen) {
+      try {
+        const { error } = await supabase
+          .from('filters')
+          .update({ color })
+          .eq('id', id);
+          
+        if (error) throw error;
+        
+        toast.success("Filter color updated");
+      } catch (error: any) {
+        toast.error("Failed to update filter color", {
+          description: error.message
+        });
+      }
+    }
+  };
 
   return {
     currentFilter,
@@ -153,8 +184,11 @@ export function useFilter() {
     setIsDeleteFilterOpen,
     newFilterName,
     setNewFilterName,
+    filterColor,
+    setFilterColor,
     handleFilterFavoriteToggle,
     handleFilterRename,
-    handleFilterDelete
+    handleFilterDelete,
+    handleFilterColorChange
   };
 }

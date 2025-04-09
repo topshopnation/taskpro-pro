@@ -1,90 +1,97 @@
 
-import { Star, Plus, MoreHorizontal, Edit, Trash } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Pencil, Star, Trash2, Palette } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
+import { IconPicker } from "@/components/ui/color-picker";
 
 interface ProjectHeaderProps {
-  projectName: string
-  isFavorite: boolean
-  onFavoriteToggle: () => void
-  onCreateTask: () => void
-  onCreateSection: () => void
-  onEditProject: () => void
-  onDeleteProject: () => void
+  name: string;
+  favorite: boolean;
+  color?: string;
+  onFavoriteToggle: () => void;
+  onRenameClick: () => void;
+  onDeleteClick: () => void;
+  onColorChange: (color: string) => void;
 }
 
 export function ProjectHeader({
-  projectName,
-  isFavorite,
+  name,
+  favorite,
+  color,
   onFavoriteToggle,
-  onCreateTask,
-  onCreateSection,
-  onEditProject,
-  onDeleteProject
+  onRenameClick,
+  onDeleteClick,
+  onColorChange,
 }: ProjectHeaderProps) {
+  const projectColors = [
+    "#FF6B6B", "#FF9E7D", "#FFCA80", "#FFEC8A", "#BADA55", 
+    "#7ED957", "#4ECDC4", "#45B7D1", "#4F86C6", "#5E60CE", 
+    "#7950F2", "#9775FA", "#C77DFF", "#E77FF3", "#F26ABC", 
+    "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
+  ];
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <h1 className="text-2xl font-bold tracking-tight">{projectName}</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={onFavoriteToggle}
-        >
-          <Star 
-            className={
-              isFavorite
-                ? "h-5 w-5 fill-yellow-400 text-yellow-400"
-                : "h-5 w-5 text-muted-foreground"
-            } 
-          />
-          <span className="sr-only">
-            {isFavorite ? "Remove from favorites" : "Add to favorites"}
-          </span>
-        </Button>
+    <div className="mb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">{name}</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onFavoriteToggle}
+          >
+            <Star
+              className={`h-5 w-5 ${
+                favorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+              }`}
+            />
+            <span className="sr-only">
+              {favorite ? "Remove from favorites" : "Add to favorites"}
+            </span>
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Palette className="h-4 w-4" style={color ? { color } : undefined} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="p-2">
+                <IconPicker 
+                  colors={projectColors} 
+                  onChange={onColorChange} 
+                  selectedColor={color || ""} 
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="outline" size="icon" onClick={onRenameClick}>
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Rename</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onDeleteClick}
+            className="text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Delete</span>
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Button 
-          onClick={onCreateTask} 
-          className="gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Task</span>
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">More options</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onCreateSection}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Section
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEditProject}>
-              <Edit className="mr-2 h-4 w-4" />
-              Rename Project
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={onDeleteProject}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <Separator className="mt-4" />
     </div>
-  )
+  );
 }

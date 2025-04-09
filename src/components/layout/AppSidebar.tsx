@@ -10,12 +10,14 @@ interface Project {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface FilterItem {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface DatabaseFilter {
@@ -26,10 +28,14 @@ interface DatabaseFilter {
   created_at: string;
   updated_at: string;
   favorite?: boolean;
+  color?: string;
 }
 
-interface FavoriteItem extends Project {
+interface FavoriteItem {
+  id: string;
+  name: string;
   type: 'project' | 'filter';
+  color?: string;
 }
 
 interface AppSidebarProps {
@@ -80,12 +86,11 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
         if (error) throw error;
 
         // Map the database filters to the FilterItem format
-        // The error occurs here because the filter object doesn't include a 'favorite' property
         const mappedFilters: FilterItem[] = (data || []).map((filter: DatabaseFilter) => ({
           id: filter.id,
           name: filter.name,
-          // Use optional chaining and provide a default value of false
           favorite: filter.favorite ?? false,
+          color: filter.color
         }));
 
         setFilters(mappedFilters);

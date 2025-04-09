@@ -15,6 +15,7 @@ interface FilterItem {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface SidebarFiltersProps {
@@ -67,7 +68,10 @@ export function SidebarFilters({
                     }
                     onClick={onMobileMenuClose}
                   >
-                    <Filter className="h-4 w-4" />
+                    <Filter 
+                      className="h-4 w-4" 
+                      style={filter.color ? { color: filter.color } : undefined}
+                    />
                     <span>{filter.name}</span>
                   </NavLink>
                 </SidebarMenuButton>

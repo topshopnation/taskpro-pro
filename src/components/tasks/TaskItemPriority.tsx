@@ -11,10 +11,18 @@ interface TaskItemPriorityProps {
 export function TaskItemPriority({ priority }: TaskItemPriorityProps) {
   // Priority colors for the flag icon
   const priorityColors: Record<number, string> = {
-    1: "text-taskpro-priority-1",
-    2: "text-taskpro-priority-2",
-    3: "text-taskpro-priority-3",
-    4: "text-muted-foreground"
+    1: "text-red-500", // P1: Red
+    2: "text-yellow-500", // P2: Yellow
+    3: "text-green-500", // P3: Green
+    4: "text-blue-500" // P4: Blue
+  }
+  
+  // Priority labels
+  const priorityLabels: Record<number, string> = {
+    1: "Priority 1 (Highest)",
+    2: "Priority 2 (High)",
+    3: "Priority 3 (Medium)",
+    4: "Priority 4 (Low)"
   }
 
   return (
@@ -26,7 +34,7 @@ export function TaskItemPriority({ priority }: TaskItemPriorityProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          Priority {priority}
+          {priorityLabels[priority]}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

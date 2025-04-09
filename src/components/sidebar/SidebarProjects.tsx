@@ -10,11 +10,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 interface Project {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface SidebarProjectsProps {
@@ -30,6 +32,9 @@ export function SidebarProjects({
   onOpenCreateProject, 
   onMobileMenuClose 
 }: SidebarProjectsProps) {
+  // Filter out any "inbox" project that may be listed
+  const filteredProjects = projects.filter(project => project.id !== "inbox");
+
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between mb-2">
@@ -50,12 +55,12 @@ export function SidebarProjects({
             <div className="flex justify-center py-2">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
-          ) : projects.length === 0 ? (
+          ) : filteredProjects.length === 0 ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               No projects found
             </div>
           ) : (
-            projects.map((project) => (
+            filteredProjects.map((project) => (
               <SidebarMenuItem key={project.id}>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -67,7 +72,10 @@ export function SidebarProjects({
                     }
                     onClick={onMobileMenuClose}
                   >
-                    <ListTodo className="h-4 w-4" />
+                    <ListTodo 
+                      className="h-4 w-4" 
+                      style={project.color ? { color: project.color } : undefined}
+                    />
                     <span>{project.name}</span>
                     <ChevronRight className="h-4 w-4 ml-auto" />
                   </NavLink>

@@ -1,14 +1,16 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
-import { useProject } from "@/hooks/useProject"
-import { useProjectTasks } from "@/hooks/useProjectTasks"
 import { ProjectHeader } from "@/components/projects/ProjectHeader"
 import { ProjectDialogs } from "@/components/projects/ProjectDialogs"
+import { useProject } from "@/hooks/useProject"
+import { useProjectTasks } from "@/hooks/useProjectTasks"
+import { ProjectSections } from "@/components/projects/ProjectLoadingState"
 import { ProjectLoadingState } from "@/components/projects/ProjectLoadingState"
-import { ProjectSections } from "@/components/projects/ProjectSections"
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { Button } from "@/components/ui/button"
-import { ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
+import { TaskList } from "@/components/tasks/TaskList"
+import { ArrowDownAZ, ArrowUpZA, Layers, Plus } from "lucide-react"
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -20,14 +22,12 @@ import { format } from "date-fns"
 import { Task } from "@/components/tasks/TaskItem"
 
 export default function ProjectView() {
+  const navigate = useNavigate()
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
-  const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false)
-  const [newSectionName, setNewSectionName] = useState("")
   const [sortBy, setSortBy] = useState<string>("title")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [groupBy, setGroupBy] = useState<string | null>("section") // Default to section grouping
+  const [groupBy, setGroupBy] = useState<string | null>(null)
 
-  // Use custom hooks for project data and tasks
   const {
     id,
     currentProject,
@@ -38,26 +38,36 @@ export default function ProjectView() {
     setIsDeleteProjectOpen,
     newProjectName,
     setNewProjectName,
+    projectColor,
+    setProjectColor,
     handleProjectFavoriteToggle,
     handleProjectRename,
-    handleProjectDelete
+    handleProjectDelete,
+    handleProjectColorChange
   } = useProject()
 
   const {
+    tasks,
+    sections,
     isLoadingTasks,
     unsectionedTasks,
-    sections,
     getSectionTasks,
     handleComplete,
     handleDelete,
-    handleFavoriteToggle
+    handleFavoriteToggle,
+    handleSectionChange
   } = useProjectTasks(id)
 
-  const isLoading = isLoadingProject || isLoadingTasks
+  useEffect(() => {
+    if (currentProject) {
+      setNewProjectName(currentProject.name)
+      setProjectColor(currentProject.color || "")
+    }
+  }, [currentProject, setNewProjectName, setProjectColor])
 
-  // Sort tasks function
-  const sortTasks = (tasks: Task[]) => {
-    return [...tasks].sort((a, b) => {
+  // Sort and group functions
+  const sortTasks = (tasksToSort: Task[]) => {
+    return [...tasksToSort].sort((a, b) => {
       if (sortBy === "title") {
         return sortDirection === "asc" 
           ? a.title.localeCompare(b.title)
@@ -76,114 +86,170 @@ export default function ProjectView() {
     })
   }
 
-  // Sort sections tasks
-  const sortedUnsectionedTasks = sortTasks(unsectionedTasks)
-  
-  // Apply sorting to section tasks
-  const getSortedSectionTasks = (sectionName: string) => {
-    const sectionTasks = getSectionTasks(sectionName)
-    return sortTasks(sectionTasks)
+  const groupTasks = (tasksToGroup: Task[]) => {
+    if (!groupBy) return { "All Tasks": sortTasks(tasksToGroup) }
+    
+    const grouped: Record<string, Task[]> = {}
+    
+    tasksToGroup.forEach(task => {
+      let groupKey = ""
+      
+      if (groupBy === "title") {
+        // Group by first letter of title
+        groupKey = task.title.charAt(0).toUpperCase()
+      } else if (groupBy === "dueDate") {
+        groupKey = task.dueDate 
+          ? format(task.dueDate, 'PPP') 
+          : "No Due Date"
+      }
+      
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = []
+      }
+      grouped[groupKey].push(task)
+    })
+    
+    // Sort each group
+    Object.keys(grouped).forEach(key => {
+      grouped[key] = sortTasks(grouped[key])
+    })
+    
+    return grouped
+  }
+
+  const groupedTasks = groupTasks(unsectionedTasks);
+
+  if (isLoadingProject) {
+    return <ProjectLoadingState />
+  }
+
+  if (!currentProject) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-[80vh]">
+          <h1 className="text-2xl font-bold mb-4">Project not found</h1>
+          <Button onClick={() => navigate('/')}>Go to Dashboard</Button>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
     <AppLayout>
-      <ProjectLoadingState 
-        isLoading={isLoading} 
-        projectExists={!!currentProject} 
-      />
-      
-      {!isLoading && currentProject && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <ProjectHeader 
-              projectName={currentProject.name}
-              isFavorite={currentProject.favorite}
-              onFavoriteToggle={handleProjectFavoriteToggle}
-              onCreateTask={() => setIsCreateTaskOpen(true)}
-              onCreateSection={() => setIsCreateSectionOpen(true)}
-              onEditProject={() => {
-                setNewProjectName(currentProject.name)
-                setIsEditProjectOpen(true)
-              }}
-              onDeleteProject={() => setIsDeleteProjectOpen(true)}
-            />
-            <div className="flex items-center space-x-2">
-              {/* Sort Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    {sortDirection === "asc" 
-                      ? <ArrowDownAZ className="h-4 w-4" /> 
-                      : <ArrowUpZA className="h-4 w-4" />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
-                    Sort by Name (A-Z)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
-                    Sort by Name (Z-A)
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
-                    Sort by Due Date (Earliest)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
-                    Sort by Due Date (Latest)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Group Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Layers className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setGroupBy("section")}>
-                    Group by Section
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy("title")}>
-                    Group by Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
-                    Group by Due Date
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <ProjectHeader
+            name={currentProject.name}
+            favorite={currentProject.favorite}
+            color={currentProject.color}
+            onFavoriteToggle={handleProjectFavoriteToggle}
+            onRenameClick={() => {
+              setNewProjectName(currentProject.name)
+              setProjectColor(currentProject.color || "")
+              setIsEditProjectOpen(true)
+            }}
+            onDeleteClick={() => setIsDeleteProjectOpen(true)}
+            onColorChange={handleProjectColorChange}
+          />
+          <div className="flex items-center space-x-2">
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  {sortDirection === "asc" 
+                    ? <ArrowDownAZ className="h-4 w-4" /> 
+                    : <ArrowUpZA className="h-4 w-4" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
+                  Sort by Name (A-Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
+                  Sort by Name (Z-A)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
+                  Sort by Due Date (Earliest)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
+                  Sort by Due Date (Latest)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Group Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Layers className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setGroupBy(null)}>
+                  No Grouping
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setGroupBy("title")}>
+                  Group by Name
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
+                  Group by Due Date
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center space-x-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
           </div>
-
-          <ProjectSections 
-            unsectionedTasks={sortedUnsectionedTasks}
-            sections={sections}
-            getSectionTasks={getSortedSectionTasks}
-            handleComplete={handleComplete}
-            handleDelete={handleDelete}
-            handleFavoriteToggle={handleFavoriteToggle}
-          />
-
-          <ProjectDialogs 
-            projectId={id}
-            isCreateTaskOpen={isCreateTaskOpen}
-            setIsCreateTaskOpen={setIsCreateTaskOpen}
-            isEditProjectOpen={isEditProjectOpen}
-            setIsEditProjectOpen={setIsEditProjectOpen}
-            isDeleteProjectOpen={isDeleteProjectOpen}
-            setIsDeleteProjectOpen={setIsDeleteProjectOpen}
-            isCreateSectionOpen={isCreateSectionOpen}
-            setIsCreateSectionOpen={setIsCreateSectionOpen}
-            newSectionName={newSectionName}
-            setNewSectionName={setNewSectionName}
-            newProjectName={newProjectName}
-            setNewProjectName={setNewProjectName}
-            handleProjectRename={handleProjectRename}
-            handleProjectDelete={handleProjectDelete}
-          />
         </div>
-      )}
+
+        {/* Display grouped tasks */}
+        <div className="space-y-6">
+          {Object.keys(groupedTasks).length === 0 ? (
+            <div className="bg-muted/30 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium mb-2">No tasks in this project</h3>
+              <p className="text-muted-foreground mb-4">Add a task to get started!</p>
+              <Button onClick={() => setIsCreateTaskOpen(true)}>Add a Task</Button>
+            </div>
+          ) : (
+            Object.entries(groupedTasks).map(([group, groupTasks]) => (
+              <TaskList
+                key={group}
+                title={groupBy ? group : "Project Tasks"}
+                tasks={groupTasks}
+                isLoading={isLoadingTasks}
+                emptyMessage="No tasks in this group"
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onFavoriteToggle={handleFavoriteToggle}
+              />
+            ))
+          )}
+        </div>
+
+        <ProjectDialogs
+          isEditDialogOpen={isEditProjectOpen}
+          isDeleteDialogOpen={isDeleteProjectOpen}
+          projectName={newProjectName}
+          onEditDialogChange={setIsEditProjectOpen}
+          onDeleteDialogChange={setIsDeleteProjectOpen}
+          onProjectNameChange={setNewProjectName}
+          onRename={handleProjectRename}
+          onDelete={handleProjectDelete}
+        />
+
+        <CreateTaskDialog
+          open={isCreateTaskOpen}
+          onOpenChange={setIsCreateTaskOpen}
+          defaultProjectId={id}
+        />
+      </div>
     </AppLayout>
   )
 }

@@ -11,24 +11,30 @@ export type Database = {
     Tables: {
       filters: {
         Row: {
+          color: string | null
           conditions: Json
           created_at: string | null
+          favorite: boolean | null
           id: string
           name: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          color?: string | null
           conditions: Json
           created_at?: string | null
+          favorite?: boolean | null
           id?: string
           name: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          color?: string | null
           conditions?: Json
           created_at?: string | null
+          favorite?: boolean | null
           id?: string
           name?: string
           updated_at?: string | null
@@ -65,6 +71,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          color: string | null
           created_at: string | null
           favorite: boolean | null
           id: string
@@ -73,6 +80,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
           favorite?: boolean | null
           id?: string
@@ -81,6 +89,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string | null
           favorite?: boolean | null
           id?: string

@@ -12,6 +12,7 @@ export function useProject() {
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
   const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
+  const [projectColor, setProjectColor] = useState("")
   const { user } = useAuth()
 
   // Fetch project data
@@ -31,7 +32,8 @@ export function useProject() {
       return {
         id: data.id,
         name: data.name,
-        favorite: data.favorite || false
+        favorite: data.favorite || false,
+        color: data.color
       }
     } catch (error: any) {
       toast.error("Failed to fetch project", {
@@ -79,15 +81,18 @@ export function useProject() {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ name: newProjectName })
+        .update({ 
+          name: newProjectName,
+          color: projectColor || currentProject?.color
+        })
         .eq('id', id)
         
       if (error) throw error
       
       setIsEditProjectOpen(false)
-      toast.success("Project renamed successfully")
+      toast.success("Project updated successfully")
     } catch (error: any) {
-      toast.error("Failed to rename project", {
+      toast.error("Failed to update project", {
         description: error.message
       })
     }
@@ -121,6 +126,29 @@ export function useProject() {
     }
   }
 
+  const handleProjectColorChange = async (color: string) => {
+    if (!currentProject) return
+    
+    setProjectColor(color)
+    
+    if (!isEditProjectOpen) {
+      try {
+        const { error } = await supabase
+          .from('projects')
+          .update({ color })
+          .eq('id', id)
+          
+        if (error) throw error
+        
+        toast.success("Project color updated")
+      } catch (error: any) {
+        toast.error("Failed to update project color", {
+          description: error.message
+        })
+      }
+    }
+  }
+
   return {
     id,
     currentProject,
@@ -131,8 +159,11 @@ export function useProject() {
     setIsDeleteProjectOpen,
     newProjectName,
     setNewProjectName,
+    projectColor,
+    setProjectColor,
     handleProjectFavoriteToggle,
     handleProjectRename,
-    handleProjectDelete
+    handleProjectDelete,
+    handleProjectColorChange
   }
 }

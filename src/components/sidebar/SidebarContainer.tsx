@@ -2,25 +2,28 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import { SidebarContent } from "@/components/sidebar/SidebarContent";
 
 interface Project {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface FilterItem {
   id: string;
   name: string;
   favorite: boolean;
+  color?: string;
 }
 
 interface FavoriteItem {
   id: string;
   name: string;
   type: 'project' | 'filter';
+  color?: string;
 }
 
 interface SidebarContainerProps {

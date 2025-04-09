@@ -34,9 +34,12 @@ export default function FilterView() {
     setIsDeleteFilterOpen,
     newFilterName,
     setNewFilterName,
+    filterColor,
+    setFilterColor,
     handleFilterFavoriteToggle,
     handleFilterRename,
-    handleFilterDelete
+    handleFilterDelete,
+    handleFilterColorChange
   } = useFilter();
 
   const {
@@ -145,9 +148,11 @@ export default function FilterView() {
             onFavoriteToggle={handleFilterFavoriteToggle}
             onRenameClick={() => {
               setNewFilterName(currentFilter.name);
+              setFilterColor(currentFilter.color || "");
               setIsEditFilterOpen(true);
             }}
             onDeleteClick={() => setIsDeleteFilterOpen(true)}
+            onColorChange={handleFilterColorChange}
           />
           <div className="flex items-center space-x-2">
             {/* Sort Dropdown */}
