@@ -99,8 +99,10 @@ export default function Settings() {
       })
       
       setIsProfileDialogOpen(false)
+      toast.success("Profile updated successfully")
     } catch (error) {
       console.error("Error updating profile:", error)
+      toast.error("Failed to update profile")
     } finally {
       setIsUpdatingProfile(false)
     }
@@ -400,12 +402,12 @@ export default function Settings() {
           </DialogHeader>
           <form onSubmit={handleProfileUpdate}>
             <div className="grid gap-4 py-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={formData.avatarUrl} />
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={formData.avatarUrl || ""} />
                   <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <div className="w-full">
                   <Label htmlFor="avatarUrl" className="text-sm font-medium">
                     Profile Image URL
                   </Label>
@@ -416,6 +418,9 @@ export default function Settings() {
                     placeholder="https://example.com/avatar.jpg"
                     className="mt-1"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter a valid image URL to update your profile picture
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

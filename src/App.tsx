@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./hooks/use-auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Index from "./pages/Index";
 
 // Configure the query client with proper error handling
 const queryClient = new QueryClient({
@@ -38,14 +39,13 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Auth Routes */}
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               
-              {/* Root route will redirect to dashboard if authenticated, otherwise to auth */}
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              
               {/* Protected Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
               <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
               <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />

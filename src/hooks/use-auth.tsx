@@ -117,19 +117,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check if we're already on the auth page or callback page
     const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
+    const isHomePage = location.pathname === '/';
     
     // Redirect logic for authenticated users
     if (user && isAuthPage) {
       console.log("User authenticated, redirecting to dashboard from auth page");
-      navigate('/');
+      navigate('/dashboard');
     }
     
-    // Redirect logic for unauthenticated users
-    if (!user && !isAuthPage && location.pathname !== '/') {
+    // Redirect logic for unauthenticated users - only for protected routes, not the homepage
+    if (!user && !isAuthPage && !isHomePage && location.pathname !== '/dashboard') {
       console.log("No user, redirecting to /auth from protected page");
       navigate('/auth');
-    } else if (!user && location.pathname === '/') {
-      console.log("No user on root route, redirecting to /auth");
+    } else if (!user && location.pathname === '/dashboard') {
+      console.log("No user on dashboard route, redirecting to /auth");
       navigate('/auth');
     }
   }, [user, loading, location.pathname, navigate]);

@@ -1,11 +1,12 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Calendar, Zap } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useAuth } from "@/hooks/use-auth";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const features = [
     {
@@ -73,13 +74,23 @@ const Index = () => {
                 Boost your productivity with TaskPro's powerful task management system. Organize, prioritize, and track your projects with ease.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button
-                  size="lg"
-                  className="text-lg h-12 px-8 animate-fade-in"
-                  onClick={() => navigate("/auth")}
-                >
-                  Get Started Free
-                </Button>
+                {user ? (
+                  <Button
+                    size="lg"
+                    className="text-lg h-12 px-8 animate-fade-in"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Go to Dashboard
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    className="text-lg h-12 px-8 animate-fade-in"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Get Started Free
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="lg"
@@ -321,14 +332,25 @@ const Index = () => {
           <p className="text-xl max-w-3xl mx-auto mb-8 text-white/90">
             Join thousands of professionals who trust TaskPro for their task management needs.
           </p>
-          <Button
-            size="lg"
-            variant="secondary"
-            className="text-lg h-12 px-8 hover:bg-white hover:text-primary"
-            onClick={() => navigate("/auth")}
-          >
-            Get Started Now
-          </Button>
+          {user ? (
+            <Button
+              size="lg"
+              variant="secondary"
+              className="text-lg h-12 px-8 hover:bg-white hover:text-primary"
+              onClick={() => navigate("/dashboard")}
+            >
+              Go to Dashboard
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              variant="secondary"
+              className="text-lg h-12 px-8 hover:bg-white hover:text-primary"
+              onClick={() => navigate("/auth")}
+            >
+              Get Started Now
+            </Button>
+          )}
         </div>
       </section>
 
