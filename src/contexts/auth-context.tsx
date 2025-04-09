@@ -10,6 +10,8 @@ export type User = {
   lastName?: string;
 };
 
+export type Provider = "google" | "github" | "twitter" | "facebook";
+
 export type AuthContextType = {
   user: User | null;
   session: Session | null;
