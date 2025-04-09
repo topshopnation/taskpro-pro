@@ -18,6 +18,7 @@ export interface Filter {
   updated_at?: string;
   user_id: string;
   favorite?: boolean;
+  color?: string;
 }
 
 export {};

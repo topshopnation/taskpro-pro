@@ -2,13 +2,17 @@
 import { Task } from "@/components/tasks/TaskItem";
 import { Filter } from "@/types/supabase";
 
-export interface CustomFilter extends Omit<Filter, 'favorite'> {
+export interface CustomFilter extends Omit<Filter, 'favorite' | 'color'> {
   id: string;
   name: string;
   conditions: any;
   logic: string;
   favorite: boolean;
+  color?: string;
 }
+
+// Define StandardFilter type 
+export type StandardFilter = CustomFilter;
 
 export const standardFilters: CustomFilter[] = [
   { 

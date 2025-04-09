@@ -45,7 +45,7 @@ export function useFilter() {
         conditions: filterData.conditions,
         logic: "and",
         favorite: filterData.favorite ?? false,
-        color: filterData.color,
+        color: filterData.color || null,
         user_id: filterData.user_id,
         created_at: filterData.created_at || "",
         updated_at: filterData.updated_at || ""
@@ -106,12 +106,20 @@ export function useFilter() {
     }
 
     try {
+      const updateData: {
+        name: string;
+        color?: string;
+      } = {
+        name: newFilterName
+      };
+      
+      if (filterColor) {
+        updateData.color = filterColor;
+      }
+
       const { error } = await supabase
         .from('filters')
-        .update({ 
-          name: newFilterName,
-          color: filterColor || currentFilter?.color 
-        })
+        .update(updateData)
         .eq('id', id);
         
       if (error) throw error;

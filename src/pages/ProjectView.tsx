@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
@@ -5,7 +6,6 @@ import { ProjectHeader } from "@/components/projects/ProjectHeader"
 import { ProjectDialogs } from "@/components/projects/ProjectDialogs"
 import { useProject } from "@/hooks/useProject"
 import { useProjectTasks } from "@/hooks/useProjectTasks"
-import { ProjectSections } from "@/components/projects/ProjectLoadingState"
 import { ProjectLoadingState } from "@/components/projects/ProjectLoadingState"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { Button } from "@/components/ui/button"
@@ -120,18 +120,11 @@ export default function ProjectView() {
   const groupedTasks = groupTasks(unsectionedTasks);
 
   if (isLoadingProject) {
-    return <ProjectLoadingState />
+    return <ProjectLoadingState isLoading={true} projectExists={true} />
   }
 
   if (!currentProject) {
-    return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center h-[80vh]">
-          <h1 className="text-2xl font-bold mb-4">Project not found</h1>
-          <Button onClick={() => navigate('/')}>Go to Dashboard</Button>
-        </div>
-      </AppLayout>
-    )
+    return <ProjectLoadingState isLoading={false} projectExists={false} />
   }
 
   return (
@@ -233,22 +226,32 @@ export default function ProjectView() {
           )}
         </div>
 
-        <ProjectDialogs
-          isEditDialogOpen={isEditProjectOpen}
-          isDeleteDialogOpen={isDeleteProjectOpen}
-          projectName={newProjectName}
-          onEditDialogChange={setIsEditProjectOpen}
-          onDeleteDialogChange={setIsDeleteProjectOpen}
-          onProjectNameChange={setNewProjectName}
-          onRename={handleProjectRename}
-          onDelete={handleProjectDelete}
-        />
-
         <CreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}
           defaultProjectId={id}
         />
+
+        {/* Projects dialogs */}
+        {isEditProjectOpen && (
+          <ProjectDialogs
+            projectId={id}
+            isCreateTaskOpen={isCreateTaskOpen}
+            setIsCreateTaskOpen={setIsCreateTaskOpen}
+            isEditProjectOpen={isEditProjectOpen}
+            setIsEditProjectOpen={setIsEditProjectOpen}
+            isDeleteProjectOpen={isDeleteProjectOpen}
+            setIsDeleteProjectOpen={setIsDeleteProjectOpen}
+            isCreateSectionOpen={false}
+            setIsCreateSectionOpen={() => {}}
+            newSectionName=""
+            setNewSectionName={() => {}}
+            newProjectName={newProjectName}
+            setNewProjectName={setNewProjectName}
+            handleProjectRename={handleProjectRename}
+            handleProjectDelete={handleProjectDelete}
+          />
+        )}
       </div>
     </AppLayout>
   )

@@ -33,7 +33,7 @@ export function useProject() {
         id: data.id,
         name: data.name,
         favorite: data.favorite || false,
-        color: data.color
+        color: data.color || null
       }
     } catch (error: any) {
       toast.error("Failed to fetch project", {
@@ -79,12 +79,20 @@ export function useProject() {
     }
 
     try {
+      const updateData: {
+        name: string;
+        color?: string;
+      } = {
+        name: newProjectName
+      }
+      
+      if (projectColor) {
+        updateData.color = projectColor
+      }
+      
       const { error } = await supabase
         .from('projects')
-        .update({ 
-          name: newProjectName,
-          color: projectColor || currentProject?.color
-        })
+        .update(updateData)
         .eq('id', id)
         
       if (error) throw error

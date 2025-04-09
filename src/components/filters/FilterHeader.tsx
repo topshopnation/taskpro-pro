@@ -2,7 +2,7 @@
 import { Pencil, Star, Trash2, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { StandardFilter, CustomFilter } from "@/types/filterTypes";
+import { CustomFilter } from "@/types/filterTypes";
 import { isStandardFilter } from "@/utils/filterUtils";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
 import { IconPicker } from "@/components/ui/color-picker";
 
 interface FilterHeaderProps {
-  filter: StandardFilter | CustomFilter;
+  filter: CustomFilter;
   onFavoriteToggle: () => void;
   onRenameClick: () => void;
   onDeleteClick: () => void;
