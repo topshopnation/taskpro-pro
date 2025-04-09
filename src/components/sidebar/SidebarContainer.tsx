@@ -5,14 +5,42 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SidebarContent } from "@/components/sidebar/SidebarContent";
 
+interface Project {
+  id: string;
+  name: string;
+  favorite: boolean;
+}
+
+interface FilterItem {
+  id: string;
+  name: string;
+  favorite: boolean;
+}
+
+interface FavoriteItem {
+  id: string;
+  name: string;
+  type: 'project' | 'filter';
+}
+
 interface SidebarContainerProps {
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
+  projects?: Project[];
+  filters?: FilterItem[];
+  favoriteItems?: FavoriteItem[];
+  isLoadingProjects?: boolean;
+  isLoadingFilters?: boolean;
 }
 
 const AppSidebarContainer = ({ 
   isMobileMenuOpen, 
-  setIsMobileMenuOpen 
+  setIsMobileMenuOpen,
+  projects = [],
+  filters = [],
+  favoriteItems = [],
+  isLoadingProjects = false,
+  isLoadingFilters = false
 }: SidebarContainerProps) => {
   const [mounted, setMounted] = useState(false);
 
@@ -45,7 +73,14 @@ const AppSidebarContainer = ({
         <SheetContent side="left" className="w-[280px] p-0">
           <div className="flex h-full flex-col">
             <div className="h-full p-4 pt-0">
-              <SidebarContent onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
+              <SidebarContent 
+                onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+                projects={projects}
+                filters={filters}
+                favoriteItems={favoriteItems}
+                isLoadingProjects={isLoadingProjects}
+                isLoadingFilters={isLoadingFilters}
+              />
             </div>
             <div className="p-4">
               <Button
@@ -66,7 +101,13 @@ const AppSidebarContainer = ({
       <aside className="hidden w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground md:block">
         <div className="flex h-full flex-col">
           <div className="p-4">
-            <SidebarContent onMobileMenuClose={() => setIsMobileMenuOpen(false)} />
+            <SidebarContent 
+              projects={projects}
+              filters={filters}
+              favoriteItems={favoriteItems}
+              isLoadingProjects={isLoadingProjects}
+              isLoadingFilters={isLoadingFilters}
+            />
           </div>
         </div>
       </aside>

@@ -50,12 +50,12 @@ export function SidebarContent({
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
-        <SidebarFavorites 
-          favoriteItems={favoriteItems} 
+        <SidebarNavigation 
           onMobileMenuClose={onMobileMenuClose} 
         />
 
-        <SidebarNavigation 
+        <SidebarFavorites 
+          favoriteItems={favoriteItems} 
           onMobileMenuClose={onMobileMenuClose} 
         />
 

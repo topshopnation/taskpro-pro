@@ -71,45 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Handle URL hash for OAuth redirects
-  useEffect(() => {
-    const handleHashRedirect = async () => {
-      // Only run on auth page with hash parameters
-      if (location.pathname === '/auth' && location.hash) {
-        try {
-          const hashParams = new URLSearchParams(location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          
-          if (accessToken) {
-            // If we have a hash with access_token, set the session manually
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: hashParams.get('refresh_token') || '',
-            });
-            
-            if (error) throw error;
-            
-            // Hash redirect processed successfully, navigate to home
-            navigate('/', { replace: true });
-            toast({
-              title: "Signed in",
-              description: "You have successfully signed in.",
-            });
-          }
-        } catch (error: any) {
-          console.error("Error processing redirect:", error);
-          toast({
-            title: "Error signing in",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    handleHashRedirect();
-  }, [location, navigate, toast]);
-
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -234,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 

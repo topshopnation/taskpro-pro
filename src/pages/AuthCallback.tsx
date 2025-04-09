@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,13 +11,14 @@ export default function AuthCallback() {
     // Process the OAuth callback
     const processCallback = async () => {
       try {
-        // Since getSessionFromUrl is deprecated in newer versions, we use the appropriate
-        // method based on the URL hash
+        // Get the URL hash parameters (for implicit flow) or query parameters (for code flow)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
         const accessToken = hashParams.get('access_token');
+        const code = queryParams.get('code');
         
+        // Handle access token (implicit flow)
         if (accessToken) {
-          // If we have a hash with access_token, set the session manually
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: hashParams.get('refresh_token') || '',
@@ -25,8 +27,22 @@ export default function AuthCallback() {
           if (error) throw error;
           
           navigate("/", { replace: true });
-        } else {
-          // Otherwise check existing session
+        } 
+        // Handle code (code flow)
+        else if (code) {
+          // Let Supabase handle it automatically
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) throw error;
+          
+          if (data?.session) {
+            navigate("/", { replace: true });
+          } else {
+            navigate("/auth", { replace: true });
+          }
+        } 
+        // Check existing session otherwise
+        else {
           const { data } = await supabase.auth.getSession();
           
           if (data?.session) {
