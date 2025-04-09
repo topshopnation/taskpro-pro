@@ -79,11 +79,13 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
 
         if (error) throw error;
 
-        // Map the database filters to the FilterItem format, ensuring favorite is included
-        const mappedFilters: FilterItem[] = (data || []).map(filter => ({
+        // Map the database filters to the FilterItem format
+        // The error occurs here because the filter object doesn't include a 'favorite' property
+        const mappedFilters: FilterItem[] = (data || []).map((filter: DatabaseFilter) => ({
           id: filter.id,
           name: filter.name,
-          favorite: filter.favorite || false,
+          // Use optional chaining and provide a default value of false
+          favorite: filter.favorite ?? false,
         }));
 
         setFilters(mappedFilters);
