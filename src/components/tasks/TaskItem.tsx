@@ -4,15 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { TaskItemPriority } from "./TaskItemPriority"
 import { TaskItemDetails } from "./TaskItemDetails"
-import { TaskItemFavorite } from "./TaskItemFavorite"
 import { TaskItemActions } from "./TaskItemActions"
 import { TaskItemConfirmDelete } from "./TaskItemConfirmDelete"
 import { Tooltip, TooltipProvider } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
-import { Badge } from "@/components/ui/badge"
-import { Tag as TagIcon } from "lucide-react"
 import { Tag } from "./taskTypes"
 
 export interface Task {
@@ -23,22 +20,20 @@ export interface Task {
   dueTime?: string
   priority: 1 | 2 | 3 | 4
   projectId: string
-  section?: string
   completed: boolean
-  favorite: boolean
 }
 
 interface TaskItemProps {
   task: Task
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
-  onFavoriteToggle: (taskId: string, favorite: boolean) => void
 }
 
-export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
+export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [taskTags, setTaskTags] = useState<Tag[]>([])
+  const [projectName, setProjectName] = useState<string>("")
   const { user } = useAuth()
 
   useEffect(() => {
@@ -66,6 +61,32 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     fetchTaskTags();
   }, [task.id, user]);
 
+  // Fetch project name if projectId exists
+  useEffect(() => {
+    const fetchProjectName = async () => {
+      if (!task.projectId || !user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', task.projectId)
+          .eq('user_id', user.id)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setProjectName(data.name);
+        }
+      } catch (error: any) {
+        console.error("Failed to fetch project name:", error.message);
+      }
+    };
+    
+    fetchProjectName();
+  }, [task.projectId, user]);
+
   const handleCompletionToggle = async () => {
     setIsUpdating(true)
     try {
@@ -85,24 +106,24 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     }
   }
 
-  const handleFavoriteToggle = async () => {
-    setIsUpdating(true)
+  const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
+    setIsUpdating(true);
     try {
       const { error } = await supabase
         .from('tasks')
-        .update({ favorite: !task.favorite })
-        .eq('id', task.id)
+        .update({ priority: newPriority })
+        .eq('id', task.id);
       
-      if (error) throw error
+      if (error) throw error;
       
-      onFavoriteToggle(task.id, !task.favorite)
-      toast.success(task.favorite ? "Removed from favorites" : "Added to favorites")
+      toast.success("Task priority updated");
+      // The parent component will reload the tasks after Supabase triggers update
     } catch (error: any) {
-      toast.error(`Error updating task: ${error.message}`)
+      toast.error(`Error updating task priority: ${error.message}`);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
     setIsUpdating(true)
@@ -145,15 +166,14 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           dueTime={task.dueTime}
           completed={task.completed}
           tags={taskTags}
+          projectName={projectName}
         />
         
         <div className="flex items-center space-x-1">
           <TooltipProvider>
-            <TaskItemPriority priority={task.priority} />
-            
-            <TaskItemFavorite
-              favorite={task.favorite}
-              onToggle={handleFavoriteToggle}
+            <TaskItemPriority 
+              priority={task.priority} 
+              onPriorityChange={handlePriorityChange}
               isUpdating={isUpdating}
             />
             

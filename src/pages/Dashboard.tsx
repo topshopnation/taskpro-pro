@@ -6,7 +6,7 @@ import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton"
 import { useDashboardTasks } from "@/hooks/useDashboardTasks"
 import { Button } from "@/components/ui/button"
-import { ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
+import { ArrowDownAZ, ArrowUpZA, Layers, Plus } from "lucide-react"
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -16,21 +16,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
 import { Task } from "@/components/tasks/TaskItem"
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 
 export default function Dashboard() {
   const [sortBy, setSortBy] = useState<string>("dueDate")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   
   const { 
     tasks,
     isLoading, 
     todayTasks, 
-    favoriteTasks, 
     highPriorityTasks,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle
+    handleDelete
   } = useDashboardTasks();
 
   // Sort function
@@ -63,7 +63,6 @@ export default function Dashboard() {
   // Apply sorting to all task lists
   const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed))
   const sortedTodayTasks = sortTasks(todayTasks)
-  const sortedFavoriteTasks = sortTasks(favoriteTasks)
   const sortedHighPriorityTasks = sortTasks(highPriorityTasks)
 
   // Group function for future implementation if needed
@@ -170,23 +169,33 @@ export default function Dashboard() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center space-x-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
           </div>
         </div>
 
         <StatCards 
           todayCount={todayTasks.length}
-          favoritesCount={favoriteTasks.length}
           highPriorityCount={highPriorityTasks.length}
         />
 
         <DashboardTabs
           todayTasks={sortedTodayTasks}
-          favoriteTasks={sortedFavoriteTasks}
           highPriorityTasks={sortedHighPriorityTasks}
           allTasks={sortedAllTasks}
           onComplete={handleComplete}
           onDelete={handleDelete}
-          onFavoriteToggle={handleFavoriteToggle}
+        />
+
+        <CreateTaskDialog
+          open={isCreateTaskOpen}
+          onOpenChange={setIsCreateTaskOpen}
         />
       </div>
     </AppLayout>

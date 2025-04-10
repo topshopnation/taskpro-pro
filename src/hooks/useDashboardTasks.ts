@@ -31,11 +31,10 @@ export function useDashboardTasks() {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        section: task.section,
-        completed: task.completed || false,
-        favorite: task.favorite || false
+        completed: task.completed || false
       }));
     } catch (error: any) {
+      console.error("Failed to fetch tasks:", error.message);
       toast.error("Failed to fetch tasks", {
         description: error.message
       });
@@ -43,11 +42,14 @@ export function useDashboardTasks() {
     }
   };
   
-  // Use React Query to fetch tasks
+  // Use React Query to fetch tasks with proper retry and stale time
   const { data: fetchedTasks, isLoading } = useQuery({
     queryKey: ['dashboard-tasks', user?.id],
     queryFn: fetchTasks,
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 10000, // 10 seconds
+    retry: 3,
+    retryDelay: 1000,
   });
   
   // Update local state when data is fetched
@@ -121,28 +123,6 @@ export function useDashboardTasks() {
     }
   };
 
-  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ favorite })
-        .eq('id', taskId);
-        
-      if (error) throw error;
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, favorite } : task
-        )
-      );
-    } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      });
-    }
-  };
-
   // Get tasks due today
   const todayTasks = tasks.filter(task => {
     if (!task.dueDate || task.completed) return false;
@@ -155,9 +135,6 @@ export function useDashboardTasks() {
     );
   });
 
-  // Get favorite tasks
-  const favoriteTasks = tasks.filter(task => task.favorite && !task.completed);
-
   // Get high priority tasks (priority 1)
   const highPriorityTasks = tasks.filter(task => task.priority === 1 && !task.completed);
 
@@ -165,10 +142,8 @@ export function useDashboardTasks() {
     tasks,
     isLoading,
     todayTasks,
-    favoriteTasks,
     highPriorityTasks,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle
+    handleDelete
   };
 }

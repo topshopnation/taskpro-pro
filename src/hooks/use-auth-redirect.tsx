@@ -15,13 +15,10 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     const isHomePage = location.pathname === '/';
     
     // Redirect logic for authenticated users
-    if (user && isAuthPage) {
-      console.log("User authenticated, redirecting to dashboard from auth page");
+    if (user && (isAuthPage || isHomePage)) {
+      console.log("User authenticated, redirecting to dashboard from auth/home page");
       navigate('/dashboard');
     }
-    
-    // Don't redirect from homepage if they're already logged in
-    // (let them navigate manually from homepage)
     
     // Redirect logic for unauthenticated users - only for protected routes
     if (!user && !isAuthPage && !isHomePage) {

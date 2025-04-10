@@ -38,22 +38,6 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   }
 };
 
-export const toggleTaskFavorite = async (taskId: string, favorite: boolean): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('tasks')
-      .update({ favorite })
-      .eq('id', taskId);
-      
-    if (error) throw error;
-  } catch (error: any) {
-    toast.error("Failed to update task", {
-      description: error.message
-    });
-    throw error;
-  }
-};
-
 export const getTaskTags = async (taskId: string): Promise<Tag[]> => {
   try {
     // Use a raw query with type assertion to work around type constraints
@@ -106,6 +90,22 @@ export const removeTaskTag = async (taskId: string, tagId: string): Promise<void
     if (error) throw error;
   } catch (error: any) {
     toast.error("Failed to remove tag from task", {
+      description: error.message
+    });
+    throw error;
+  }
+};
+
+export const updateTaskPriority = async (taskId: string, priority: 1 | 2 | 3 | 4): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ priority })
+      .eq('id', taskId);
+      
+    if (error) throw error;
+  } catch (error: any) {
+    toast.error("Failed to update task priority", {
       description: error.message
     });
     throw error;

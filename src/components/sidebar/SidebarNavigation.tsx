@@ -21,7 +21,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <NavLink
-                to="/"
+                to="/dashboard"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -85,5 +85,5 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  );
+  )
 }
