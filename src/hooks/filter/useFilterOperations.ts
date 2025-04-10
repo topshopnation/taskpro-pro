@@ -77,7 +77,7 @@ export function useFilterOperations(filterId: string) {
       if (error) throw error;
       
       toast.success("Filter deleted successfully");
-      navigate('/today'); // Navigate to Today instead of Dashboard
+      navigate('/today'); // Navigate to Today view after deletion
     } catch (error: any) {
       toast.error("Failed to delete filter", {
         description: error.message

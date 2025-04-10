@@ -5,11 +5,12 @@ import { useFilteredTasks } from "@/hooks/useFilteredTasks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { FilterHeader } from "@/components/filters/FilterHeader";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
-import { useFilter } from "@/hooks/useFilter";
+import { useFilter } from "@/hooks/filter";
 import { Button } from "@/components/ui/button";
 import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { groupTasks } from "@/utils/taskSortUtils";
+import { FilterConditionsDisplay } from "@/components/filters/FilterConditionsDisplay";
 
 export default function FilterView() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export default function FilterView() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="space-y-2">
           <FilterHeader
             filter={currentFilter}
             onFavoriteToggle={handleFilterFavoriteToggle}
@@ -88,16 +89,25 @@ export default function FilterView() {
             onColorChange={handleFilterColorChange}
           />
           
-          <TaskSortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            hideAddTaskButton={true}
-            showProjectSort={true}
-          />
+          <div className="mt-1">
+            <FilterConditionsDisplay 
+              conditions={currentFilter.conditions || []} 
+              logic={currentFilter.logic}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between mt-4">
+            <TaskSortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+              showProjectSort={true}
+            />
+          </div>
         </div>
 
         <div className="space-y-6">
