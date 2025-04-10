@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -5,7 +6,7 @@ import { TaskItemPriority } from "./TaskItemPriority"
 import { TaskItemDetails } from "./TaskItemDetails"
 import { TaskItemActions } from "./TaskItemActions"
 import { TaskItemConfirmDelete } from "./TaskItemConfirmDelete"
-import { Tooltip, TooltipProvider } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"

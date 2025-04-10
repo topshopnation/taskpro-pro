@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
@@ -24,6 +24,7 @@ export default function TodayView() {
   const [sortBy, setSortBy] = useState<string>("dueDate")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
+  const [tasks, setTasks] = useState<Task[]>([])
   const { user } = useAuth()
 
   const getTodayDate = () => {
@@ -31,7 +32,7 @@ export default function TodayView() {
     return format(today, 'yyyy-MM-dd')
   }
 
-  const fetchTodayTasks = async () => {
+  const fetchTodayTasks = useCallback(async () => {
     if (!user) return []
     
     const todayDate = getTodayDate()
@@ -64,13 +65,27 @@ export default function TodayView() {
       })
       return []
     }
-  }
+  }, [user])
   
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: queryTasks = [], isLoading } = useQuery({
     queryKey: ['today-tasks', user?.id],
     queryFn: fetchTodayTasks,
     enabled: !!user
   })
+  
+  useEffect(() => {
+    setTasks(queryTasks);
+  }, [queryTasks]);
+
+  useTaskRealtime(user, () => {
+    fetchTodayTasks()
+      .then(updatedTasks => {
+        setTasks(updatedTasks);
+      })
+      .catch(error => {
+        console.error("Error in real-time update:", error);
+      });
+  });
 
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {

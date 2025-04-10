@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
@@ -28,7 +28,7 @@ export default function OverdueView() {
   const [tasks, setTasks] = useState<Task[]>([])
   const { user } = useAuth()
 
-  const fetchOverdueTasks = async () => {
+  const fetchOverdueTasks = useCallback(async () => {
     if (!user) return []
     
     const todayDate = new Date()
@@ -60,7 +60,7 @@ export default function OverdueView() {
       })
       return []
     }
-  }
+  }, [user])
   
   const { isLoading } = useQuery({
     queryKey: ['overdue-tasks', user?.id],
@@ -73,19 +73,29 @@ export default function OverdueView() {
     if (!user) return;
     
     const fetchAndSetTasks = async () => {
-      const fetchedTasks = await fetchOverdueTasks();
-      setTasks(fetchedTasks);
+      try {
+        const fetchedTasks = await fetchOverdueTasks();
+        setTasks(fetchedTasks);
+      } catch (error) {
+        console.error("Error fetching overdue tasks:", error);
+      }
     };
     
     fetchAndSetTasks();
-  }, [user]);
+  }, [user, fetchOverdueTasks]);
 
-  useTaskRealtime(user, async () => {
-    if (user) {
-      const updatedTasks = await fetchOverdueTasks();
-      setTasks(updatedTasks);
-      return Promise.resolve();
-    }
+  // Handle real-time updates with proper error handling
+  useTaskRealtime(user, () => {
+    fetchOverdueTasks()
+      .then(updatedTasks => {
+        setTasks(updatedTasks);
+      })
+      .catch(error => {
+        console.error("Error in real-time update:", error);
+      });
+    
+    // Return void to satisfy the FetchCallback type
+    return;
   });
 
   const handleComplete = async (taskId: string, completed: boolean) => {
@@ -298,5 +308,5 @@ export default function OverdueView() {
         />
       </div>
     </AppLayout>
-  )
+  );
 }

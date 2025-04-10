@@ -18,8 +18,8 @@ export function useTaskRealtime(user: { id: string } | null, fetchCallback: Fetc
         filter: `user_id=eq.${user.id}`,
       }, () => {
         try {
-          // Call the callback but don't await it here
-          // This avoids blocking the real-time handler
+          // Call the callback without awaiting to prevent blocking the handler
+          // The callback can still be async and return a Promise
           fetchCallback();
         } catch (error) {
           console.error("Error executing task callback:", error);

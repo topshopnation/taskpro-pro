@@ -1,7 +1,7 @@
 
 import { Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -36,16 +36,19 @@ export function TaskItemPriority({ priority, onPriorityChange, isUpdating }: Tas
 
   return (
     <DropdownMenu>
-      <TooltipTrigger asChild>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isUpdating}>
-            <Flag className={cn("h-4 w-4", priorityColors[priority])} />
-          </Button>
-        </DropdownMenuTrigger>
-      </TooltipTrigger>
-      <TooltipContent>
-        {priorityLabels[priority]} (Click to change)
-      </TooltipContent>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isUpdating}>
+              <Flag className={cn("h-4 w-4", priorityColors[priority])} />
+              <span className="sr-only">Set priority</span>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {priorityLabels[priority]} (Click to change)
+        </TooltipContent>
+      </Tooltip>
       
       <DropdownMenuContent align="end">
         <DropdownMenuItem 

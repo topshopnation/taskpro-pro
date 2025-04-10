@@ -31,10 +31,13 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
                 "h-4 w-4", 
                 isOverdue ? "text-red-500" : dueDate ? "text-blue-500" : "text-muted-foreground"
               )} />
+              <span className="sr-only">
+                {dueDate ? "Change due date" : "Set due date"}
+              </span>
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side="bottom">
           {dueDate 
             ? isOverdue 
               ? `Overdue: ${format(dueDate, "MMM d, yyyy")}`
@@ -50,7 +53,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
             mode="single" 
             selected={dueDate}
             onSelect={onDateChange}
-            className="pointer-events-auto"
+            initialFocus
           />
           {dueDate && (
             <div className="mt-2 flex justify-end">
