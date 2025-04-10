@@ -55,7 +55,7 @@ export default function Dashboard() {
             setSortDirection={setSortDirection}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
-            onAddTask={() => setIsCreateTaskOpen(true)}
+            hideAddTaskButton={true}
             showProjectSort={true}
           />
         </div>

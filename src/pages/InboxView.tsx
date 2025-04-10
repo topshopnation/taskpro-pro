@@ -36,7 +36,7 @@ export default function InboxView() {
             setSortDirection={setSortDirection}
             groupBy={groupBy}
             setGroupBy={setGroupBy}
-            onAddTask={() => setIsCreateTaskOpen(true)}
+            hideAddTaskButton={true}
           />
         </div>
 
@@ -58,5 +58,5 @@ export default function InboxView() {
         />
       </div>
     </AppLayout>
-  )
+  );
 }

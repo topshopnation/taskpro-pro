@@ -57,10 +57,10 @@ export function ProjectHeader({
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
+              <Button variant="outline" size="icon" className="h-9 w-9 flex items-center justify-center">
                 <Palette className="h-4 w-4" style={color ? { color } : undefined} />
               </Button>
             </DropdownMenuTrigger>
@@ -75,7 +75,7 @@ export function ProjectHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={onRenameClick}>
+          <Button variant="outline" size="icon" className="h-9 w-9 flex items-center justify-center" onClick={onRenameClick}>
             <Pencil className="h-4 w-4" />
             <span className="sr-only">Rename</span>
           </Button>
@@ -83,7 +83,7 @@ export function ProjectHeader({
             variant="outline"
             size="icon"
             onClick={onDeleteClick}
-            className="text-destructive h-9 w-9"
+            className="text-destructive h-9 w-9 flex items-center justify-center"
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete</span>

@@ -3,7 +3,6 @@ import { useState } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
-import { Task } from "@/components/tasks/TaskItem"
 import { useOverdueTasks } from "@/hooks/useOverdueTasks"
 import { useTaskOperations } from "@/hooks/useTaskOperations"
 import { OverdueHeader } from "@/components/overdue/OverdueHeader"
@@ -28,7 +27,11 @@ export default function OverdueView() {
   const { handleComplete, handleDelete, handleFavoriteToggle } = useTaskOperations()
   
   // Set up realtime subscription
-  useTaskRealtime(() => refetch())
+  useTaskRealtime(user, () => {
+    if (user) {
+      refetch();
+    }
+  });
 
   // Handlers
   const handleRescheduleAllClick = () => {
@@ -96,5 +99,5 @@ export default function OverdueView() {
         />
       </div>
     </AppLayout>
-  )
+  );
 }

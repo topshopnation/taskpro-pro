@@ -43,18 +43,18 @@ export function AppHeader() {
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full"
+          className="rounded-full flex items-center justify-center"
           onClick={handleCreateTask}
         >
-          <PlusCircle className="h-5 w-5" />
+          <PlusCircle className="h-5 w-5 text-primary" />
           <span className="sr-only">Create task</span>
         </Button>
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full"
+          className="rounded-full flex items-center justify-center"
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5 text-primary" />
           <span className="sr-only">Notifications</span>
         </Button>
         <Avatar 
@@ -62,7 +62,7 @@ export function AppHeader() {
           onClick={() => navigate("/settings")} 
         >
           <AvatarImage src={user?.avatarUrl || ""} />
-          <AvatarFallback className="bg-primary text-primary-foreground">
+          <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
             {userInitials}
           </AvatarFallback>
         </Avatar>
