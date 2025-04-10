@@ -5,13 +5,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import ProfileCard from "@/components/settings/ProfileCard";
 import AppearanceCard from "@/components/settings/AppearanceCard";
 import SubscriptionCard from "@/components/settings/SubscriptionCard";
-import SmartFeaturesCard from "@/components/settings/SmartFeaturesCard";
 import VoiceInputCard from "@/components/settings/VoiceInputCard";
 import DataManagementCard from "@/components/settings/DataManagementCard";
 import ProfileDialog from "@/components/settings/ProfileDialog";
 import SubscriptionDialog from "@/components/settings/SubscriptionDialog";
 import PaymentMethodsCard from "@/components/settings/PaymentMethodsCard";
-import { Separator } from "@/components/ui/separator";
 
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
@@ -29,7 +27,6 @@ export default function Settings() {
           <SubscriptionCard onUpgrade={() => setIsUpgradeDialogOpen(true)} />
           <PaymentMethodsCard />
           <AppearanceCard />
-          <SmartFeaturesCard />
           <VoiceInputCard />
           <DataManagementCard />
         </div>
