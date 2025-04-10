@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
 import { useTaskRealtime } from "@/hooks/useTaskRealtime";
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function OverdueView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -84,7 +84,7 @@ export default function OverdueView() {
     fetchAndSetTasks();
   }, [user, fetchOverdueTasks]);
 
-  // Handle real-time updates with proper error handling
+  // Handle real-time updates
   useTaskRealtime(user, () => {
     fetchOverdueTasks()
       .then(updatedTasks => {
@@ -93,9 +93,6 @@ export default function OverdueView() {
       .catch(error => {
         console.error("Error in real-time update:", error);
       });
-    
-    // Return void to satisfy the FetchCallback type
-    return;
   });
 
   const handleComplete = async (taskId: string, completed: boolean) => {
@@ -207,106 +204,108 @@ export default function OverdueView() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <CalendarClock className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Overdue Tasks</h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  {sortDirection === "asc" 
-                    ? <ArrowDownAZ className="h-4 w-4" /> 
-                    : <ArrowUpZA className="h-4 w-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
-                  Sort by Name (A-Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
-                  Sort by Name (Z-A)
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
-                  Sort by Due Date (Earliest)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
-                  Sort by Due Date (Latest)
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
-                  Sort by Project (A-Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
-                  Sort by Project (Z-A)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Layers className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setGroupBy(null)}>
-                  No Grouping
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setGroupBy("title")}>
-                  Group by Name
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy("project")}>
-                  Group by Project
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
-                  Group by Due Date
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Button 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center space-x-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-          </div>
-        </div>
-
+      <TooltipProvider>
         <div className="space-y-6">
-          {Object.keys(groupedTasks).length === 0 ? (
-            <div className="bg-muted/30 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No overdue tasks</h3>
-              <p className="text-muted-foreground mb-4">You have no tasks that are overdue.</p>
-              <Button onClick={() => setIsCreateTaskOpen(true)}>Add a Task</Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CalendarClock className="h-6 w-6" />
+              <h1 className="text-2xl font-bold">Overdue Tasks</h1>
             </div>
-          ) : (
-            Object.entries(groupedTasks).map(([group, groupTasks]) => (
-              <TaskList
-                key={group}
-                title={groupBy ? group : ""}
-                tasks={groupTasks}
-                isLoading={isLoading}
-                emptyMessage="No tasks in this group"
-                onComplete={handleComplete}
-                onDelete={handleDelete}
-                onFavoriteToggle={handleFavoriteToggle}
-              />
-            ))
-          )}
-        </div>
+            <div className="flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    {sortDirection === "asc" 
+                      ? <ArrowDownAZ className="h-4 w-4" /> 
+                      : <ArrowUpZA className="h-4 w-4" />}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
+                    Sort by Name (A-Z)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
+                    Sort by Name (Z-A)
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
+                    Sort by Due Date (Earliest)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
+                    Sort by Due Date (Latest)
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
+                    Sort by Project (A-Z)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
+                    Sort by Project (Z-A)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Layers className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setGroupBy(null)}>
+                    No Grouping
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setGroupBy("title")}>
+                    Group by Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy("project")}>
+                    Group by Project
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
+                    Group by Due Date
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                onClick={() => setIsCreateTaskOpen(true)}
+                className="flex items-center space-x-1"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Task</span>
+              </Button>
+            </div>
+          </div>
 
-        <CreateTaskDialog
-          open={isCreateTaskOpen}
-          onOpenChange={setIsCreateTaskOpen}
-        />
-      </div>
+          <div className="space-y-6">
+            {Object.keys(groupedTasks).length === 0 ? (
+              <div className="bg-muted/30 rounded-lg p-8 text-center">
+                <h3 className="text-lg font-medium mb-2">No overdue tasks</h3>
+                <p className="text-muted-foreground mb-4">You have no tasks that are overdue.</p>
+                <Button onClick={() => setIsCreateTaskOpen(true)}>Add a Task</Button>
+              </div>
+            ) : (
+              Object.entries(groupedTasks).map(([group, groupTasks]) => (
+                <TaskList
+                  key={group}
+                  title={groupBy ? group : ""}
+                  tasks={groupTasks}
+                  isLoading={isLoading}
+                  emptyMessage="No tasks in this group"
+                  onComplete={handleComplete}
+                  onDelete={handleDelete}
+                  onFavoriteToggle={handleFavoriteToggle}
+                />
+              ))
+            )}
+          </div>
+
+          <CreateTaskDialog
+            open={isCreateTaskOpen}
+            onOpenChange={setIsCreateTaskOpen}
+          />
+        </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }

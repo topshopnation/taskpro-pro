@@ -9,6 +9,7 @@ export function useTaskRealtime(user: { id: string } | null, fetchCallback: Fetc
   useEffect(() => {
     if (!user) return;
     
+    // Create a channel to listen for changes
     const channel = supabase
       .channel('completed-tasks-changes')
       .on('postgres_changes', {
@@ -18,8 +19,8 @@ export function useTaskRealtime(user: { id: string } | null, fetchCallback: Fetc
         filter: `user_id=eq.${user.id}`,
       }, () => {
         try {
-          // Call the callback without awaiting to prevent blocking the handler
-          // The callback can still be async and return a Promise
+          // Call the callback but don't await it here
+          // This avoids blocking the real-time handler
           fetchCallback();
         } catch (error) {
           console.error("Error executing task callback:", error);
