@@ -17,8 +17,9 @@ interface TaskSortControlsProps {
   setSortDirection: (value: SortDirection) => void
   groupBy: string | null
   setGroupBy: (value: string | null) => void
-  onAddTask: () => void
+  onAddTask?: () => void
   showProjectSort?: boolean
+  hideAddTaskButton?: boolean
 }
 
 export function TaskSortControls({
@@ -29,14 +30,15 @@ export function TaskSortControls({
   groupBy,
   setGroupBy,
   onAddTask,
-  showProjectSort = false
+  showProjectSort = false,
+  hideAddTaskButton = false
 }: TaskSortControlsProps) {
   return (
     <div className="flex items-center space-x-2">
       {/* Sort Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="h-9 w-9">
             {sortDirection === "asc" 
               ? <ArrowDownAZ className="h-4 w-4" /> 
               : <ArrowUpZA className="h-4 w-4" />}
@@ -73,7 +75,7 @@ export function TaskSortControls({
       {/* Group Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="h-9 w-9">
             <Layers className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -96,13 +98,16 @@ export function TaskSortControls({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Button 
-        onClick={onAddTask}
-        className="flex items-center space-x-1"
-      >
-        <Plus className="h-4 w-4" />
-        <span>Add Task</span>
-      </Button>
+      {!hideAddTaskButton && onAddTask && (
+        <Button 
+          onClick={onAddTask}
+          className="flex items-center space-x-1 h-9"
+          size="sm"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Task</span>
+        </Button>
+      )}
     </div>
   )
 }

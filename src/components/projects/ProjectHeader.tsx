@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IconPicker } from "@/components/ui/color-picker";
@@ -37,7 +36,7 @@ export function ProjectHeader({
   ];
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{name}</h1>
@@ -61,7 +60,7 @@ export function ProjectHeader({
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="h-9 w-9">
                 <Palette className="h-4 w-4" style={color ? { color } : undefined} />
               </Button>
             </DropdownMenuTrigger>
@@ -76,7 +75,7 @@ export function ProjectHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button variant="outline" size="icon" onClick={onRenameClick}>
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={onRenameClick}>
             <Pencil className="h-4 w-4" />
             <span className="sr-only">Rename</span>
           </Button>
@@ -84,7 +83,7 @@ export function ProjectHeader({
             variant="outline"
             size="icon"
             onClick={onDeleteClick}
-            className="text-destructive"
+            className="text-destructive h-9 w-9"
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete</span>

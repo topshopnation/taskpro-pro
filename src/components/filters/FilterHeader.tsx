@@ -7,7 +7,6 @@ import { isStandardFilter } from "@/utils/filterUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IconPicker } from "@/components/ui/color-picker";
@@ -36,7 +35,7 @@ export function FilterHeader({
   ];
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{filter.name}</h1>
@@ -62,7 +61,7 @@ export function FilterHeader({
           {!isStandard && onColorChange && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="h-9 w-9">
                   <Palette 
                     className="h-4 w-4" 
                     style={filter.color ? { color: filter.color } : undefined} 
@@ -86,6 +85,7 @@ export function FilterHeader({
             size="icon"
             onClick={onRenameClick}
             disabled={isStandard}
+            className="h-9 w-9"
           >
             <Pencil className="h-4 w-4" />
             <span className="sr-only">Rename</span>
@@ -94,7 +94,7 @@ export function FilterHeader({
             variant="outline"
             size="icon"
             onClick={onDeleteClick}
-            className="text-destructive"
+            className="text-destructive h-9 w-9"
             disabled={isStandard}
           >
             <Trash2 className="h-4 w-4" />

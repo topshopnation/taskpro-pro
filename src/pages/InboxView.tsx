@@ -8,7 +8,6 @@ import { Inbox } from "lucide-react"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
-import { TaskList } from "@/components/tasks/TaskList"
 
 export default function InboxView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -25,8 +24,8 @@ export default function InboxView() {
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Inbox className="h-6 w-6" />
+          <div className="flex items-center gap-2">
+            <Inbox className="h-5 w-5" />
             <h1 className="text-2xl font-bold">Inbox</h1>
           </div>
           

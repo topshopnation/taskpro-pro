@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { AppLayout } from "@/components/layout/AppLayout"
@@ -86,6 +87,7 @@ export default function ProjectView() {
             groupBy={groupBy}
             setGroupBy={setGroupBy}
             onAddTask={() => setIsCreateTaskOpen(true)}
+            hideAddTaskButton={true}
           />
         </div>
 

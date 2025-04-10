@@ -12,7 +12,6 @@ import { TaskFormValues, ProjectOption } from "@/components/tasks/taskTypes"
 import { TaskPrioritySelector } from "@/components/tasks/TaskPrioritySelector"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { TagInput } from "@/components/tasks/TagInput"
-import { Button } from "@/components/ui/button"
 import { useEffect } from "react"
 
 interface TaskFormContentProps {
@@ -129,3 +128,7 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
     </div>
   )
 }
+
+// Add the Button import at the top
+import { Button } from "@/components/ui/button"
+
