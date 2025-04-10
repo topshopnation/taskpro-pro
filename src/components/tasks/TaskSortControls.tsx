@@ -18,6 +18,7 @@ interface TaskSortControlsProps {
   groupBy: string | null
   setGroupBy: (value: string | null) => void
   onAddTask: () => void
+  showProjectSort?: boolean
 }
 
 export function TaskSortControls({
@@ -27,7 +28,8 @@ export function TaskSortControls({
   setSortDirection,
   groupBy,
   setGroupBy,
-  onAddTask
+  onAddTask,
+  showProjectSort = false
 }: TaskSortControlsProps) {
   return (
     <div className="flex items-center space-x-2">
@@ -54,6 +56,17 @@ export function TaskSortControls({
           <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
             Sort by Due Date (Latest)
           </DropdownMenuItem>
+          {showProjectSort && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
+                Sort by Project (A-Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
+                Sort by Project (Z-A)
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       
@@ -75,6 +88,11 @@ export function TaskSortControls({
           <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
             Group by Due Date
           </DropdownMenuItem>
+          {showProjectSort && (
+            <DropdownMenuItem onClick={() => setGroupBy("project")}>
+              Group by Project
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       

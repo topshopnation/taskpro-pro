@@ -19,6 +19,12 @@ export const sortTasks = (tasksToSort: Task[], sortBy: string, sortDirection: So
       return sortDirection === "asc" 
         ? a.dueDate.getTime() - b.dueDate.getTime()
         : b.dueDate.getTime() - a.dueDate.getTime()
+    } else if (sortBy === "project") {
+      const projectA = a.projectId || "none"
+      const projectB = b.projectId || "none"
+      return sortDirection === "asc" 
+        ? projectA.localeCompare(projectB)
+        : projectB.localeCompare(projectA)
     }
     return 0
   })
@@ -39,6 +45,8 @@ export const groupTasks = (tasksToGroup: Task[], groupBy: string | null, sortBy:
       groupKey = task.dueDate 
         ? format(task.dueDate, 'PPP') 
         : "No Due Date"
+    } else if (groupBy === "project") {
+      groupKey = task.projectId || "No Project"
     }
     
     if (!grouped[groupKey]) {
