@@ -1,67 +1,73 @@
 
-import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
-import { Task } from "@/components/tasks/TaskItem"
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { queryClient } from "@/lib/react-query";
 
 export function useTaskOperations() {
-  const handleComplete = async (taskId: string, completed: boolean) => {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const completeTask = async (taskId: string, completed: boolean) => {
+    setIsLoading(true);
     try {
       const { error } = await supabase
         .from('tasks')
         .update({ completed })
-        .eq('id', taskId)
+        .eq('id', taskId);
         
-      if (error) throw error
+      if (error) throw error;
       
-      toast.success(completed ? "Task completed" : "Task uncompleted")
-      return true
+      // Invalidate all task queries to ensure all components get fresh data
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+      
+      toast.success(completed ? "Task completed" : "Task marked incomplete");
+      return true;
     } catch (error: any) {
       toast.error("Failed to update task", {
         description: error.message
-      })
-      return false
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }
-
-  const handleDelete = async (taskId: string) => {
+  };
+  
+  const deleteTask = async (taskId: string) => {
+    setIsLoading(true);
     try {
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', taskId)
+        .eq('id', taskId);
         
-      if (error) throw error
+      if (error) throw error;
       
-      toast.success("Task deleted")
-      return true
+      // Invalidate all task queries
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+      
+      toast.success("Task deleted");
+      return true;
     } catch (error: any) {
       toast.error("Failed to delete task", {
         description: error.message
-      })
-      return false
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }
-
-  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ favorite })
-        .eq('id', taskId)
-        
-      if (error) throw error
-      return true
-    } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      })
-      return false
-    }
-  }
+  };
   
   return {
-    handleComplete,
-    handleDelete,
-    handleFavoriteToggle
-  }
+    isLoading,
+    completeTask,
+    deleteTask
+  };
 }

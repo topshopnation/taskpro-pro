@@ -16,8 +16,13 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     
     // Redirect logic for authenticated users
     if (user && (isAuthPage || isHomePage)) {
-      console.log("User authenticated, redirecting to dashboard from auth/home page");
-      navigate('/dashboard');
+      console.log("User authenticated, redirecting to today page from auth/home page");
+      navigate('/today');
+    }
+    
+    // Redirect dashboard to today
+    if (user && location.pathname === '/dashboard') {
+      navigate('/today');
     }
     
     // Redirect logic for unauthenticated users - only for protected routes

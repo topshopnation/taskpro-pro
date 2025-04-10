@@ -2,10 +2,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
-import Dashboard from "./pages/Dashboard";
+import Stats from "./pages/Stats";
 import ProjectView from "./pages/ProjectView";
 import FilterView from "./pages/FilterView";
 import InboxView from "./pages/InboxView";
@@ -18,17 +18,8 @@ import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./providers/auth-provider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
-
-// Configure the query client with proper error handling
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+import CompletedTasks from "./pages/CompletedTasks";
+import { queryClient } from "./lib/react-query";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -45,13 +36,15 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               
               {/* Protected Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<Navigate to="/today" replace />} />
+              <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
               <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
               <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
               
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
