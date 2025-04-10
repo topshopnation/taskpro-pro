@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -141,15 +142,21 @@ export default function OverdueView() {
   }
 
   const handleReschedule = async () => {
-    if (!rescheduleDate || selectedTasks.length === 0) {
-      toast.error("Please select a date and at least one task")
+    if (!rescheduleDate) {
+      toast.error("Please select a date")
       return
     }
     
     try {
       const formattedDate = format(rescheduleDate, 'yyyy-MM-dd')
+      const taskIds = tasks.map(task => task.id)
       
-      for (const taskId of selectedTasks) {
+      if (taskIds.length === 0) {
+        toast.error("No overdue tasks to reschedule")
+        return
+      }
+      
+      for (const taskId of taskIds) {
         const { error } = await supabase
           .from('tasks')
           .update({ due_date: `${formattedDate}T12:00:00` })
@@ -158,8 +165,7 @@ export default function OverdueView() {
         if (error) throw error
       }
       
-      toast.success(`Rescheduled ${selectedTasks.length} tasks to ${format(rescheduleDate, 'PPP')}`)
-      setSelectedTasks([])
+      toast.success(`Rescheduled ${taskIds.length} tasks to ${format(rescheduleDate, 'PPP')}`)
       setIsRescheduleOpen(false)
       setRescheduleDate(undefined)
       refetch()
@@ -168,6 +174,14 @@ export default function OverdueView() {
         description: error.message
       })
     }
+  }
+
+  const handleRescheduleAllClick = () => {
+    // Set a default date (tomorrow)
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    setRescheduleDate(tomorrow)
+    setIsRescheduleOpen(true)
   }
 
   const sortTasks = (tasksToSort: Task[]) => {
@@ -239,12 +253,13 @@ export default function OverdueView() {
           <div className="flex items-center space-x-2">
             <Button 
               variant="outline" 
-              size="icon"
-              onClick={() => setIsRescheduleOpen(true)}
-              disabled={selectedTasks.length === 0}
-              className={selectedTasks.length > 0 ? "bg-primary/10" : ""}
+              size="sm"
+              onClick={handleRescheduleAllClick}
+              className="flex items-center space-x-1"
+              disabled={tasks.length === 0}
             >
               <CalendarRange className="h-4 w-4" />
+              <span>Reschedule All</span>
             </Button>
             
             <DropdownMenu>
@@ -301,14 +316,6 @@ export default function OverdueView() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            <Button 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center space-x-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
           </div>
         </div>
 
@@ -330,6 +337,7 @@ export default function OverdueView() {
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onFavoriteToggle={handleFavoriteToggle}
+                hideTitle={!groupBy}
               />
             ))
           )}
@@ -343,7 +351,7 @@ export default function OverdueView() {
         <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Reschedule Tasks</DialogTitle>
+              <DialogTitle>Reschedule All Overdue Tasks</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="flex justify-center">
@@ -352,11 +360,11 @@ export default function OverdueView() {
                   selected={rescheduleDate}
                   onSelect={setRescheduleDate}
                   disabled={(date) => date < new Date()}
-                  className="rounded-md border"
+                  className="rounded-md border pointer-events-auto"
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                {selectedTasks.length} {selectedTasks.length === 1 ? "task" : "tasks"} selected
+                {tasks.length} {tasks.length === 1 ? "task" : "tasks"} will be rescheduled
               </p>
             </div>
             <DialogFooter>
@@ -365,9 +373,9 @@ export default function OverdueView() {
               </Button>
               <Button 
                 onClick={handleReschedule} 
-                disabled={!rescheduleDate || selectedTasks.length === 0}
+                disabled={!rescheduleDate || tasks.length === 0}
               >
-                Reschedule
+                Reschedule All
               </Button>
             </DialogFooter>
           </DialogContent>

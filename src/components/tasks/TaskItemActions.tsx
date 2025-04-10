@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,12 +12,13 @@ import { EditTaskDialog } from "./EditTaskDialog"
 import { Task } from "./TaskItem"
 
 interface TaskItemActionsProps {
-  task: Task
-  onDeleteClick: () => void
-  isUpdating: boolean
+  task: Task;
+  onDeleteClick: () => void;
+  isUpdating: boolean;
+  onFavoriteToggle?: (taskId: string, favorite: boolean) => void;
 }
 
-export function TaskItemActions({ task, onDeleteClick, isUpdating }: TaskItemActionsProps) {
+export function TaskItemActions({ task, onDeleteClick, isUpdating, onFavoriteToggle }: TaskItemActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   return (
