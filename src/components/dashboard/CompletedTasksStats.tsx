@@ -1,191 +1,193 @@
 
-import { useMemo } from "react";
-import { Task } from "@/components/tasks/TaskItem";
-import { format, subDays, subMonths, subYears, isWithinInterval } from "date-fns";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { format, subDays, subMonths, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 interface CompletedTasksStatsProps {
-  tasks: Task[];
+  period: 'week' | 'month' | 'year';
 }
 
-export function CompletedTasksStats({ tasks }: CompletedTasksStatsProps) {
-  // Filter tasks to only include completed ones
-  const completedTasks = tasks.filter(task => task.completed);
-  
-  // Prepare data for different time periods
-  const weeklyData = useMemo(() => {
-    const today = new Date();
-    const weekAgo = subDays(today, 7);
+export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  const getPeriodBounds = () => {
+    const now = new Date();
     
-    // Initialize data for each of the last 7 days
-    const data = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(today, i);
-      return {
-        date: format(date, 'EEE'),
-        count: 0,
-        fullDate: date
-      };
-    }).reverse();
-    
-    // Count tasks completed on each day
-    completedTasks.forEach(task => {
-      if (task.dueDate && isWithinInterval(task.dueDate, { start: weekAgo, end: today })) {
-        const taskDate = format(task.dueDate, 'EEE');
-        const dataPoint = data.find(d => d.date === taskDate);
-        if (dataPoint) {
-          dataPoint.count += 1;
-        }
-      }
-    });
-    
-    return data;
-  }, [completedTasks]);
-  
-  const monthlyData = useMemo(() => {
-    const today = new Date();
-    const monthAgo = subDays(today, 30);
-    
-    // Group by week
-    const data = [
-      { date: 'Week 1', count: 0 },
-      { date: 'Week 2', count: 0 },
-      { date: 'Week 3', count: 0 },
-      { date: 'Week 4', count: 0 },
-    ];
-    
-    // Count tasks completed in each week
-    completedTasks.forEach(task => {
-      if (task.dueDate && isWithinInterval(task.dueDate, { start: monthAgo, end: today })) {
-        const daysAgo = Math.floor((today.getTime() - task.dueDate.getTime()) / (1000 * 60 * 60 * 24));
-        const weekIndex = Math.min(Math.floor(daysAgo / 7), 3);
-        data[weekIndex].count += 1;
-      }
-    });
-    
-    return data;
-  }, [completedTasks]);
-  
-  const yearlyData = useMemo(() => {
-    const today = new Date();
-    const yearAgo = subYears(today, 1);
-    
-    // Group by month
-    const data = Array.from({ length: 12 }, (_, i) => {
-      const date = subMonths(today, i);
-      return {
-        date: format(date, 'MMM'),
-        count: 0,
-      };
-    }).reverse();
-    
-    // Count tasks completed in each month
-    completedTasks.forEach(task => {
-      if (task.dueDate && isWithinInterval(task.dueDate, { start: yearAgo, end: today })) {
-        const taskMonth = format(task.dueDate, 'MMM');
-        const dataPoint = data.find(d => d.date === taskMonth);
-        if (dataPoint) {
-          dataPoint.count += 1;
-        }
-      }
-    });
-    
-    return data;
-  }, [completedTasks]);
-  
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Completed Tasks</h2>
+    switch (period) {
+      case 'week':
+        return {
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: endOfWeek(now, { weekStartsOn: 1 }),
+          format: 'EEE', // Mon, Tue, etc.
+          days: 7
+        };
+      case 'month':
+        return {
+          start: startOfMonth(now),
+          end: endOfMonth(now),
+          format: 'd MMM', // 1 Jan, 2 Jan, etc.
+          days: 30
+        };
+      case 'year':
+        return {
+          start: startOfYear(now),
+          end: endOfYear(now),
+          format: 'MMM', // Jan, Feb, etc.
+          days: 12
+        };
+    }
+  };
+
+  useEffect(() => {
+    const fetchCompletedTasks = async () => {
+      if (!user) return;
       
-      <Tabs defaultValue="week" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="week">Last Week</TabsTrigger>
-          <TabsTrigger value="month">Last Month</TabsTrigger>
-          <TabsTrigger value="year">Last Year</TabsTrigger>
-        </TabsList>
+      setIsLoading(true);
+      
+      try {
+        const periodBounds = getPeriodBounds();
         
-        <TabsContent value="week" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Tasks (Last 7 Days)</CardTitle>
-              <CardDescription>
-                Number of tasks completed each day over the past week
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip
-                      formatter={(value) => [`${value} tasks`, 'Completed']}
-                      labelFormatter={(label) => `Day: ${label}`}
-                    />
-                    <Bar dataKey="count" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('completed_at')
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .gte('completed_at', periodBounds.start.toISOString())
+          .lte('completed_at', periodBounds.end.toISOString());
+          
+        if (error) throw error;
         
-        <TabsContent value="month" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Tasks (Last 30 Days)</CardTitle>
-              <CardDescription>
-                Number of tasks completed each week over the past month
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip
-                      formatter={(value) => [`${value} tasks`, 'Completed']}
-                      labelFormatter={(label) => `${label}`}
-                    />
-                    <Bar dataKey="count" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        // Process data for visualization based on period
+        let processedData: any[] = [];
         
-        <TabsContent value="year" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Tasks (Last Year)</CardTitle>
-              <CardDescription>
-                Number of tasks completed each month over the past year
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={yearlyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip
-                      formatter={(value) => [`${value} tasks`, 'Completed']}
-                      labelFormatter={(label) => `Month: ${label}`}
-                    />
-                    <Bar dataKey="count" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        if (period === 'week') {
+          // Group by day of week
+          const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
+            const day = new Date();
+            day.setDate(day.getDate() - day.getDay() + i + (i === 0 ? -6 : 1)); // Start from Monday
+            return {
+              name: format(day, 'EEE'),
+              date: format(day, 'yyyy-MM-dd'),
+              count: 0
+            };
+          });
+          
+          // Count tasks completed on each day
+          tasks?.forEach(task => {
+            const completedDate = format(new Date(task.completed_at), 'yyyy-MM-dd');
+            const dayIndex = daysOfWeek.findIndex(day => day.date === completedDate);
+            if (dayIndex !== -1) {
+              daysOfWeek[dayIndex].count++;
+            }
+          });
+          
+          processedData = daysOfWeek;
+        } else if (period === 'month') {
+          // Group by week or days depending on the current month
+          const today = new Date();
+          const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+          
+          const daysData = Array.from({ length: daysInMonth }, (_, i) => {
+            const day = new Date(today.getFullYear(), today.getMonth(), i + 1);
+            return {
+              name: format(day, 'd'),
+              date: format(day, 'yyyy-MM-dd'),
+              count: 0
+            };
+          });
+          
+          tasks?.forEach(task => {
+            const completedDate = format(new Date(task.completed_at), 'yyyy-MM-dd');
+            const dayIndex = daysData.findIndex(day => day.date === completedDate);
+            if (dayIndex !== -1) {
+              daysData[dayIndex].count++;
+            }
+          });
+          
+          // Group by weeks for better visualization
+          const weeksData = [];
+          for (let i = 0; i < daysInMonth; i += 7) {
+            const week = daysData.slice(i, i + 7);
+            const weekTotal = week.reduce((sum, day) => sum + day.count, 0);
+            const startDay = i + 1;
+            const endDay = Math.min(i + 7, daysInMonth);
+            weeksData.push({
+              name: `${startDay}-${endDay}`,
+              count: weekTotal
+            });
+          }
+          
+          processedData = weeksData;
+        } else if (period === 'year') {
+          // Group by month
+          const monthsData = Array.from({ length: 12 }, (_, i) => {
+            const month = new Date(new Date().getFullYear(), i, 1);
+            return {
+              name: format(month, 'MMM'),
+              month: i,
+              count: 0
+            };
+          });
+          
+          tasks?.forEach(task => {
+            const completedMonth = new Date(task.completed_at).getMonth();
+            monthsData[completedMonth].count++;
+          });
+          
+          processedData = monthsData;
+        }
+        
+        setData(processedData);
+      } catch (error) {
+        console.error('Error fetching completed tasks stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCompletedTasks();
+  }, [user, period]);
+
+  const getChartTitle = () => {
+    switch (period) {
+      case 'week':
+        return 'Tasks Completed This Week';
+      case 'month':
+        return 'Tasks Completed This Month';
+      case 'year':
+        return 'Tasks Completed This Year';
+    }
+  };
+
+  return (
+    <Card className="col-span-3">
+      <CardHeader>
+        <CardTitle>{getChartTitle()}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-[300px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" name="Completed Tasks" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -10,9 +10,12 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { sortTasks } from "@/utils/taskSortUtils";
 import { Task } from "@/components/tasks/TaskItem";
 import { BarChart2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompletedTasksStats } from "@/components/dashboard/CompletedTasksStats";
 
 export default function Stats() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [completedPeriod, setCompletedPeriod] = useState<'week' | 'month' | 'year'>('week');
   
   const { 
     tasks,
@@ -53,14 +56,37 @@ export default function Stats() {
           favoritesCount={0}
         />
 
-        <DashboardTabs
-          todayTasks={sortedTodayTasks}
-          favoriteTasks={sortedFavoriteTasks}
-          highPriorityTasks={sortedHighPriorityTasks}
-          allTasks={sortedAllTasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-        />
+        <Tabs defaultValue="tasks">
+          <TabsList>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks">
+            <DashboardTabs
+              todayTasks={sortedTodayTasks}
+              favoriteTasks={sortedFavoriteTasks}
+              highPriorityTasks={sortedHighPriorityTasks}
+              allTasks={sortedAllTasks}
+              onComplete={handleComplete}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+          
+          <TabsContent value="completed">
+            <div className="space-y-4">
+              <Tabs defaultValue="week" className="w-full" onValueChange={(value) => setCompletedPeriod(value as any)}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="week">This Week</TabsTrigger>
+                  <TabsTrigger value="month">This Month</TabsTrigger>
+                  <TabsTrigger value="year">This Year</TabsTrigger>
+                </TabsList>
+                
+                <CompletedTasksStats period={completedPeriod} />
+              </Tabs>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <CreateTaskDialog
           open={isCreateTaskOpen}

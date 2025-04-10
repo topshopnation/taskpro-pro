@@ -13,6 +13,7 @@ import { TaskPrioritySelector } from "@/components/tasks/TaskPrioritySelector"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { TagInput } from "@/components/tasks/TagInput"
 import { useEffect } from "react"
+import { Button } from "@/components/ui/button"
 
 interface TaskFormContentProps {
   values: TaskFormValues;
@@ -161,22 +162,38 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
           onValueChange={(value) => onChange({ project: value })}
         >
           <SelectTrigger id="project">
-            <SelectValue placeholder="Select a project" />
+            <SelectValue placeholder="Select a project">
+              {values.project === "inbox" ? (
+                <div className="flex items-center gap-2">
+                  <span>Inbox</span>
+                </div>
+              ) : projects?.find(p => p.id === values.project) ? (
+                <div className="flex items-center gap-2">
+                  {projects.find(p => p.id === values.project)?.color && (
+                    <Circle className="h-3 w-3 fill-current" style={{ color: projects.find(p => p.id === values.project)?.color }} />
+                  )}
+                  <span>{projects.find(p => p.id === values.project)?.name}</span>
+                </div>
+              ) : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="inbox" className="flex items-center gap-2">
-              <span>Inbox</span>
+              <div className="flex items-center gap-2">
+                <span>Inbox</span>
+              </div>
             </SelectItem>
             {projects && projects.map((project) => (
               <SelectItem 
                 key={project.id} 
                 value={project.id}
-                className="flex items-center gap-2"
               >
-                {project.color && (
-                  <Circle className="h-3 w-3 fill-current text-transparent" style={{ color: project.color }} />
-                )}
-                <span>{project.name}</span>
+                <div className="flex items-center gap-2">
+                  {project.color && (
+                    <Circle className="h-3 w-3 fill-current" style={{ color: project.color }} />
+                  )}
+                  <span>{project.name}</span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
@@ -193,6 +210,3 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
     </div>
   )
 }
-
-// Add the Button import at the top
-import { Button } from "@/components/ui/button"

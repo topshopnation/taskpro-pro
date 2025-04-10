@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom" 
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useProject } from "@/hooks/useProject"
 import { ProjectHeader } from "@/components/projects/ProjectHeader"
@@ -11,13 +11,13 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
-import { IconPicker } from "@/components/ui/color-picker"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [sortBy, setSortBy] = useState<string>("title")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const {
     id,
@@ -68,6 +68,12 @@ export default function ProjectView() {
     "#7950F2", "#9775FA", "#C77DFF", "#E77FF3", "#F26ABC", 
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
+
+  // Modified to redirect to Today page instead of Home
+  const handleProjectDeleteWithRedirect = async () => {
+    await handleProjectDelete();
+    navigate('/today');
+  };
 
   return (
     <AppLayout>
@@ -133,9 +139,9 @@ export default function ProjectView() {
           setProjectColor={setProjectColor}
           projectColors={projectColors}
           handleProjectRename={handleProjectRename}
-          handleProjectDelete={handleProjectDelete}
+          handleProjectDelete={handleProjectDeleteWithRedirect}
         />
       </div>
     </AppLayout>
-  )
+  );
 }
