@@ -15,17 +15,6 @@ export default function CompletedTasks() {
     handleDelete
   } = useCompletedTasks(timeFilter);
 
-  const getProjectName = (projectId: string): string => {
-    // In a real app, you'd fetch this from the database
-    const projectNames: Record<string, string> = {
-      "inbox": "Inbox",
-      "work": "Work",
-      "personal": "Personal",
-      "none": "No Project"
-    }
-    return projectNames[projectId] || projectId;
-  }
-
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -41,7 +30,6 @@ export default function CompletedTasks() {
         ) : (
           <TasksByProject
             tasksByProject={tasksByProject}
-            getProjectName={getProjectName}
             onComplete={handleComplete}
             onDelete={handleDelete}
           />

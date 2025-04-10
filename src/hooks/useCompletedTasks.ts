@@ -20,7 +20,7 @@ export function useCompletedTasks(timeFilter: string = "all") {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, projects(name, color)')
         .eq('user_id', user.id)
         .eq('completed', true);
         
@@ -33,6 +33,8 @@ export function useCompletedTasks(timeFilter: string = "all") {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
+        projectName: task.projects?.name || 'No Project',
+        projectColor: task.projects?.color,
         completed: task.completed || false,
         favorite: task.favorite || false
       }));
