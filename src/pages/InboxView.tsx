@@ -23,7 +23,7 @@ export default function InboxView() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const { user } = useAuth()
-  const { tasks, isLoading, handleComplete, handleDelete, handleFavoriteToggle } = useInboxTasks()
+  const { tasks, isLoading, handleComplete, handleDelete } = useInboxTasks()
 
   // Sort and group functions
   const sortTasks = (tasksToSort: Task[]) => {
@@ -163,7 +163,6 @@ export default function InboxView() {
                 emptyMessage="No tasks in this group"
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onFavoriteToggle={handleFavoriteToggle}
               />
             ))
           )}

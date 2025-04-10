@@ -12,8 +12,7 @@ export default function CompletedTasks() {
     tasksByProject, 
     isLoading, 
     handleComplete, 
-    handleDelete, 
-    handleFavoriteToggle 
+    handleDelete
   } = useCompletedTasks(timeFilter)
 
   const getProjectName = (projectId: string): string => {
@@ -45,7 +44,6 @@ export default function CompletedTasks() {
             getProjectName={getProjectName}
             onComplete={handleComplete}
             onDelete={handleDelete}
-            onFavoriteToggle={handleFavoriteToggle}
           />
         )}
       </div>

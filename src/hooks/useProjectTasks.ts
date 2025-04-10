@@ -8,7 +8,6 @@ import { Task } from "@/components/tasks/TaskItem"
 
 export function useProjectTasks(projectId?: string) {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [sections, setSections] = useState<{id: string, name: string}[]>([])
   const { user } = useAuth()
 
   // Fetch project tasks
@@ -31,7 +30,6 @@ export function useProjectTasks(projectId?: string) {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
       }))
@@ -57,29 +55,6 @@ export function useProjectTasks(projectId?: string) {
     }
   }, [projectTasks])
   
-  // Generate sections from tasks
-  useEffect(() => {
-    if (tasks.length > 0) {
-      const uniqueSections = Array.from(
-        new Set(tasks.filter(task => task.section).map(task => task.section))
-      ).map(sectionId => {
-        // Use section name from task or default to section ID
-        const sectionNames: Record<string, string> = {
-          'todo': 'To Do',
-          'inprogress': 'In Progress',
-          'done': 'Done'
-        }
-        
-        return {
-          id: sectionId as string,
-          name: sectionNames[sectionId as string] || sectionId as string
-        }
-      })
-      
-      setSections(uniqueSections)
-    }
-  }, [tasks])
-  
   // Subscribe to real-time updates
   useEffect(() => {
     if (!user || !projectId) return
@@ -103,13 +78,8 @@ export function useProjectTasks(projectId?: string) {
     }
   }, [user, projectId])
 
-  // Get tasks for each section
-  const getSectionTasks = (sectionId: string) => {
-    return tasks.filter(task => task.section === sectionId && !task.completed)
-  }
-  
   // Get tasks without sections
-  const unsectionedTasks = tasks.filter(task => !task.section && !task.completed)
+  const unsectionedTasks = tasks.filter(task => !task.completed)
 
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
@@ -152,60 +122,11 @@ export function useProjectTasks(projectId?: string) {
     }
   }
 
-  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ favorite })
-        .eq('id', taskId)
-        
-      if (error) throw error
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, favorite } : task
-        )
-      )
-    } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      })
-    }
-  }
-
-  const handleSectionChange = async (taskId: string, sectionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ section: sectionId })
-        .eq('id', taskId)
-        
-      if (error) throw error
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, section: sectionId } : task
-        )
-      )
-      toast.success("Task moved to section")
-    } catch (error: any) {
-      toast.error("Failed to move task", {
-        description: error.message
-      })
-    }
-  }
-
   return {
     tasks,
-    sections,
     isLoadingTasks,
     unsectionedTasks,
-    getSectionTasks,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle,
-    handleSectionChange
+    handleDelete
   }
 }
