@@ -64,7 +64,7 @@ export function DashboardTabs({
         <DashboardCharts tasks={allTasks} />
       </TabsContent>
       <TabsContent value="completed">
-        <CompletedTasksStats tasks={allTasks} />
+        <CompletedTasksStats />
       </TabsContent>
     </Tabs>
   );

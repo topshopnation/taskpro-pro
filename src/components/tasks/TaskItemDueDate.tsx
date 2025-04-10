@@ -1,13 +1,14 @@
 
-import { format, addDays, nextSaturday, nextMonday, isSameDay } from "date-fns"
+import { format, addDays, nextSaturday, nextMonday, isSameDay, addMonths } from "date-fns"
 import { Calendar as CalendarIcon, Sun, Sofa, ArrowRight, Clock, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
+import { useMediaQuery } from "@/hooks/use-mobile"
 
 interface TaskItemDueDateProps {
   dueDate?: Date
@@ -19,6 +20,13 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const isOverdue = dueDate && new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0))
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [timeInput, setTimeInput] = useState<string>(dueDate ? format(dueDate, "HH:mm") : "")
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const [showTwoMonths, setShowTwoMonths] = useState(!isMobile)
+  
+  // Update showTwoMonths when screen size changes
+  useEffect(() => {
+    setShowTwoMonths(!isMobile)
+  }, [isMobile])
   
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -72,6 +80,9 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       onDateChange(dateWithTime);
     }
   };
+  
+  // Calculate the next month for the second calendar
+  const nextMonthDate = addMonths(currentMonth, 1);
   
   return (
     <Popover>
@@ -176,7 +187,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setCurrentMonth(addDays(currentMonth, -30))}
+                onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
                 className="h-7 w-7 p-0"
               >
                 &lt;
@@ -184,27 +195,43 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               
               <div className="text-sm font-medium">
                 {format(currentMonth, "MMMM yyyy")}
+                {showTwoMonths && (
+                  <span className="hidden md:inline"> - {format(nextMonthDate, "MMMM yyyy")}</span>
+                )}
               </div>
               
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setCurrentMonth(addDays(currentMonth, 30))}
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 className="h-7 w-7 p-0"
               >
                 &gt;
               </Button>
             </div>
             
-            <CalendarComponent
-              mode="single" 
-              selected={dueDate}
-              onSelect={handleDateTimeSelection}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
+            <div className="flex flex-col md:flex-row gap-0 md:gap-2">
+              <CalendarComponent
+                mode="single" 
+                selected={dueDate}
+                onSelect={handleDateTimeSelection}
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+              
+              {showTwoMonths && (
+                <CalendarComponent
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={handleDateTimeSelection}
+                  month={nextMonthDate}
+                  onMonthChange={(month) => setCurrentMonth(addMonths(month, -1))}
+                  className={cn("p-3 pointer-events-auto hidden md:block")}
+                />
+              )}
+            </div>
           </div>
           
           {dueDate && (

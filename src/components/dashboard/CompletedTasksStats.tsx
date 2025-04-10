@@ -6,20 +6,22 @@ import { useAuth } from "@/hooks/use-auth";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, subDays, subMonths, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CompletedTasksStatsProps {
-  period: 'week' | 'month' | 'year';
+  period?: 'week' | 'month' | 'year';
 }
 
-export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
+export function CompletedTasksStats({ period = 'week' }: CompletedTasksStatsProps) {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>(period);
   const { user } = useAuth();
 
   const getPeriodBounds = () => {
     const now = new Date();
     
-    switch (period) {
+    switch (selectedPeriod) {
       case 'week':
         return {
           start: startOfWeek(now, { weekStartsOn: 1 }),
@@ -55,18 +57,18 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
         
         const { data: tasks, error } = await supabase
           .from('tasks')
-          .select('completed_at')
+          .select('completed, completion_date')
           .eq('user_id', user.id)
           .eq('completed', true)
-          .gte('completed_at', periodBounds.start.toISOString())
-          .lte('completed_at', periodBounds.end.toISOString());
+          .gte('completion_date', periodBounds.start.toISOString())
+          .lte('completion_date', periodBounds.end.toISOString());
           
         if (error) throw error;
         
         // Process data for visualization based on period
         let processedData: any[] = [];
         
-        if (period === 'week') {
+        if (selectedPeriod === 'week') {
           // Group by day of week
           const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
             const day = new Date();
@@ -80,15 +82,17 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
           
           // Count tasks completed on each day
           tasks?.forEach(task => {
-            const completedDate = format(new Date(task.completed_at), 'yyyy-MM-dd');
-            const dayIndex = daysOfWeek.findIndex(day => day.date === completedDate);
-            if (dayIndex !== -1) {
-              daysOfWeek[dayIndex].count++;
+            if (task.completion_date) {
+              const completedDate = format(new Date(task.completion_date), 'yyyy-MM-dd');
+              const dayIndex = daysOfWeek.findIndex(day => day.date === completedDate);
+              if (dayIndex !== -1) {
+                daysOfWeek[dayIndex].count++;
+              }
             }
           });
           
           processedData = daysOfWeek;
-        } else if (period === 'month') {
+        } else if (selectedPeriod === 'month') {
           // Group by week or days depending on the current month
           const today = new Date();
           const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
@@ -103,10 +107,12 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
           });
           
           tasks?.forEach(task => {
-            const completedDate = format(new Date(task.completed_at), 'yyyy-MM-dd');
-            const dayIndex = daysData.findIndex(day => day.date === completedDate);
-            if (dayIndex !== -1) {
-              daysData[dayIndex].count++;
+            if (task.completion_date) {
+              const completedDate = format(new Date(task.completion_date), 'yyyy-MM-dd');
+              const dayIndex = daysData.findIndex(day => day.date === completedDate);
+              if (dayIndex !== -1) {
+                daysData[dayIndex].count++;
+              }
             }
           });
           
@@ -124,7 +130,7 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
           }
           
           processedData = weeksData;
-        } else if (period === 'year') {
+        } else if (selectedPeriod === 'year') {
           // Group by month
           const monthsData = Array.from({ length: 12 }, (_, i) => {
             const month = new Date(new Date().getFullYear(), i, 1);
@@ -136,8 +142,10 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
           });
           
           tasks?.forEach(task => {
-            const completedMonth = new Date(task.completed_at).getMonth();
-            monthsData[completedMonth].count++;
+            if (task.completion_date) {
+              const completedMonth = new Date(task.completion_date).getMonth();
+              monthsData[completedMonth].count++;
+            }
           });
           
           processedData = monthsData;
@@ -152,10 +160,10 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
     };
     
     fetchCompletedTasks();
-  }, [user, period]);
+  }, [user, selectedPeriod]);
 
   const getChartTitle = () => {
-    switch (period) {
+    switch (selectedPeriod) {
       case 'week':
         return 'Tasks Completed This Week';
       case 'month':
@@ -171,6 +179,18 @@ export function CompletedTasksStats({ period }: CompletedTasksStatsProps) {
         <CardTitle>{getChartTitle()}</CardTitle>
       </CardHeader>
       <CardContent>
+        <Tabs 
+          value={selectedPeriod} 
+          onValueChange={(value) => setSelectedPeriod(value as 'week' | 'month' | 'year')}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="week">Week</TabsTrigger>
+            <TabsTrigger value="month">Month</TabsTrigger>
+            <TabsTrigger value="year">Year</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
         {isLoading ? (
           <div className="flex justify-center items-center h-[300px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

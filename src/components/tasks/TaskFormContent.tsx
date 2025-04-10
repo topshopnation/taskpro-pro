@@ -165,12 +165,13 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
             <SelectValue placeholder="Select a project">
               {values.project === "inbox" ? (
                 <div className="flex items-center gap-2">
+                  <Circle className="h-3.5 w-3.5 mr-1.5" />
                   <span>Inbox</span>
                 </div>
               ) : projects?.find(p => p.id === values.project) ? (
                 <div className="flex items-center gap-2">
                   {projects.find(p => p.id === values.project)?.color && (
-                    <Circle className="h-3 w-3 fill-current" style={{ color: projects.find(p => p.id === values.project)?.color }} />
+                    <Circle className="h-3.5 w-3.5 fill-current mr-1.5" style={{ color: projects.find(p => p.id === values.project)?.color }} />
                   )}
                   <span>{projects.find(p => p.id === values.project)?.name}</span>
                 </div>
@@ -178,8 +179,9 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="inbox" className="flex items-center gap-2">
+            <SelectItem value="inbox">
               <div className="flex items-center gap-2">
+                <Circle className="h-3.5 w-3.5 mr-1.5" />
                 <span>Inbox</span>
               </div>
             </SelectItem>
@@ -187,10 +189,11 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
               <SelectItem 
                 key={project.id} 
                 value={project.id}
+                className="flex items-center gap-2"
               >
                 <div className="flex items-center gap-2">
                   {project.color && (
-                    <Circle className="h-3 w-3 fill-current" style={{ color: project.color }} />
+                    <Circle className="h-3.5 w-3.5 fill-current mr-1.5" style={{ color: project.color }} />
                   )}
                   <span>{project.name}</span>
                 </div>
