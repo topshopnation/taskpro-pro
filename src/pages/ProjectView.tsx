@@ -107,25 +107,23 @@ export default function ProjectView() {
           defaultProjectId={id}
         />
 
-        {isEditProjectOpen && (
-          <ProjectDialogs
-            projectId={id}
-            isCreateTaskOpen={isCreateTaskOpen}
-            setIsCreateTaskOpen={setIsCreateTaskOpen}
-            isEditProjectOpen={isEditProjectOpen}
-            setIsEditProjectOpen={setIsEditProjectOpen}
-            isDeleteProjectOpen={isDeleteProjectOpen}
-            setIsDeleteProjectOpen={setIsDeleteProjectOpen}
-            isCreateSectionOpen={false}
-            setIsCreateSectionOpen={() => {}}
-            newSectionName=""
-            setNewSectionName={() => {}}
-            newProjectName={newProjectName}
-            setNewProjectName={setNewProjectName}
-            handleProjectRename={handleProjectRename}
-            handleProjectDelete={handleProjectDelete}
-          />
-        )}
+        <ProjectDialogs
+          projectId={id}
+          isCreateTaskOpen={isCreateTaskOpen}
+          setIsCreateTaskOpen={setIsCreateTaskOpen}
+          isEditProjectOpen={isEditProjectOpen}
+          setIsEditProjectOpen={setIsEditProjectOpen}
+          isDeleteProjectOpen={isDeleteProjectOpen}
+          setIsDeleteProjectOpen={setIsDeleteProjectOpen}
+          isCreateSectionOpen={false}
+          setIsCreateSectionOpen={() => {}}
+          newSectionName=""
+          setNewSectionName={() => {}}
+          newProjectName={newProjectName}
+          setNewProjectName={setNewProjectName}
+          handleProjectRename={handleProjectRename}
+          handleProjectDelete={handleProjectDelete}
+        />
       </div>
     </AppLayout>
   )

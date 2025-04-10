@@ -42,6 +42,7 @@ export function FilterHeader({
             size="icon"
             className="h-8 w-8 flex items-center justify-center"
             onClick={onFavoriteToggle}
+            type="button"
           >
             <Star
               className={`h-5 w-5 ${
@@ -61,6 +62,7 @@ export function FilterHeader({
                 variant="outline" 
                 size="icon" 
                 className="h-9 w-9 flex items-center justify-center"
+                type="button"
               >
                 <Palette className="h-5 w-5" style={filter.color ? { color: filter.color } : undefined} />
               </Button>
@@ -81,6 +83,7 @@ export function FilterHeader({
             size="icon" 
             className="h-9 w-9 flex items-center justify-center" 
             onClick={onRenameClick}
+            type="button"
           >
             <Pencil className="h-5 w-5" />
             <span className="sr-only">Rename</span>
@@ -89,6 +92,7 @@ export function FilterHeader({
           <Button
             variant="outline"
             size="icon"
+            type="button"
             onClick={onDeleteClick}
             className="text-destructive h-9 w-9 flex items-center justify-center"
           >

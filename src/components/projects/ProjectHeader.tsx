@@ -80,6 +80,7 @@ export function ProjectHeader({
             size="icon" 
             className="h-9 w-9 flex items-center justify-center" 
             onClick={onRenameClick}
+            type="button"
           >
             <Pencil className="h-5 w-5" />
             <span className="sr-only">Rename</span>
@@ -88,6 +89,7 @@ export function ProjectHeader({
           <Button
             variant="outline"
             size="icon"
+            type="button"
             onClick={onDeleteClick}
             className="text-destructive h-9 w-9 flex items-center justify-center"
           >

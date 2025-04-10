@@ -45,8 +45,9 @@ export default function FilterView() {
   useEffect(() => {
     if (currentFilter) {
       setNewFilterName(currentFilter.name);
+      setFilterColor(currentFilter.color || "");
     }
-  }, [currentFilter, setNewFilterName]);
+  }, [currentFilter, setNewFilterName, setFilterColor]);
 
   const groupedTasks = groupTasks(filteredTasks, groupBy, sortBy, sortDirection);
 
