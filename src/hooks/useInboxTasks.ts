@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { Task } from "@/components/tasks/TaskItem"
 import { updateTaskCompletion, deleteTask } from "@/utils/taskOperations"
+import { useTaskRealtime } from "@/hooks/useTaskRealtime"
 
 export function useInboxTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -51,34 +52,11 @@ export function useInboxTasks() {
     enabled: !!user
   })
   
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!user) return
-    
-    // Create a Supabase channel for real-time updates
-    const channel = supabase
-      .channel('public:tasks')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `user_id=eq.${user.id}`
-        },
-        async () => {
-          // Refetch tasks when database changes
-          const updatedTasks = await fetchTasks()
-          setTasks(updatedTasks)
-        }
-      )
-      .subscribe()
-    
-    // Clean up the subscription
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user])
+  // Set up realtime subscription using the shared hook
+  useTaskRealtime(user, async () => {
+    const updatedTasks = await fetchTasks()
+    setTasks(updatedTasks)
+  })
   
   // Update local state when data is fetched
   useEffect(() => {
