@@ -48,14 +48,10 @@ export default function ProjectView() {
 
   const {
     tasks,
-    sections,
     isLoadingTasks,
     unsectionedTasks,
-    getSectionTasks,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle,
-    handleSectionChange
+    handleDelete
   } = useProjectTasks(id)
 
   useEffect(() => {
@@ -220,7 +216,6 @@ export default function ProjectView() {
                 emptyMessage="No tasks in this group"
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onFavoriteToggle={handleFavoriteToggle}
               />
             ))
           )}
