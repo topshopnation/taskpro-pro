@@ -34,7 +34,7 @@ export default function AuthCallback() {
           console.log("Session exists after OAuth flow, navigating to dashboard");
           // Success - redirect to dashboard
           toast.success("Successfully signed in!");
-          navigate("/", { replace: true });
+          navigate("/dashboard", { replace: true }); // Changed to dashboard
           return;
         }
         
@@ -59,7 +59,7 @@ export default function AuthCallback() {
           if (delayedData?.session) {
             console.log("Session established after delay, navigating to dashboard");
             toast.success("Successfully signed in!");
-            navigate("/", { replace: true });
+            navigate("/dashboard", { replace: true }); // Changed to dashboard
           } else {
             console.log("No session established after delay, redirecting to auth");
             toast.error("Authentication failed. Please try again.");

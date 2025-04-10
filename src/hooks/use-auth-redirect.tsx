@@ -20,12 +20,12 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
       navigate('/dashboard');
     }
     
-    // Redirect logic for unauthenticated users - only for protected routes, not the homepage
-    if (!user && !isAuthPage && !isHomePage && location.pathname !== '/dashboard') {
+    // Don't redirect from homepage if they're already logged in
+    // (let them navigate manually from homepage)
+    
+    // Redirect logic for unauthenticated users - only for protected routes
+    if (!user && !isAuthPage && !isHomePage) {
       console.log("No user, redirecting to /auth from protected page");
-      navigate('/auth');
-    } else if (!user && location.pathname === '/dashboard') {
-      console.log("No user on dashboard route, redirecting to /auth");
       navigate('/auth');
     }
   }, [user, loading, location.pathname, navigate]);

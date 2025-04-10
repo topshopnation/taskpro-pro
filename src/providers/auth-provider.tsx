@@ -1,12 +1,11 @@
 
 import { useEffect, useState } from "react";
 import { Provider, Session } from "@supabase/supabase-js";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContext, User } from "@/contexts/auth-context";
 import { fetchUserProfile } from "@/utils/auth-utils";
-import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -14,9 +13,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Use the auth redirect hook
-  useAuthRedirect(user, loading);
 
   // Update user state with auth and profile data
   const updateUserState = async (authUser: any) => {
@@ -95,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Signed in",
         description: "You have successfully signed in.",
       });
-      navigate("/");
+      navigate("/dashboard"); // Redirecting to dashboard instead of home
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -153,7 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // We'll let the auth state change event handle the navigation
+      // Navigate to home page after signout
+      navigate("/");
+      
       toast({
         title: "Signed out",
         description: "You have been signed out.",
@@ -212,6 +210,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Show a loading toast
+      toast({
+        title: "Updating profile...",
+        description: "Please wait while your profile is being updated.",
+      });
+
       const { error } = await supabase
         .from('profiles')
         .update({

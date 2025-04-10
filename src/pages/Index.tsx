@@ -1,7 +1,7 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Calendar, Zap } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const Index = () => {
@@ -176,71 +176,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* App Screenshots */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">See TaskPro in Action</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Discover how TaskPro can transform your workflow with these screenshots.
-            </p>
-          </div>
-
-          <div className="relative px-12">
-            <Carousel className="w-full">
-              <CarouselContent>
-                <CarouselItem>
-                  <div className="p-1">
-                    <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl overflow-hidden">
-                      <img
-                        src="https://images.unsplash.com/photo-1581092160607-ee23d8ddc1c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                        alt="Dashboard View"
-                        className="w-full h-auto"
-                      />
-                      <div className="p-6">
-                        <h3 className="font-bold text-xl mb-2">Dashboard Overview</h3>
-                        <p className="text-gray-600 dark:text-gray-400">Get a bird's eye view of all your tasks and projects.</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="p-1">
-                    <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl overflow-hidden">
-                      <img
-                        src="https://images.unsplash.com/photo-1600267204091-5c1ab8b10c02?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                        alt="Project View"
-                        className="w-full h-auto"
-                      />
-                      <div className="p-6">
-                        <h3 className="font-bold text-xl mb-2">Project Management</h3>
-                        <p className="text-gray-600 dark:text-gray-400">Organize tasks into projects for better organization.</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="p-1">
-                    <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl overflow-hidden">
-                      <img
-                        src="https://images.unsplash.com/photo-1517292987719-0369a794ec0f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                        alt="Analytics View"
-                        className="w-full h-auto"
-                      />
-                      <div className="p-6">
-                        <h3 className="font-bold text-xl mb-2">Productivity Analytics</h3>
-                        <p className="text-gray-600 dark:text-gray-400">Track your progress with detailed insights and reports.</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-              <CarouselPrevious className="left-0" />
-              <CarouselNext className="right-0" />
-            </Carousel>
-          </div>
-        </div>
-      </section>
+      {/* Removed: App Screenshots section */}
 
       {/* Testimonials */}
       <section className="py-20 bg-white dark:bg-gray-950">

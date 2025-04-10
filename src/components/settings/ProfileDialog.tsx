@@ -1,19 +1,12 @@
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/hooks/use-auth"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { toast } from "sonner"
-
-interface ProfileFormData {
-  firstName: string;
-  lastName: string;
-  avatarUrl: string;
-}
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -21,139 +14,117 @@ interface ProfileDialogProps {
 }
 
 export default function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
-  const { user, updateProfile } = useAuth()
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
-  const [formData, setFormData] = useState<ProfileFormData>({
-    firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
-    avatarUrl: user?.avatarUrl || "",
-  })
-  
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        avatarUrl: user.avatarUrl || "",
-      })
-    }
-  }, [user])
-  
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsUpdatingProfile(true)
+  const { user, updateProfile } = useAuth();
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     
     try {
       await updateProfile({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        avatarUrl: formData.avatarUrl,
-      })
+        firstName,
+        lastName,
+        avatarUrl,
+      });
       
-      onOpenChange(false)
-      toast.success("Profile updated successfully")
+      // Close the dialog after successful update
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error updating profile:", error)
-      toast.error("Failed to update profile")
+      console.error("Error updating profile:", error);
     } finally {
-      setIsUpdatingProfile(false)
+      setLoading(false);
     }
-  }
-  
-  const userInitials = user?.firstName 
-    ? `${user.firstName.charAt(0)}${user.lastName ? user.lastName.charAt(0) : ''}`
-    : user?.email 
-      ? user.email.substring(0, 2).toUpperCase() 
-      : "U"
-  
+  };
+
+  // Generate initials for avatar fallback
+  const getInitials = () => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}` || (user?.email?.charAt(0) || '?').toUpperCase();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
           <DialogDescription>
-            Update your personal information and profile picture
+            Update your profile information
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleProfileUpdate}>
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={formData.avatarUrl || ""} />
-                <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
+            <div className="flex items-center justify-center mb-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
               </Avatar>
-              <div className="w-full">
-                <Label htmlFor="avatarUrl" className="text-sm font-medium">
-                  Profile Image URL
-                </Label>
-                <Input
-                  id="avatarUrl"
-                  value={formData.avatarUrl || ""}
-                  onChange={(e) => setFormData({...formData, avatarUrl: e.target.value})}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter a valid image URL to update your profile picture
-                </p>
-              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName || ""}
-                  onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                  placeholder="John"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName || ""}
-                  onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                  placeholder="Doe"
-                />
-              </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="avatar-url" className="text-right">
+                Avatar URL
+              </Label>
+              <Input
+                id="avatar-url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                className="col-span-3"
+                placeholder="https://example.com/avatar.png"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="first-name" className="text-right">
+                First name
+              </Label>
+              <Input
+                id="first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="last-name" className="text-right">
+                Last name
+              </Label>
+              <Input
+                id="last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
                 Email
               </Label>
               <Input
                 id="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-muted"
+                className="col-span-3"
               />
-              <p className="text-xs text-muted-foreground">
-                Email address cannot be changed
-              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isUpdatingProfile}>
-              {isUpdatingProfile ? (
+            <Button type="submit" disabled={loading}>
+              {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                "Save Changes"
+                "Save changes"
               )}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
