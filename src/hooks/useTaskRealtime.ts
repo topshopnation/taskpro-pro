@@ -16,9 +16,11 @@ export function useTaskRealtime(user: { id: string } | null, fetchCallback: Fetc
         schema: 'public',
         table: 'tasks',
         filter: `user_id=eq.${user.id}`,
-      }, async () => {
+      }, () => {
         try {
-          await fetchCallback();
+          // Call the callback but don't await it here
+          // This avoids blocking the real-time handler
+          fetchCallback();
         } catch (error) {
           console.error("Error executing task callback:", error);
         }

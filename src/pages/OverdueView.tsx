@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -64,15 +65,19 @@ export default function OverdueView() {
   const { isLoading } = useQuery({
     queryKey: ['overdue-tasks', user?.id],
     queryFn: fetchOverdueTasks,
-    enabled: !!user,
-    onSuccess: (data) => {
-      setTasks(data)
-    }
+    enabled: !!user
   })
-
+  
+  // Use useEffect to update tasks when data is fetched
   useEffect(() => {
     if (!user) return;
-    fetchOverdueTasks().then(setTasks);
+    
+    const fetchAndSetTasks = async () => {
+      const fetchedTasks = await fetchOverdueTasks();
+      setTasks(fetchedTasks);
+    };
+    
+    fetchAndSetTasks();
   }, [user]);
 
   useTaskRealtime(user, async () => {
