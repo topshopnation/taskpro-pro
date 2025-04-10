@@ -57,11 +57,11 @@ export function CompletedTasksStats({ period = 'week' }: CompletedTasksStatsProp
         
         const { data: tasks, error } = await supabase
           .from('tasks')
-          .select('completed, completion_date')
+          .select('completed, updated_at')
           .eq('user_id', user.id)
           .eq('completed', true)
-          .gte('completion_date', periodBounds.start.toISOString())
-          .lte('completion_date', periodBounds.end.toISOString());
+          .gte('updated_at', periodBounds.start.toISOString())
+          .lte('updated_at', periodBounds.end.toISOString());
           
         if (error) throw error;
         
@@ -82,8 +82,8 @@ export function CompletedTasksStats({ period = 'week' }: CompletedTasksStatsProp
           
           // Count tasks completed on each day
           tasks?.forEach(task => {
-            if (task.completion_date) {
-              const completedDate = format(new Date(task.completion_date), 'yyyy-MM-dd');
+            if (task.updated_at) {
+              const completedDate = format(new Date(task.updated_at), 'yyyy-MM-dd');
               const dayIndex = daysOfWeek.findIndex(day => day.date === completedDate);
               if (dayIndex !== -1) {
                 daysOfWeek[dayIndex].count++;
@@ -107,8 +107,8 @@ export function CompletedTasksStats({ period = 'week' }: CompletedTasksStatsProp
           });
           
           tasks?.forEach(task => {
-            if (task.completion_date) {
-              const completedDate = format(new Date(task.completion_date), 'yyyy-MM-dd');
+            if (task.updated_at) {
+              const completedDate = format(new Date(task.updated_at), 'yyyy-MM-dd');
               const dayIndex = daysData.findIndex(day => day.date === completedDate);
               if (dayIndex !== -1) {
                 daysData[dayIndex].count++;
@@ -142,8 +142,8 @@ export function CompletedTasksStats({ period = 'week' }: CompletedTasksStatsProp
           });
           
           tasks?.forEach(task => {
-            if (task.completion_date) {
-              const completedMonth = new Date(task.completion_date).getMonth();
+            if (task.updated_at) {
+              const completedMonth = new Date(task.updated_at).getMonth();
               monthsData[completedMonth].count++;
             }
           });

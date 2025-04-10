@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import {
   AlertDialog,
@@ -62,13 +63,13 @@ export function TaskItemConfirmDelete({
     setShowUndo(true);
   };
   
-  const handleUndo = () => {
+  const handleUndo = (): Promise<void> => {
     setShowUndo(false);
     onOpenChange(false);
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve();
-      }, UNDO_TIMEOUT);
+      }, 100);
     });
   };
   

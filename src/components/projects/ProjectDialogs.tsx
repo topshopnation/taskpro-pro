@@ -38,6 +38,9 @@ interface ProjectDialogsProps {
   setNewSectionName: (name: string) => void
   newProjectName: string
   setNewProjectName: (name: string) => void
+  projectColor: string
+  setProjectColor: (color: string) => void
+  projectColors?: string[]
   handleProjectRename: () => void
   handleProjectDelete: () => void
 }
@@ -56,6 +59,9 @@ export function ProjectDialogs({
   setNewSectionName,
   newProjectName,
   setNewProjectName,
+  projectColor,
+  setProjectColor,
+  projectColors,
   handleProjectRename,
   handleProjectDelete
 }: ProjectDialogsProps) {
