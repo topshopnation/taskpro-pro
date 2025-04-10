@@ -21,6 +21,8 @@ export interface Task {
   dueTime?: string
   priority: 1 | 2 | 3 | 4
   projectId: string
+  projectName?: string
+  projectColor?: string
   completed: boolean
   favorite?: boolean
 }
