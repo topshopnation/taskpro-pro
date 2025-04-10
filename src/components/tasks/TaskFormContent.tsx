@@ -12,6 +12,7 @@ import { TaskFormValues, ProjectOption } from "@/components/tasks/taskTypes"
 import { TaskPrioritySelector } from "@/components/tasks/TaskPrioritySelector"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { TagInput } from "@/components/tasks/TagInput"
+import { Button } from "@/components/ui/button"
 
 interface TaskFormContentProps {
   values: TaskFormValues;
@@ -83,45 +84,26 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="project">Project</Label>
-          <Select 
-            value={values.project} 
-            onValueChange={(value) => onChange({ project: value })}
-          >
-            <SelectTrigger id="project">
-              <SelectValue placeholder="Select a project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="inbox" className="flex items-center gap-2">
-                <span>Inbox</span>
+      <div className="grid gap-2">
+        <Label htmlFor="project">Project</Label>
+        <Select 
+          value={values.project} 
+          onValueChange={(value) => onChange({ project: value })}
+        >
+          <SelectTrigger id="project">
+            <SelectValue placeholder="Select a project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="inbox" className="flex items-center gap-2">
+              <span>Inbox</span>
+            </SelectItem>
+            {projects?.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                {project.name}
               </SelectItem>
-              {projects?.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="grid gap-2">
-          <Label htmlFor="section">Section (optional)</Label>
-          <Select 
-            value={values.section} 
-            onValueChange={(value) => onChange({ section: value })}
-          >
-            <SelectTrigger id="section">
-              <SelectValue placeholder="Select a section" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todo">To Do</SelectItem>
-              <SelectItem value="inprogress">In Progress</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="grid gap-2">
@@ -134,6 +116,3 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
     </div>
   )
 }
-
-// Import the Button component that's used in this file
-import { Button } from "@/components/ui/button"

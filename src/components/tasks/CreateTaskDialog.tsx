@@ -23,7 +23,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     dueDate: undefined,
     priority: "4",
     project: "inbox",
-    section: "",
     tags: []
   })
 
@@ -59,7 +58,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
           due_date: formValues.dueDate ? formValues.dueDate.toISOString() : null,
           priority: parseInt(formValues.priority),
           project_id: formValues.project === "inbox" ? null : formValues.project,
-          section: formValues.section || null,
           completed: false,
           favorite: false,
           user_id: user.id
@@ -102,7 +100,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
       dueDate: undefined,
       priority: "4",
       project: "inbox",
-      section: "",
       tags: []
     })
   }

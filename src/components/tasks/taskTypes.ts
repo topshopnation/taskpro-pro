@@ -1,11 +1,9 @@
-
 export interface TaskFormValues {
   title: string;
   notes: string;
   dueDate?: Date;
   priority: string;
   project: string;
-  section: string;
   tags: string[];
 }
 
@@ -20,7 +18,6 @@ export interface Tag {
   color?: string;
 }
 
-// Define interfaces for working with Supabase directly
 export interface TaskTagRelation {
   task_id: string;
   tag_id: string;

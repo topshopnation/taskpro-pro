@@ -24,7 +24,6 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     dueDate: undefined,
     priority: "4",
     project: "inbox",
-    section: "",
     tags: []
   });
 
@@ -64,7 +63,6 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         dueDate: task.dueDate,
         priority: task.priority.toString(),
         project: task.projectId || "inbox",
-        section: "",
         tags: []  // Will be set by fetchTaskTags
       });
       
