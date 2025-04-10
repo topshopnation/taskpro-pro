@@ -10,6 +10,7 @@ import DataManagementCard from "@/components/settings/DataManagementCard";
 import ProfileDialog from "@/components/settings/ProfileDialog";
 import SubscriptionDialog from "@/components/settings/SubscriptionDialog";
 import PaymentMethodsCard from "@/components/settings/PaymentMethodsCard";
+import SignOutCard from "@/components/settings/SignOutCard";
 
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function Settings() {
           <AppearanceCard />
           <VoiceInputCard />
           <DataManagementCard />
+          <SignOutCard />
         </div>
       </div>
 

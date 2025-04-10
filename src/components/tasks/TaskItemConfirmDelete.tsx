@@ -102,7 +102,7 @@ export function TaskItemConfirmDelete({
               <Progress value={progress} className="h-2" />
             </div>
             <AlertDialogFooter>
-              <Button onClick={() => handleUndo()} disabled={isUpdating}>
+              <Button onClick={handleUndo} disabled={isUpdating}>
                 Undo
               </Button>
             </AlertDialogFooter>
