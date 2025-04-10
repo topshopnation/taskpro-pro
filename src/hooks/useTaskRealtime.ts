@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type FetchCallback = () => Promise<void>;
+type FetchCallback = () => Promise<void> | void;
 
 // Change the type to be more flexible - accept any object with an id property
 export function useTaskRealtime(user: { id: string } | null, fetchCallback: FetchCallback) {

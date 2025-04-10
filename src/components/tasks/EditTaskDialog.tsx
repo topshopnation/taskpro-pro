@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { TaskFormContent } from "@/components/tasks/TaskFormContent";
-import { TaskFormValues, TaskTagRelation } from "@/components/tasks/taskTypes";
+import { TaskFormValues } from "@/components/tasks/taskTypes";
 
 interface EditTaskDialogProps {
   open: boolean;

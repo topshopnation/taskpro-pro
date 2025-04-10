@@ -4,7 +4,7 @@ export interface TaskFormValues {
   notes: string;
   dueDate?: Date;
   project: string;
-  priority: number;
+  priority: string;
   tags: string[];
 }
 

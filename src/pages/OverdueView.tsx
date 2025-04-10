@@ -26,10 +26,10 @@ export default function OverdueView() {
   const { data: tasks = [], isLoading, refetch } = useOverdueTasks(user?.id)
   const { handleComplete, handleDelete, handleFavoriteToggle } = useTaskOperations()
   
-  // Set up realtime subscription
-  useTaskRealtime(user, () => {
+  // Set up realtime subscription - make refetch return a Promise
+  useTaskRealtime(user, async () => {
     if (user) {
-      refetch();
+      await refetch();
     }
   });
 
