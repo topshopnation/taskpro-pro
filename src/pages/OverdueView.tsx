@@ -36,7 +36,7 @@ export default function OverdueView() {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, projects(name, color)')
         .eq('user_id', user.id)
         .eq('completed', false)
         .lt('due_date', todayDate.toISOString())
@@ -50,6 +50,8 @@ export default function OverdueView() {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
+        projectName: task.projects?.name || 'No Project',
+        projectColor: task.projects?.color,
         section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
@@ -68,7 +70,6 @@ export default function OverdueView() {
     enabled: !!user
   })
   
-  // Use useEffect to update tasks when data is fetched
   useEffect(() => {
     if (!user) return;
     
@@ -84,7 +85,6 @@ export default function OverdueView() {
     fetchAndSetTasks();
   }, [user, fetchOverdueTasks]);
 
-  // Handle real-time updates
   useTaskRealtime(user, () => {
     fetchOverdueTasks()
       .then(updatedTasks => {
@@ -159,11 +159,11 @@ export default function OverdueView() {
           ? a.dueDate.getTime() - b.dueDate.getTime()
           : b.dueDate.getTime() - a.dueDate.getTime()
       } else if (sortBy === "project") {
-        const projectA = a.projectId || "none"
-        const projectB = b.projectId || "none"
+        const projectNameA = a.projectName || "No Project"
+        const projectNameB = b.projectName || "No Project"
         return sortDirection === "asc" 
-          ? projectA.localeCompare(projectB)
-          : projectB.localeCompare(projectA)
+          ? projectNameA.localeCompare(projectNameB)
+          : projectNameB.localeCompare(projectNameA)
       }
       return 0
     })
@@ -178,7 +178,7 @@ export default function OverdueView() {
       let groupKey = ""
       
       if (groupBy === "project") {
-        groupKey = task.projectId || "No Project"
+        groupKey = task.projectName || "No Project"
       } else if (groupBy === "dueDate") {
         groupKey = task.dueDate 
           ? format(task.dueDate, 'PPP') 

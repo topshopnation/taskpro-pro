@@ -16,13 +16,21 @@ export function useTaskProjects() {
         .from('projects')
         .select('id, name, color')
         .eq('user_id', user.id)
+        .order('name')
       
       if (error) {
         console.error('Error fetching projects:', error)
         throw error
       }
       
-      return data || []
+      // Ensure we have properly formatted project options with names
+      const projectOptions = (data || []).map(project => ({
+        id: project.id,
+        name: project.name || 'Unnamed Project',
+        color: project.color
+      }))
+      
+      return projectOptions
     },
     enabled: !!user,
   })

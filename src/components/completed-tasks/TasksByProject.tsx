@@ -4,14 +4,12 @@ import { Task } from "@/components/tasks/TaskItem"
 
 interface TasksByProjectProps {
   tasksByProject: Record<string, Task[]>
-  getProjectName: (projectId: string) => string
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
 }
 
 export function TasksByProject({
   tasksByProject,
-  getProjectName,
   onComplete,
   onDelete
 }: TasksByProjectProps) {
@@ -25,10 +23,10 @@ export function TasksByProject({
 
   return (
     <>
-      {Object.entries(tasksByProject).map(([projectId, projectTasks]) => (
-        <div key={projectId} className="mb-8">
+      {Object.entries(tasksByProject).map(([projectName, projectTasks]) => (
+        <div key={projectName} className="mb-8">
           <TaskList
-            title={getProjectName(projectId)}
+            title={projectName}
             tasks={projectTasks}
             onComplete={onComplete}
             onDelete={onDelete}
