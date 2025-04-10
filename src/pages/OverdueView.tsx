@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -324,7 +323,7 @@ export default function OverdueView() {
             Object.entries(groupedTasks).map(([group, groupTasks]) => (
               <TaskList
                 key={group}
-                title={groupBy ? group : "Overdue Tasks"}
+                title={groupBy ? group : ""}
                 tasks={groupTasks}
                 isLoading={isLoading}
                 emptyMessage="No tasks in this group"

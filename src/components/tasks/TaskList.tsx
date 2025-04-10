@@ -24,10 +24,12 @@ export function TaskList({
 }: TaskListProps) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+      {title && (
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">{title}</CardTitle>
+        </CardHeader>
+      )}
+      <CardContent className={!title ? "pt-6" : ""}>
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -50,6 +52,7 @@ export function TaskList({
                 task={task} 
                 onComplete={onComplete}
                 onDelete={onDelete}
+                onFavoriteToggle={onFavoriteToggle}
               />
             ))}
           </div>

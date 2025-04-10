@@ -10,6 +10,8 @@ interface GroupedTaskListsProps {
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
   onAddTask: () => void
+  hideTitle?: boolean
+  onFavoriteToggle?: (taskId: string, favorite: boolean) => void
 }
 
 export function GroupedTaskLists({
@@ -18,7 +20,9 @@ export function GroupedTaskLists({
   isLoadingTasks,
   onComplete,
   onDelete,
-  onAddTask
+  onAddTask,
+  hideTitle = false,
+  onFavoriteToggle
 }: GroupedTaskListsProps) {
   if (Object.keys(groupedTasks).length === 0) {
     return (
@@ -35,12 +39,13 @@ export function GroupedTaskLists({
       {Object.entries(groupedTasks).map(([group, groupTasks]) => (
         <TaskList
           key={group}
-          title={groupBy ? group : "Project Tasks"}
+          title={hideTitle ? "" : (groupBy ? group : "Project Tasks")}
           tasks={groupTasks}
           isLoading={isLoadingTasks}
           emptyMessage="No tasks in this group"
           onComplete={onComplete}
           onDelete={onDelete}
+          onFavoriteToggle={onFavoriteToggle}
         />
       ))}
     </div>

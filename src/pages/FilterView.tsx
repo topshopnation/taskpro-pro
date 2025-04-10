@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -112,7 +111,9 @@ export default function FilterView() {
               isLoadingTasks={isLoading}
               onComplete={handleComplete}
               onDelete={handleDelete}
+              onAddTask={() => {}}
               onFavoriteToggle={handleFavoriteToggle}
+              hideTitle={!groupBy}
             />
           )}
         </div>

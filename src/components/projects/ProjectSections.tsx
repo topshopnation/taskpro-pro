@@ -7,18 +7,20 @@ interface ProjectSectionsProps {
   handleComplete: (taskId: string, completed: boolean) => void
   handleDelete: (taskId: string) => void
   isLoading?: boolean
+  hideTitle?: boolean
 }
 
 export function ProjectSections({
   tasks,
   handleComplete,
   handleDelete,
-  isLoading = false
+  isLoading = false,
+  hideTitle = false
 }: ProjectSectionsProps) {
   return (
     <div className="space-y-6">
       <TaskList
-        title="Project Tasks"
+        title={hideTitle ? "" : "Project Tasks"}
         tasks={tasks.filter(task => !task.completed)}
         isLoading={isLoading}
         emptyMessage="No tasks in this project"

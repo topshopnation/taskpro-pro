@@ -48,6 +48,7 @@ export default function InboxView() {
           onComplete={handleComplete}
           onDelete={handleDelete}
           onAddTask={() => setIsCreateTaskOpen(true)}
+          hideTitle={!groupBy}
         />
 
         <CreateTaskDialog

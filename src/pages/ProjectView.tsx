@@ -98,6 +98,7 @@ export default function ProjectView() {
           onComplete={handleComplete}
           onDelete={handleDelete}
           onAddTask={() => setIsCreateTaskOpen(true)}
+          hideTitle={!groupBy}
         />
 
         <CreateTaskDialog
