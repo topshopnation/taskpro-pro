@@ -39,7 +39,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <p className="font-medium">$4.99</p>
+            <p className="font-medium">$3.00</p>
             <p className="text-xs text-muted-foreground">per month</p>
           </div>
         </div>

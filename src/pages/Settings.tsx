@@ -10,6 +10,7 @@ import VoiceInputCard from "@/components/settings/VoiceInputCard";
 import DataManagementCard from "@/components/settings/DataManagementCard";
 import ProfileDialog from "@/components/settings/ProfileDialog";
 import SubscriptionDialog from "@/components/settings/SubscriptionDialog";
+import PaymentMethodsCard from "@/components/settings/PaymentMethodsCard";
 import { Separator } from "@/components/ui/separator";
 
 export default function Settings() {
@@ -26,6 +27,7 @@ export default function Settings() {
         <div className="grid gap-6">
           <ProfileCard onEditProfile={() => setIsProfileDialogOpen(true)} />
           <SubscriptionCard onUpgrade={() => setIsUpgradeDialogOpen(true)} />
+          <PaymentMethodsCard />
           <AppearanceCard />
           <SmartFeaturesCard />
           <VoiceInputCard />

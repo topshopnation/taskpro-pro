@@ -185,8 +185,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Removed: App Screenshots section */}
-
       {/* Testimonials */}
       <section className="py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -230,7 +228,7 @@ const Index = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing for Everyone</h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Start for free and upgrade when you need more features.
+              Unlock premium features with our affordable plans.
             </p>
           </div>
 
@@ -239,10 +237,10 @@ const Index = () => {
               <div className="p-8 text-center">
                 <h3 className="text-2xl font-bold mb-4">Pro Plan</h3>
                 <div className="flex items-center justify-center">
-                  <span className="text-5xl font-bold">$9</span>
+                  <span className="text-5xl font-bold">$3</span>
                   <span className="text-xl ml-1 text-gray-600 dark:text-gray-400">/month</span>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">Billed annually or $12 monthly</p>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">Billed monthly or $30 annually</p>
               </div>
               <div className="p-8 bg-gray-50 dark:bg-gray-900">
                 <ul className="space-y-4">

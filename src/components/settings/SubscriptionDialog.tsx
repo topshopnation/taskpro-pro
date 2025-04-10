@@ -24,15 +24,16 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
         <DialogHeader>
           <DialogTitle>Upgrade to TaskPro Pro</DialogTitle>
           <DialogDescription>
-            Get unlimited access to all premium features for only $4.99/month
+            Get unlimited access to all premium features for only $3.00/month
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <div className="rounded-lg border p-4 mb-4">
             <div className="flex justify-between items-center mb-4">
               <div className="font-medium">TaskPro Pro</div>
-              <div className="font-medium">$4.99/month</div>
+              <div className="font-medium">$3.00/month</div>
             </div>
+            <div className="text-xs text-muted-foreground mb-3">Or $30.00 billed annually (save $6)</div>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm">
                 <BadgeCheck className="h-4 w-4 text-green-500" />
