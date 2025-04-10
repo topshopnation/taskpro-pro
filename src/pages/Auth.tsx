@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Github, Mail, CircleAlert } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TaskProLogo } from "@/components/ui/taskpro-logo";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -65,10 +66,8 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome to TaskPro
-          </h1>
+        <div className="flex flex-col space-y-2 text-center items-center">
+          <TaskProLogo size="large" className="mb-2" />
           <p className="text-sm text-muted-foreground">
             Sign in to your account or create a new one
           </p>
@@ -98,26 +97,30 @@ export default function Auth() {
               <CardContent className="space-y-4">
                 <form onSubmit={handleEmailSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="signin-email">Email</Label>
                     <Input
-                      id="email"
+                      id="signin-email"
+                      name="email"
                       type="email"
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="username"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="signin-password">Password</Label>
                     <Input
-                      id="password"
+                      id="signin-password"
+                      name="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="current-password"
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
@@ -192,24 +195,28 @@ export default function Auth() {
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
+                      name="email"
                       type="email"
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="username"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
                     <Input
                       id="signup-password"
+                      name="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
                       minLength={6}
+                      autoComplete="new-password"
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>

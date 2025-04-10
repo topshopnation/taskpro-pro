@@ -37,12 +37,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
         if (newSession?.user) {
           setSession(newSession);
-          await updateUserState(newSession.user);
+          // Use setTimeout to prevent potential deadlocks with Supabase auth
+          setTimeout(() => {
+            updateUserState(newSession.user);
+          }, 0);
         } else {
           setSession(null);
           setUser(null);
@@ -52,12 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       console.log("Initial session check:", existingSession ? "session exists" : "no session");
       
       if (existingSession?.user) {
         setSession(existingSession);
-        await updateUserState(existingSession.user);
+        updateUserState(existingSession.user);
       } else {
         setUser(null);
         setSession(null);
@@ -73,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Signing in with email/password");
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -85,6 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           variant: "destructive",
         });
         throw error;
+      }
+
+      // Immediately update state to prevent hanging
+      if (data?.session) {
+        setSession(data.session);
+        await updateUserState(data.session.user);
       }
 
       toast({

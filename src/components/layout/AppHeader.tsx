@@ -1,83 +1,72 @@
 
-import { Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ThemeToggleSimple } from "@/components/theme-toggle"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { useAuth } from "@/hooks/use-auth"
-import { useNavigate } from "react-router-dom"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, Menu, PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SidebarContent } from "@/components/sidebar/SidebarContent";
+import { useState } from "react";
+import { TaskProLogo } from "@/components/ui/taskpro-logo";
 
-interface AppHeaderProps {
-  title: string
-  setIsMobileMenuOpen: (open: boolean) => void
-}
+export function AppHeader() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [showSidebar, setShowSidebar] = useState(false);
 
-export default function AppHeader({ title, setIsMobileMenuOpen }: AppHeaderProps) {
-  const isMobile = useIsMobile()
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
-  
-  // Generate user initials based on email or name
-  const userInitials = user?.firstName 
-    ? `${user.firstName.charAt(0)}${user.lastName ? user.lastName.charAt(0) : ''}`
-    : user?.email 
-      ? user.email.substring(0, 2).toUpperCase() 
-      : "U"
+  const userInitials = user?.firstName && user?.lastName
+    ? `${user.firstName[0]}${user.lastName[0]}`
+    : user?.email?.substring(0, 2).toUpperCase() || "U";
 
-  const displayName = user?.firstName 
-    ? `${user.firstName} ${user.lastName || ''}`
-    : user?.email?.split('@')[0] || "User"
+  const handleCreateTask = () => {
+    // Functionality to create a new task
+    console.log("Create task clicked");
+  };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
-      {isMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mr-2 md:hidden"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
-          <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      )}
-      
-      <div className="flex-1">
-        <h1 className="text-xl font-semibold">{title}</h1>
-      </div>
-      
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
       <div className="flex items-center gap-2">
-        <ThemeToggleSimple />
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar>
-                <AvatarImage src={user?.avatarUrl} />
-                <AvatarFallback>{userInitials}</AvatarFallback>
-              </Avatar>
+        <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle sidebar</span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{displayName}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => signOut()}>
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+        <TaskProLogo size="small" />
+      </div>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-full"
+          onClick={handleCreateTask}
+        >
+          <PlusCircle className="h-5 w-5" />
+          <span className="sr-only">Create task</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-full"
+        >
+          <Bell className="h-5 w-5" />
+          <span className="sr-only">Notifications</span>
+        </Button>
+        <Avatar 
+          className="cursor-pointer"
+          onClick={() => navigate("/settings")} 
+        >
+          <AvatarImage src={user?.avatarUrl || ""} />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {userInitials}
+          </AvatarFallback>
+        </Avatar>
       </div>
     </header>
-  )
+  );
 }
