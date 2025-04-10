@@ -8,10 +8,13 @@ export const isStandardFilter = (filterId: string | undefined): boolean => {
 };
 
 export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] => {
-  if (!filter || !filter.conditions || filter.conditions.length === 0) return tasks;
-
+  if (!filter || !filter.conditions) return tasks;
+  
+  // Make sure conditions is an array before mapping
+  const conditions = Array.isArray(filter.conditions) ? filter.conditions : [];
+  
   return tasks.filter(task => {
-    const results = filter.conditions.map((condition: any) => {
+    const results = conditions.map((condition: any) => {
       if (condition.type === "due" && condition.value === "today" && task.dueDate) {
         const today = new Date();
         const taskDate = new Date(task.dueDate);

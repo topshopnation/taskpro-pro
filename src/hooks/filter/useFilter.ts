@@ -43,8 +43,11 @@ export function useFilter() {
       if (success) setIsDeleteFilterOpen(false);
     }),
     handleFilterColorChange: (color: string) => {
+      // Get the result from handleFilterColorChange but don't pass the Promise to setFilterColor
       const newColor = handleFilterColorChange(color, currentFilter, isEditFilterOpen);
-      setFilterColor(newColor || "");
+      if (typeof newColor === 'string') {
+        setFilterColor(newColor);
+      }
     }
   };
 }
