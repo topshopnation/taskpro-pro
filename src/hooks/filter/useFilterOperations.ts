@@ -91,7 +91,7 @@ export function useFilterOperations(filterId?: string) {
       if (error) throw error;
       
       toast.success("Filter deleted successfully");
-      navigate('/');
+      navigate('/today'); // Navigate to Today page instead of home
       return true;
     } catch (error: any) {
       toast.error("Failed to delete filter", {

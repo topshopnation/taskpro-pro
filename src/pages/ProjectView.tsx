@@ -11,6 +11,7 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
+import { IconPicker } from "@/components/ui/color-picker"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -60,6 +61,13 @@ export default function ProjectView() {
   if (!currentProject) {
     return <ProjectLoadingState isLoading={false} projectExists={false} />
   }
+
+  const projectColors = [
+    "#FF6B6B", "#FF9E7D", "#FFCA80", "#FFEC8A", "#BADA55", 
+    "#7ED957", "#4ECDC4", "#45B7D1", "#4F86C6", "#5E60CE", 
+    "#7950F2", "#9775FA", "#C77DFF", "#E77FF3", "#F26ABC", 
+    "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
+  ];
 
   return (
     <AppLayout>
@@ -121,6 +129,9 @@ export default function ProjectView() {
           setNewSectionName={() => {}}
           newProjectName={newProjectName}
           setNewProjectName={setNewProjectName}
+          projectColor={projectColor}
+          setProjectColor={setProjectColor}
+          projectColors={projectColors}
           handleProjectRename={handleProjectRename}
           handleProjectDelete={handleProjectDelete}
         />

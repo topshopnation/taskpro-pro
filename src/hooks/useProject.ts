@@ -126,7 +126,7 @@ export function useProject() {
       
       setIsDeleteProjectOpen(false)
       toast.success("Project deleted successfully")
-      navigate('/') // Navigate to dashboard after deletion
+      navigate('/today') // Navigate to Today page after deletion instead of home
     } catch (error: any) {
       toast.error("Failed to delete project", {
         description: error.message

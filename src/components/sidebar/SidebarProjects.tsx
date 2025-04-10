@@ -1,6 +1,6 @@
 
 import { ListTodo, Plus, ChevronRight, Loader2 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -32,13 +32,30 @@ export function SidebarProjects({
   onOpenCreateProject, 
   onMobileMenuClose 
 }: SidebarProjectsProps) {
+  const location = useLocation();
   // Filter out any "inbox" project that may be listed
   const filteredProjects = projects.filter(project => project.id !== "inbox");
+  
+  // Only show the top 5 projects in the sidebar, the rest are in the projects page
+  const topProjects = filteredProjects.slice(0, 5);
+  const hasMoreProjects = filteredProjects.length > 5;
 
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between mb-2">
-        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+        <SidebarMenuButton asChild>
+          <NavLink
+            to="/projects"
+            className={({ isActive }) =>
+              `flex items-center rounded-md text-sm transition-colors ${
+                isActive ? "text-primary font-medium" : "text-sidebar-foreground"
+              }`
+            }
+            onClick={onMobileMenuClose}
+          >
+            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          </NavLink>
+        </SidebarMenuButton>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -55,33 +72,49 @@ export function SidebarProjects({
             <div className="flex justify-center py-2">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredProjects.length === 0 ? (
+          ) : topProjects.length === 0 ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               No projects found
             </div>
           ) : (
-            filteredProjects.map((project) => (
-              <SidebarMenuItem key={project.id}>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to={`/projects/${project.id}`}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                      }`
-                    }
-                    onClick={onMobileMenuClose}
-                  >
-                    <ListTodo 
-                      className="h-4 w-4" 
-                      style={project.color ? { color: project.color } : undefined}
-                    />
-                    <span>{project.name}</span>
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))
+            <>
+              {topProjects.map((project) => (
+                <SidebarMenuItem key={project.id}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={`/projects/${project.id}`}
+                      className={({ isActive }) =>
+                        `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        }`
+                      }
+                      onClick={onMobileMenuClose}
+                    >
+                      <ListTodo 
+                        className="h-4 w-4" 
+                        style={project.color ? { color: project.color } : undefined}
+                      />
+                      <span className="truncate">{project.name}</span>
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              
+              {hasMoreProjects && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/projects"
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:text-sidebar-accent-foreground"
+                      onClick={onMobileMenuClose}
+                    >
+                      <span className="truncate">View all projects...</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </>
           )}
         </SidebarMenu>
       </SidebarGroupContent>

@@ -7,16 +7,12 @@ import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { sortTasks } from "@/utils/taskSortUtils";
 import { Task } from "@/components/tasks/TaskItem";
 import { BarChart2 } from "lucide-react";
 
 export default function Stats() {
-  const [sortBy, setSortBy] = useState<string>("dueDate");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [groupBy, setGroupBy] = useState<string | null>(null);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   
   const { 
@@ -28,11 +24,10 @@ export default function Stats() {
     handleDelete
   } = useDashboardTasks();
 
-  // Apply sorting to all task lists
-  const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed), sortBy, sortDirection)
-  const sortedTodayTasks = sortTasks(todayTasks, sortBy, sortDirection)
-  const sortedHighPriorityTasks = sortTasks(highPriorityTasks, sortBy, sortDirection)
-  // No favorite tasks since we're removing this feature
+  // Apply default sorting to all task lists
+  const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed), "dueDate", "asc")
+  const sortedTodayTasks = sortTasks(todayTasks, "dueDate", "asc")
+  const sortedHighPriorityTasks = sortTasks(highPriorityTasks, "dueDate", "asc")
   const sortedFavoriteTasks: Task[] = []
 
   if (isLoading) {
@@ -46,22 +41,11 @@ export default function Stats() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <div className="flex items-center gap-2">
             <BarChart2 className="h-5 w-5" />
             <h1 className="text-2xl font-bold tracking-tight">Statistics</h1>
           </div>
-          
-          <TaskSortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            hideAddTaskButton={true}
-            showProjectSort={true}
-          />
         </div>
 
         <StatCards 

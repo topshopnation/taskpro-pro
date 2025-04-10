@@ -66,7 +66,7 @@ export default function FilterView() {
       <AppLayout>
         <div className="flex flex-col items-center justify-center h-[80vh]">
           <h1 className="text-2xl font-bold mb-4">Filter not found</h1>
-          <Button onClick={() => navigate('/')}>Go to Dashboard</Button>
+          <Button onClick={() => navigate('/today')}>Go to Today</Button>
         </div>
       </AppLayout>
     );
@@ -124,9 +124,11 @@ export default function FilterView() {
           isEditDialogOpen={isEditFilterOpen}
           isDeleteDialogOpen={isDeleteFilterOpen}
           filterName={newFilterName}
+          filterColor={filterColor}
           onEditDialogChange={setIsEditFilterOpen}
           onDeleteDialogChange={setIsDeleteFilterOpen}
           onFilterNameChange={setNewFilterName}
+          onFilterColorChange={setFilterColor}
           onRename={handleFilterRename}
           onDelete={handleFilterDelete}
         />

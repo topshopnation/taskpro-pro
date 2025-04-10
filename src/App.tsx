@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import Stats from "./pages/Stats";
 import ProjectView from "./pages/ProjectView";
+import ProjectsPage from "./pages/ProjectsPage";
 import FilterView from "./pages/FilterView";
+import FiltersPage from "./pages/FiltersPage";
 import InboxView from "./pages/InboxView";
 import TodayView from "./pages/TodayView";
 import OverdueView from "./pages/OverdueView";
@@ -41,7 +43,9 @@ const App = () => (
               <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
               <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
               <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
+              <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
+              <Route path="/filters" element={<ProtectedRoute><FiltersPage /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
