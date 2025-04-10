@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { StatCards } from "@/components/dashboard/StatCards"
@@ -64,6 +63,8 @@ export default function Dashboard() {
   const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed))
   const sortedTodayTasks = sortTasks(todayTasks)
   const sortedHighPriorityTasks = sortTasks(highPriorityTasks)
+  // Added empty array for favorite tasks since we're removing this feature
+  const sortedFavoriteTasks: Task[] = []
 
   // Group function for future implementation if needed
   const groupTasks = (tasksToGroup: Task[]) => {
@@ -183,10 +184,12 @@ export default function Dashboard() {
         <StatCards 
           todayCount={todayTasks.length}
           highPriorityCount={highPriorityTasks.length}
+          favoritesCount={0}
         />
 
         <DashboardTabs
           todayTasks={sortedTodayTasks}
+          favoriteTasks={sortedFavoriteTasks}
           highPriorityTasks={sortedHighPriorityTasks}
           allTasks={sortedAllTasks}
           onComplete={handleComplete}

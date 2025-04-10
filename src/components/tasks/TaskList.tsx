@@ -10,6 +10,7 @@ interface TaskListProps {
   emptyMessage?: string
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
+  onFavoriteToggle?: (taskId: string, favorite: boolean) => void
 }
 
 export function TaskList({ 
@@ -18,7 +19,8 @@ export function TaskList({
   isLoading = false, 
   emptyMessage = "No tasks found", 
   onComplete, 
-  onDelete
+  onDelete,
+  onFavoriteToggle
 }: TaskListProps) {
   return (
     <Card>

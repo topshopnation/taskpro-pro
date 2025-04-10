@@ -64,7 +64,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         dueDate: task.dueDate,
         priority: task.priority.toString(),
         project: task.projectId || "inbox",
-        section: task.section || "",
+        section: "",
         tags: []  // Will be set by fetchTaskTags
       });
       
@@ -94,8 +94,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           notes: formValues.notes,
           due_date: formValues.dueDate ? formValues.dueDate.toISOString() : null,
           priority: parseInt(formValues.priority),
-          project_id: formValues.project === "inbox" ? null : formValues.project,
-          section: formValues.section || null
+          project_id: formValues.project === "inbox" ? null : formValues.project
         })
         .eq('id', task.id);
 

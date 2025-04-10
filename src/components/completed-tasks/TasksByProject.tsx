@@ -7,15 +7,13 @@ interface TasksByProjectProps {
   getProjectName: (projectId: string) => string
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
-  onFavoriteToggle: (taskId: string, favorite: boolean) => void
 }
 
 export function TasksByProject({
   tasksByProject,
   getProjectName,
   onComplete,
-  onDelete,
-  onFavoriteToggle
+  onDelete
 }: TasksByProjectProps) {
   if (Object.keys(tasksByProject).length === 0) {
     return (
@@ -34,7 +32,6 @@ export function TasksByProject({
             tasks={projectTasks}
             onComplete={onComplete}
             onDelete={onDelete}
-            onFavoriteToggle={onFavoriteToggle}
           />
         </div>
       ))}

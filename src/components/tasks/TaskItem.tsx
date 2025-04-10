@@ -21,6 +21,7 @@ export interface Task {
   priority: 1 | 2 | 3 | 4
   projectId: string
   completed: boolean
+  favorite?: boolean
 }
 
 interface TaskItemProps {

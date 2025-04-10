@@ -21,11 +21,11 @@ function StatCard({ title, value }: StatCardProps) {
 
 interface StatCardsProps {
   todayCount: number;
-  favoritesCount: number;
+  favoritesCount?: number;
   highPriorityCount: number;
 }
 
-export function StatCards({ todayCount, favoritesCount, highPriorityCount }: StatCardsProps) {
+export function StatCards({ todayCount, favoritesCount = 0, highPriorityCount }: StatCardsProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <StatCard title="Tasks Due Today" value={todayCount} />

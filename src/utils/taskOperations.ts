@@ -38,6 +38,22 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   }
 };
 
+export const toggleTaskFavorite = async (taskId: string, favorite: boolean): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ favorite })
+      .eq('id', taskId);
+      
+    if (error) throw error;
+  } catch (error: any) {
+    toast.error("Failed to update task favorite status", {
+      description: error.message
+    });
+    throw error;
+  }
+};
+
 export const getTaskTags = async (taskId: string): Promise<Tag[]> => {
   try {
     // Use a raw query with type assertion to work around type constraints

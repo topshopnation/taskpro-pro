@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { Task } from "@/components/tasks/TaskItem"
-import { updateTaskCompletion, deleteTask, toggleTaskFavorite } from "@/utils/taskOperations"
+import { updateTaskCompletion, deleteTask } from "@/utils/taskOperations"
 
 export function useInboxTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -33,7 +33,6 @@ export function useInboxTasks() {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
       }))
@@ -115,26 +114,10 @@ export function useInboxTasks() {
     }
   }
 
-  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
-    try {
-      await toggleTaskFavorite(taskId, favorite)
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, favorite } : task
-        )
-      )
-    } catch (error) {
-      // Error is handled in the taskOperations utility
-    }
-  }
-
   return {
     tasks,
     isLoading,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle
+    handleDelete
   }
 }

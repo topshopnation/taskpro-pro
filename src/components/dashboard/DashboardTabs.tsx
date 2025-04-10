@@ -11,7 +11,7 @@ interface DashboardTabsProps {
   allTasks: Task[];
   onComplete: (taskId: string, completed: boolean) => void;
   onDelete: (taskId: string) => void;
-  onFavoriteToggle: (taskId: string, favorite: boolean) => void;
+  onFavoriteToggle?: (taskId: string, favorite: boolean) => void;
 }
 
 export function DashboardTabs({
@@ -38,7 +38,6 @@ export function DashboardTabs({
           emptyMessage="No tasks due today"
           onComplete={onComplete}
           onDelete={onDelete}
-          onFavoriteToggle={onFavoriteToggle}
         />
       </TabsContent>
       <TabsContent value="favorites">
@@ -48,7 +47,6 @@ export function DashboardTabs({
           emptyMessage="No favorite tasks"
           onComplete={onComplete}
           onDelete={onDelete}
-          onFavoriteToggle={onFavoriteToggle}
         />
       </TabsContent>
       <TabsContent value="highPriority">
@@ -58,7 +56,6 @@ export function DashboardTabs({
           emptyMessage="No high priority tasks"
           onComplete={onComplete}
           onDelete={onDelete}
-          onFavoriteToggle={onFavoriteToggle}
         />
       </TabsContent>
       <TabsContent value="stats">

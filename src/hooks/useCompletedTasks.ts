@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { filterCompletedTasksByTime, groupTasksByProject } from "@/utils/taskFilterUtils";
-import { updateTaskCompletion, deleteTask, toggleTaskFavorite } from "@/utils/taskOperations";
+import { updateTaskCompletion, deleteTask } from "@/utils/taskOperations";
 import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 
 export function useCompletedTasks(timeFilter: string = "all") {
@@ -33,7 +33,6 @@ export function useCompletedTasks(timeFilter: string = "all") {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
       }));
@@ -94,27 +93,11 @@ export function useCompletedTasks(timeFilter: string = "all") {
     }
   };
 
-  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
-    try {
-      await toggleTaskFavorite(taskId, favorite);
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, favorite } : task
-        )
-      );
-    } catch (error) {
-      // Error is already handled in toggleTaskFavorite
-    }
-  };
-
   return {
     tasks: filteredTasks,
     tasksByProject,
     isLoading,
     handleComplete,
-    handleDelete,
-    handleFavoriteToggle
+    handleDelete
   };
 }
