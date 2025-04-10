@@ -22,6 +22,61 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   return (
     <div className="grid gap-2">
       <Label>Due Date</Label>
+      
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "flex items-center gap-1",
+            dueDate && format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') ? "bg-primary/10 border-primary" : ""
+          )}
+          onClick={() => onChange(today)}
+        >
+          <CalendarIcon className="h-3.5 w-3.5" />
+          <span>Today</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "flex items-center gap-1",
+            dueDate && format(dueDate, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd') ? "bg-primary/10 border-primary" : ""
+          )}
+          onClick={() => onChange(tomorrow)}
+        >
+          <Sun className="h-3.5 w-3.5" />
+          <span>Tomorrow</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "flex items-center gap-1",
+            dueDate && format(dueDate, 'yyyy-MM-dd') === format(weekend, 'yyyy-MM-dd') ? "bg-primary/10 border-primary" : ""
+          )}
+          onClick={() => onChange(weekend)}
+        >
+          <Sofa className="h-3.5 w-3.5" />
+          <span>Weekend</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "flex items-center gap-1",
+            dueDate && format(dueDate, 'yyyy-MM-dd') === format(nextWeek, 'yyyy-MM-dd') ? "bg-primary/10 border-primary" : ""
+          )}
+          onClick={() => onChange(nextWeek)}
+        >
+          <ArrowRight className="h-3.5 w-3.5" />
+          <span>Next week</span>
+        </Button>
+      </div>
+      
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -36,71 +91,13 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <div className="p-2">
-            <div className="mb-3 space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left font-normal"
-                onClick={() => onChange(today)}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                <span>Today</span>
-                <span className="ml-auto text-sm text-muted-foreground">
-                  {format(today, "EEE")}
-                </span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left font-normal"
-                onClick={() => onChange(tomorrow)}
-              >
-                <Sun className="mr-2 h-4 w-4" />
-                <span>Tomorrow</span>
-                <span className="ml-auto text-sm text-muted-foreground">
-                  {format(tomorrow, "EEE")}
-                </span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left font-normal"
-                onClick={() => onChange(weekend)}
-              >
-                <Sofa className="mr-2 h-4 w-4" />
-                <span>This Weekend</span>
-                <span className="ml-auto text-sm text-muted-foreground">
-                  {format(weekend, "EEE")}
-                </span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left font-normal"
-                onClick={() => onChange(nextWeek)}
-              >
-                <ArrowRight className="mr-2 h-4 w-4" />
-                <span>Next Week</span>
-                <span className="ml-auto text-sm text-muted-foreground">
-                  {format(nextWeek, "MMM d")}
-                </span>
-              </Button>
-            </div>
-            
-            <div className="border-t pt-3">
-              <Calendar
-                mode="single"
-                selected={dueDate}
-                onSelect={(date) => onChange(date || undefined)}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </div>
-          </div>
+          <Calendar
+            mode="single"
+            selected={dueDate}
+            onSelect={(date) => onChange(date || undefined)}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
         </PopoverContent>
       </Popover>
     </div>

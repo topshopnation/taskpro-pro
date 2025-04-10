@@ -117,57 +117,57 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       
       <PopoverContent align="end" className="w-auto p-0" side="right">
         <div className="p-2">
-          <div className="mb-3 space-y-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-left font-normal"
+              className={cn(
+                "flex items-center gap-1",
+                dueDate && isSameDay(dueDate, today) ? "bg-primary/10 border-primary" : ""
+              )}
               onClick={() => handleDateTimeSelection(today)}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="h-3.5 w-3.5" />
               <span>Today</span>
-              <span className="ml-auto text-sm text-muted-foreground">
-                {format(today, "EEE")}
-              </span>
             </Button>
             
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-left font-normal"
+              className={cn(
+                "flex items-center gap-1",
+                dueDate && isSameDay(dueDate, tomorrow) ? "bg-primary/10 border-primary" : ""
+              )}
               onClick={() => handleDateTimeSelection(tomorrow)}
             >
-              <Sun className="mr-2 h-4 w-4" />
+              <Sun className="h-3.5 w-3.5" />
               <span>Tomorrow</span>
-              <span className="ml-auto text-sm text-muted-foreground">
-                {format(tomorrow, "EEE")}
-              </span>
             </Button>
             
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-left font-normal"
+              className={cn(
+                "flex items-center gap-1",
+                dueDate && isSameDay(dueDate, weekend) ? "bg-primary/10 border-primary" : ""
+              )}
               onClick={() => handleDateTimeSelection(weekend)}
             >
-              <Sofa className="mr-2 h-4 w-4" />
-              <span>This Weekend</span>
-              <span className="ml-auto text-sm text-muted-foreground">
-                {format(weekend, "EEE")}
-              </span>
+              <Sofa className="h-3.5 w-3.5" />
+              <span>Weekend</span>
             </Button>
             
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start text-left font-normal"
+              className={cn(
+                "flex items-center gap-1",
+                dueDate && isSameDay(dueDate, nextWeek) ? "bg-primary/10 border-primary" : ""
+              )}
               onClick={() => handleDateTimeSelection(nextWeek)}
             >
-              <ArrowRight className="mr-2 h-4 w-4" />
-              <span>Next Week</span>
-              <span className="ml-auto text-sm text-muted-foreground">
-                {format(nextWeek, "MMM d")}
-              </span>
+              <ArrowRight className="h-3.5 w-3.5" />
+              <span>Next week</span>
             </Button>
           </div>
 
