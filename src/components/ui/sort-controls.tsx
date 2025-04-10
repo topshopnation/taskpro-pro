@@ -80,8 +80,8 @@ export function SortControls({
           <SelectContent>
             {groupOptions.map((option) => (
               <SelectItem 
-                key={option.value || "none"} 
-                value={option.value || "none"}
+                key={option.value} 
+                value={option.value}
               >
                 {option.label}
               </SelectItem>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -44,7 +43,6 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       if (!user) return;
       
       try {
-        // Use type assertion to bypass TypeScript constraints
         const { data, error } = await (supabase as any)
           .from('task_tags')
           .select('tags(id, name, color)')
@@ -53,7 +51,6 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           
         if (error) throw error;
         
-        // Extract tags from the nested structure and properly type them
         const tags = data.map((item: any) => item.tags as Tag);
         setTaskTags(tags);
       } catch (error: any) {
@@ -64,7 +61,6 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     fetchTaskTags();
   }, [task.id, user]);
 
-  // Fetch project name if projectId exists
   useEffect(() => {
     const fetchProjectName = async () => {
       if (!task.projectId || !user) return;
@@ -120,7 +116,6 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       if (error) throw error;
       
       toast.success("Task priority updated");
-      // The parent component will reload the tasks after Supabase triggers update
     } catch (error: any) {
       toast.error(`Error updating task priority: ${error.message}`);
     } finally {
@@ -141,7 +136,6 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       if (error) throw error;
       
       toast.success(date ? "Due date updated" : "Due date removed");
-      // The parent component will reload the tasks after Supabase triggers update
     } catch (error: any) {
       toast.error(`Error updating due date: ${error.message}`);
     } finally {
@@ -195,24 +189,26 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
         
         <div className="flex items-center space-x-1">
           <TooltipProvider>
-            <TaskItemPriority 
-              priority={task.priority} 
-              onPriorityChange={handlePriorityChange}
-              isUpdating={isUpdating}
-            />
-            
-            <TaskItemDueDate
-              dueDate={task.dueDate}
-              onDateChange={handleDateChange}
-              isUpdating={isUpdating}
-            />
-            
-            <TaskItemActions
-              task={task}
-              onDeleteClick={() => setIsDeleteDialogOpen(true)}
-              isUpdating={isUpdating}
-              onFavoriteToggle={onFavoriteToggle}
-            />
+            <div className="flex items-center space-x-1">
+              <TaskItemPriority 
+                priority={task.priority} 
+                onPriorityChange={handlePriorityChange}
+                isUpdating={isUpdating}
+              />
+              
+              <TaskItemDueDate
+                dueDate={task.dueDate}
+                onDateChange={handleDateChange}
+                isUpdating={isUpdating}
+              />
+              
+              <TaskItemActions
+                task={task}
+                onDeleteClick={() => setIsDeleteDialogOpen(true)}
+                isUpdating={isUpdating}
+                onFavoriteToggle={onFavoriteToggle}
+              />
+            </div>
           </TooltipProvider>
         </div>
       </div>
