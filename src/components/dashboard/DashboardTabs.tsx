@@ -3,6 +3,7 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Task } from "@/components/tasks/TaskItem";
 import { DashboardCharts } from "./DashboardCharts";
+import { CompletedTasksStats } from "./CompletedTasksStats";
 
 interface DashboardTabsProps {
   todayTasks: Task[];
@@ -30,6 +31,7 @@ export function DashboardTabs({
         <TabsTrigger value="favorites">Favorites</TabsTrigger>
         <TabsTrigger value="highPriority">High Priority</TabsTrigger>
         <TabsTrigger value="stats">Statistics</TabsTrigger>
+        <TabsTrigger value="completed">Completed</TabsTrigger>
       </TabsList>
       <TabsContent value="today">
         <TaskList
@@ -60,6 +62,9 @@ export function DashboardTabs({
       </TabsContent>
       <TabsContent value="stats">
         <DashboardCharts tasks={allTasks} />
+      </TabsContent>
+      <TabsContent value="completed">
+        <CompletedTasksStats tasks={allTasks} />
       </TabsContent>
     </Tabs>
   );

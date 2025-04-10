@@ -2,14 +2,13 @@
 import { useState } from "react"
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
+import { TaskDeleteAlert } from "./TaskDeleteAlert";
 
 interface TaskItemConfirmDeleteProps {
   open: boolean
@@ -34,14 +33,12 @@ export function TaskItemConfirmDelete({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isUpdating}>Cancel</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm} 
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
-            disabled={isUpdating}
-          >
-            {isUpdating ? "Deleting..." : "Delete"}
-          </AlertDialogAction>
+          <TaskDeleteAlert
+            onCancel={() => onOpenChange(false)}
+            onConfirm={onConfirm}
+            onUndo={() => onOpenChange(false)} 
+            isUpdating={isUpdating}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

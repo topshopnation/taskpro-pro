@@ -5,7 +5,6 @@ import { useDashboardTasks } from "@/hooks/useDashboardTasks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { StatCards } from "@/components/dashboard/StatCards";
-import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { sortTasks } from "@/utils/taskSortUtils";
