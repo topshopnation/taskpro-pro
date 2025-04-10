@@ -34,6 +34,7 @@ interface SidebarContainerProps {
   favoriteItems?: FavoriteItem[];
   isLoadingProjects?: boolean;
   isLoadingFilters?: boolean;
+  className?: string; // Added this line to fix the TypeScript error
 }
 
 const AppSidebarContainer = ({ 
@@ -43,7 +44,8 @@ const AppSidebarContainer = ({
   filters = [],
   favoriteItems = [],
   isLoadingProjects = false,
-  isLoadingFilters = false
+  isLoadingFilters = false,
+  className
 }: SidebarContainerProps) => {
   const [mounted, setMounted] = useState(false);
 
@@ -88,7 +90,7 @@ const AppSidebarContainer = ({
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground md:block">
+      <aside className={`hidden w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground md:block ${className}`}>
         <div className="flex h-full flex-col">
           <div className="p-4">
             <SidebarContent 
