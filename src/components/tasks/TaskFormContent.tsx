@@ -4,8 +4,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { CalendarIcon, Circle } from "lucide-react"
+import { format, addDays, nextSaturday, nextMonday } from "date-fns"
+import { CalendarIcon, Circle, Sun, Sofa, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TaskFormValues, ProjectOption } from "@/components/tasks/taskTypes"
@@ -26,6 +26,13 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
   useEffect(() => {
     console.log("Available projects in TaskFormContent:", projects);
   }, [projects]);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const tomorrow = addDays(today, 1);
+  const weekend = nextSaturday(today);
+  const nextWeek = nextMonday(today);
   
   return (
     <div className="grid gap-4 py-4">
@@ -69,13 +76,71 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={values.dueDate}
-                onSelect={(date) => onChange({ dueDate: date || undefined })}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
+              <div className="p-2">
+                <div className="mb-3 space-y-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                    onClick={() => onChange({ dueDate: today })}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <span>Today</span>
+                    <span className="ml-auto text-sm text-muted-foreground">
+                      {format(today, "EEE")}
+                    </span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                    onClick={() => onChange({ dueDate: tomorrow })}
+                  >
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Tomorrow</span>
+                    <span className="ml-auto text-sm text-muted-foreground">
+                      {format(tomorrow, "EEE")}
+                    </span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                    onClick={() => onChange({ dueDate: weekend })}
+                  >
+                    <Sofa className="mr-2 h-4 w-4" />
+                    <span>This Weekend</span>
+                    <span className="ml-auto text-sm text-muted-foreground">
+                      {format(weekend, "EEE")}
+                    </span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-left font-normal"
+                    onClick={() => onChange({ dueDate: nextWeek })}
+                  >
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    <span>Next Week</span>
+                    <span className="ml-auto text-sm text-muted-foreground">
+                      {format(nextWeek, "MMM d")}
+                    </span>
+                  </Button>
+                </div>
+                
+                <div className="border-t pt-3">
+                  <Calendar
+                    mode="single"
+                    selected={values.dueDate}
+                    onSelect={(date) => onChange({ dueDate: date || undefined })}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
