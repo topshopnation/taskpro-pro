@@ -71,15 +71,18 @@ export function SortControls({
       <div className="flex items-center">
         <span className="text-sm text-muted-foreground mr-2">Group:</span>
         <Select 
-          value={groupBy || ""} 
-          onValueChange={(value) => setGroupBy(value === "" ? null : value)}
+          value={groupBy || "none"} 
+          onValueChange={(value) => setGroupBy(value === "none" ? null : value)}
         >
           <SelectTrigger className="h-8 w-[120px]">
             <SelectValue placeholder="Group by" />
           </SelectTrigger>
           <SelectContent>
             {groupOptions.map((option) => (
-              <SelectItem key={option.value || "none"} value={option.value || ""}>
+              <SelectItem 
+                key={option.value || "none"} 
+                value={option.value || "none"}
+              >
                 {option.label}
               </SelectItem>
             ))}

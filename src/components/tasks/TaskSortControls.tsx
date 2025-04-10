@@ -1,3 +1,4 @@
+
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SortControls } from "@/components/ui/sort-controls";
@@ -33,7 +34,7 @@ export function TaskSortControls({
   ];
 
   const groupOptions = [
-    { value: null, label: "None" },
+    { value: "none", label: "None" },
     { value: "priority", label: "Priority" },
     { value: "dueDate", label: "Due Date" },
     ...(showProjectSort ? [{ value: "project", label: "Project" }] : []),

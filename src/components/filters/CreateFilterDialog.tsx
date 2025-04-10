@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -31,7 +30,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
   
-  // For new condition form
   const [conditionType, setConditionType] = useState("due")
   const [conditionValue, setConditionValue] = useState("")
   const [conditionOperator, setConditionOperator] = useState("equals")
@@ -51,7 +49,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
 
     setConditions([...conditions, newCondition])
     
-    // Reset form
     setConditionType("due")
     setConditionValue("")
     setConditionOperator("equals")
@@ -116,7 +113,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     setConditionOperator("equals")
   }
 
-  // Helper to render condition type label
   const getConditionLabel = (condition: Condition) => {
     const typeLabels: Record<string, string> = {
       due: "Due Date",
@@ -147,7 +143,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     const typeLabel = typeLabels[condition.type] || condition.type
     const operatorLabel = condition.operator ? operatorLabels[condition.operator] || condition.operator : ""
     
-    // Handle special value labels
     let valueLabel = condition.value
     if (condition.type in valueLabels && condition.value in valueLabels[condition.type]) {
       valueLabel = valueLabels[condition.type][condition.value]
@@ -174,7 +169,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             />
           </div>
           
-          {/* Current conditions */}
           {conditions.length > 0 && (
             <div className="space-y-2">
               <Label>Current Conditions</Label>
@@ -201,7 +195,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             </div>
           )}
           
-          {/* Add condition form */}
           <div className="space-y-3 rounded-md border p-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -289,7 +282,6 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             </Button>
           </div>
 
-          {/* Logic selector */}
           {conditions.length > 1 && (
             <div className="grid gap-2">
               <Label>Condition Logic</Label>
