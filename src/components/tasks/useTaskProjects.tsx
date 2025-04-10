@@ -14,10 +14,14 @@ export function useTaskProjects() {
       
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name')
+        .select('id, name, color')
         .eq('user_id', user.id)
       
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching projects:', error)
+        throw error
+      }
+      
       return data || []
     },
     enabled: !!user,

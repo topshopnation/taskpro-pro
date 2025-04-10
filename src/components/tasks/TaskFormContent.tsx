@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TaskFormValues, ProjectOption } from "@/components/tasks/taskTypes"
@@ -13,6 +13,7 @@ import { TaskPrioritySelector } from "@/components/tasks/TaskPrioritySelector"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { TagInput } from "@/components/tasks/TagInput"
 import { Button } from "@/components/ui/button"
+import { useEffect } from "react"
 
 interface TaskFormContentProps {
   values: TaskFormValues;
@@ -20,7 +21,12 @@ interface TaskFormContentProps {
 }
 
 export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
-  const { projects } = useTaskProjects();
+  const { projects, isLoading } = useTaskProjects();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("Available projects in TaskFormContent:", projects);
+  }, [projects]);
   
   return (
     <div className="grid gap-4 py-4">
@@ -97,9 +103,16 @@ export function TaskFormContent({ values, onChange }: TaskFormContentProps) {
             <SelectItem value="inbox" className="flex items-center gap-2">
               <span>Inbox</span>
             </SelectItem>
-            {projects?.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.name}
+            {projects && projects.map((project) => (
+              <SelectItem 
+                key={project.id} 
+                value={project.id}
+                className="flex items-center gap-2"
+              >
+                {project.color && (
+                  <Circle className="h-3 w-3 fill-current text-transparent" style={{ color: project.color }} />
+                )}
+                <span>{project.name}</span>
               </SelectItem>
             ))}
           </SelectContent>
