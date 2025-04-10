@@ -1,7 +1,8 @@
+
 import { useState } from "react"
 import { useEffect } from "react";
 import { useDashboardTasks } from "@/hooks/useDashboardTasks";
-import AppLayout from "@/components/layout/AppLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";

@@ -39,11 +39,12 @@ interface FavoriteItem {
 }
 
 interface AppSidebarProps {
-  isMobileMenuOpen: boolean;
-  setIsMobileMenuOpen: (open: boolean) => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
+  className?: string;
 }
 
-export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: AppSidebarProps) {
+export function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen, className }: AppSidebarProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [filters, setFilters] = useState<FilterItem[]>([]);
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
@@ -149,13 +150,14 @@ export default function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Ap
 
   return (
     <AppSidebarContainer 
-      isMobileMenuOpen={isMobileMenuOpen} 
-      setIsMobileMenuOpen={setIsMobileMenuOpen}
+      isMobileMenuOpen={isMobileMenuOpen || false} 
+      setIsMobileMenuOpen={setIsMobileMenuOpen || (() => {})}
       projects={projects}
       filters={filters}
       favoriteItems={favoriteItems}
       isLoadingProjects={isLoadingProjects}
       isLoadingFilters={isLoadingFilters}
+      className={className}
     />
   );
 }

@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -6,6 +7,17 @@ import { FilterHeader } from "@/components/filters/FilterHeader";
 import { TaskList } from "@/components/tasks/TaskList";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { useFilter } from "@/hooks/useFilter";
+import { Button } from "@/components/ui/button";
+import { Task } from "@/components/tasks/TaskItem";
+import { format } from "date-fns";
+import { 
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react";
 
 export default function FilterView() {
   const navigate = useNavigate();

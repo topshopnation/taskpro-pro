@@ -1,9 +1,9 @@
-import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react"
-import AppLayout from "@/components/layout/AppLayout"
+import { useParams } from "react-router-dom"
+import { AppLayout } from "@/components/layout/AppLayout"
+import { useProject } from "@/hooks/useProject"
 import { ProjectHeader } from "@/components/projects/ProjectHeader"
 import { ProjectDialogs } from "@/components/projects/ProjectDialogs"
-import { useProject } from "@/hooks/useProject"
 import { useProjectTasks } from "@/hooks/useProjectTasks"
 import { ProjectLoadingState } from "@/components/projects/ProjectLoadingState"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"

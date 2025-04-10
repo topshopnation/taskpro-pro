@@ -1,8 +1,10 @@
+
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { TasksByProject } from "@/components/completed-tasks/TasksByProject";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TimeFilter } from "@/components/completed-tasks/TimeFilter";
 import { useState } from "react";
+import { ProjectLoadingState } from "@/components/projects/ProjectLoadingState";
 
 export default function CompletedTasks() {
   const [timeFilter, setTimeFilter] = useState("all");

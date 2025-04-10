@@ -1,5 +1,6 @@
+
 import { useState } from "react"
-import AppLayout from "@/components/layout/AppLayout"
+import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
