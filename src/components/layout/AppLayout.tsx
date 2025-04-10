@@ -1,33 +1,18 @@
 
-import { useState } from "react"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import AppSidebar from "./AppSidebar"
-import AppHeader from "./AppHeader"
+import { Outlet } from "react-router-dom";
+import { AppSidebar } from "./AppSidebar";
+import { AppHeader } from "./AppHeader";
 
-interface AppLayoutProps {
-  children: React.ReactNode
-}
-
-export default function AppLayout({ children }: AppLayoutProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
+export function AppLayout() {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar 
-          isMobileMenuOpen={isMobileMenuOpen} 
-          setIsMobileMenuOpen={setIsMobileMenuOpen} 
-        />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <AppHeader 
-            title="TaskPro"
-            setIsMobileMenuOpen={setIsMobileMenuOpen} 
-          />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            {children}
-          </main>
-        </div>
+    <div className="flex min-h-screen flex-col">
+      <AppHeader />
+      <div className="flex flex-1">
+        <AppSidebar className="hidden md:block" />
+        <main className="flex-1 p-4 md:p-6">
+          <Outlet />
+        </main>
       </div>
-    </SidebarProvider>
-  )
+    </div>
+  );
 }
