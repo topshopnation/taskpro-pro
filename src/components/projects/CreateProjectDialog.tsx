@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
+import { useQuery } from "@tanstack/react-query"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -17,10 +18,60 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
+  const [isNameError, setIsNameError] = useState(false)
+  
+  // Reset form state when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setName("")
+      setIsNameError(false)
+    }
+  }, [open])
+
+  // Fetch existing project names to check for duplicates
+  const { data: existingProjects } = useQuery({
+    queryKey: ['project-names', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select('name')
+        .eq('user_id', user.id)
+        
+      if (error) {
+        console.error("Error fetching project names:", error)
+        return []
+      }
+      
+      return data || []
+    },
+    enabled: !!user && open
+  })
+
+  const validateProjectName = (projectName: string) => {
+    const trimmedName = projectName.trim()
+    if (!trimmedName) {
+      setIsNameError(true)
+      return false
+    }
+    
+    const isDuplicate = existingProjects?.some(
+      project => project.name.toLowerCase() === trimmedName.toLowerCase()
+    )
+    
+    if (isDuplicate) {
+      setIsNameError(true)
+      toast.error("A project with this name already exists")
+      return false
+    }
+    
+    setIsNameError(false)
+    return true
+  }
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error("Project name is required")
+    if (!validateProjectName(name)) {
       return
     }
 
@@ -35,7 +86,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       const { error } = await supabase
         .from('projects')
         .insert({
-          name,
+          name: name.trim(),
           favorite: false,
           user_id: user.id
         })
@@ -64,10 +115,19 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
             <Input
               id="project-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (isNameError) validateProjectName(e.target.value)
+              }}
               placeholder="Enter project name"
               autoFocus
+              className={isNameError ? "border-destructive" : ""}
             />
+            {isNameError && (
+              <p className="text-sm text-destructive">
+                Please enter a unique project name
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>

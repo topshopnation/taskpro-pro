@@ -3,7 +3,6 @@ import { Pencil, Star, Trash2, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CustomFilter } from "@/types/filterTypes";
-import { isStandardFilter } from "@/utils/filterUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,7 @@ interface FilterHeaderProps {
   onFavoriteToggle: () => void;
   onRenameClick: () => void;
   onDeleteClick: () => void;
-  onColorChange?: (color: string) => void;
+  onColorChange: (color: string) => void;
 }
 
 export function FilterHeader({
@@ -26,7 +25,6 @@ export function FilterHeader({
   onDeleteClick,
   onColorChange,
 }: FilterHeaderProps) {
-  const isStandard = isStandardFilter(filter.id);
   const filterColors = [
     "#FF6B6B", "#FF9E7D", "#FFCA80", "#FFEC8A", "#BADA55", 
     "#7ED957", "#4ECDC4", "#45B7D1", "#4F86C6", "#5E60CE", 
@@ -42,9 +40,8 @@ export function FilterHeader({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 flex items-center justify-center"
             onClick={onFavoriteToggle}
-            disabled={isStandard}
           >
             <Star
               className={`h-5 w-5 ${
@@ -58,46 +55,44 @@ export function FilterHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          {!isStandard && onColorChange && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                  <Palette 
-                    className="h-4 w-4" 
-                    style={filter.color ? { color: filter.color } : undefined} 
-                  />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="p-2">
-                  <IconPicker 
-                    colors={filterColors} 
-                    onChange={onColorChange} 
-                    selectedColor={filter.color || ""} 
-                  />
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-9 w-9 flex items-center justify-center"
+              >
+                <Palette className="h-5 w-5" style={filter.color ? { color: filter.color } : undefined} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="p-2">
+                <IconPicker 
+                  colors={filterColors} 
+                  onChange={onColorChange} 
+                  selectedColor={filter.color || ""} 
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-9 w-9 flex items-center justify-center" 
+            onClick={onRenameClick}
+          >
+            <Pencil className="h-5 w-5" />
+            <span className="sr-only">Rename</span>
+          </Button>
           
           <Button
             variant="outline"
             size="icon"
-            onClick={onRenameClick}
-            disabled={isStandard}
-            className="h-9 w-9"
-          >
-            <Pencil className="h-4 w-4" />
-            <span className="sr-only">Rename</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
             onClick={onDeleteClick}
-            className="text-destructive h-9 w-9"
-            disabled={isStandard}
+            className="text-destructive h-9 w-9 flex items-center justify-center"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-5 w-5" />
             <span className="sr-only">Delete</span>
           </Button>
         </div>

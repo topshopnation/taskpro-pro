@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,16 +50,17 @@ export function useSearchTasks(query: string) {
     enabled: !!user && query.trim().length > 0
   });
   
-  useEffect(() => {
+  // Set results when data changes
+  useState(() => {
     if (data) {
       setResults(data);
     } else {
       setResults([]);
     }
-  }, [data]);
+  });
   
   return {
-    results,
+    results: data || [],
     isLoading: isLoading && query.trim().length > 0
   };
 }

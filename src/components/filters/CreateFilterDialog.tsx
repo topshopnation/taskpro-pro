@@ -1,4 +1,5 @@
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,7 @@ import { Plus, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
+import { useQuery } from "@tanstack/react-query"
 
 interface Condition {
   id: string
@@ -28,11 +30,61 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
   const [conditions, setConditions] = useState<Condition[]>([])
   const [logic, setLogic] = useState("and")
   const [isLoading, setIsLoading] = useState(false)
+  const [isNameError, setIsNameError] = useState(false)
   const { user } = useAuth()
   
   const [conditionType, setConditionType] = useState("due")
   const [conditionValue, setConditionValue] = useState("")
   const [conditionOperator, setConditionOperator] = useState("equals")
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      resetForm()
+    }
+  }, [open])
+
+  // Fetch existing filter names to check for duplicates
+  const { data: existingFilters } = useQuery({
+    queryKey: ['filter-names', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      
+      const { data, error } = await supabase
+        .from('filters')
+        .select('name')
+        .eq('user_id', user.id)
+        
+      if (error) {
+        console.error("Error fetching filter names:", error)
+        return []
+      }
+      
+      return data || []
+    },
+    enabled: !!user && open
+  })
+
+  const validateFilterName = (filterName: string) => {
+    const trimmedName = filterName.trim()
+    if (!trimmedName) {
+      setIsNameError(true)
+      return false
+    }
+    
+    const isDuplicate = existingFilters?.some(
+      filter => filter.name.toLowerCase() === trimmedName.toLowerCase()
+    )
+    
+    if (isDuplicate) {
+      setIsNameError(true)
+      toast.error("A filter with this name already exists")
+      return false
+    }
+    
+    setIsNameError(false)
+    return true
+  }
 
   const addCondition = () => {
     if (!conditionValue) {
@@ -59,8 +111,22 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
   }
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error("Filter name is required")
+    if (!validateFilterName(name)) {
+      return
+    }
+
+    // Add the current condition if there's a value but user didn't click "Add Condition"
+    if (conditionValue && conditions.length === 0) {
+      const newCondition: Condition = {
+        id: Date.now().toString(),
+        type: conditionType,
+        value: conditionValue,
+        operator: conditionOperator
+      }
+      setConditions([newCondition])
+      
+      // Process submission after state update
+      setTimeout(() => submitFilter([newCondition]), 0)
       return
     }
 
@@ -69,6 +135,10 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
       return
     }
 
+    submitFilter(conditions)
+  }
+
+  const submitFilter = async (conditionsToSubmit: Condition[]) => {
     if (!user) {
       toast.error("You must be logged in to create a filter")
       return
@@ -80,10 +150,10 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
       const { error } = await supabase
         .from('filters')
         .insert({
-          name,
+          name: name.trim(),
           conditions: {
             logic,
-            items: conditions.map(c => ({
+            items: conditionsToSubmit.map(c => ({
               type: c.type,
               value: c.value,
               operator: c.operator
@@ -111,6 +181,7 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     setConditionType("due")
     setConditionValue("")
     setConditionOperator("equals")
+    setIsNameError(false)
   }
 
   const getConditionLabel = (condition: Condition) => {
@@ -163,10 +234,19 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             <Input
               id="filter-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (isNameError) validateFilterName(e.target.value)
+              }}
               placeholder="Enter filter name"
               autoFocus
+              className={isNameError ? "border-destructive" : ""}
             />
+            {isNameError && (
+              <p className="text-sm text-destructive">
+                Please enter a unique filter name
+              </p>
+            )}
           </div>
           
           {conditions.length > 0 && (
