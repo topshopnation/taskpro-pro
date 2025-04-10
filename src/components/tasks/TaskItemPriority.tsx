@@ -9,10 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { TaskPriority } from "./taskTypes"
 
 interface TaskItemPriorityProps {
-  priority: number
-  onPriorityChange: (priority: 1 | 2 | 3 | 4) => void
+  priority: TaskPriority
+  onPriorityChange: (priority: TaskPriority) => void
   isUpdating: boolean
 }
 
@@ -35,20 +36,16 @@ export function TaskItemPriority({ priority, onPriorityChange, isUpdating }: Tas
 
   return (
     <DropdownMenu>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isUpdating}>
-                <Flag className={cn("h-4 w-4", priorityColors[priority])} />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            {priorityLabels[priority]} (Click to change)
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <TooltipTrigger asChild>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isUpdating}>
+            <Flag className={cn("h-4 w-4", priorityColors[priority])} />
+          </Button>
+        </DropdownMenuTrigger>
+      </TooltipTrigger>
+      <TooltipContent>
+        {priorityLabels[priority]} (Click to change)
+      </TooltipContent>
       
       <DropdownMenuContent align="end">
         <DropdownMenuItem 

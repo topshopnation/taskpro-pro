@@ -26,3 +26,6 @@ export interface TaskTagRelation {
   task_id: string;
   tag_id: string;
 }
+
+// Ensure priority is properly typed
+export type TaskPriority = 1 | 2 | 3 | 4;

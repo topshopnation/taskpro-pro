@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { Tag } from "./taskTypes"
+import { TaskItemDueDate } from "./TaskItemDueDate" 
 
 export interface Task {
   id: string
@@ -28,9 +29,10 @@ interface TaskItemProps {
   task: Task
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
+  onFavoriteToggle?: (taskId: string, favorite: boolean) => void
 }
 
-export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
+export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [taskTags, setTaskTags] = useState<Tag[]>([])
@@ -126,6 +128,27 @@ export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
     }
   };
 
+  const handleDateChange = async (date: Date | undefined) => {
+    setIsUpdating(true);
+    try {
+      const formattedDate = date ? date.toISOString() : null;
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ due_date: formattedDate })
+        .eq('id', task.id);
+      
+      if (error) throw error;
+      
+      toast.success(date ? "Due date updated" : "Due date removed");
+      // The parent component will reload the tasks after Supabase triggers update
+    } catch (error: any) {
+      toast.error(`Error updating due date: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDelete = async () => {
     setIsUpdating(true)
     try {
@@ -178,10 +201,17 @@ export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
               isUpdating={isUpdating}
             />
             
+            <TaskItemDueDate
+              dueDate={task.dueDate}
+              onDateChange={handleDateChange}
+              isUpdating={isUpdating}
+            />
+            
             <TaskItemActions
               task={task}
               onDeleteClick={() => setIsDeleteDialogOpen(true)}
               isUpdating={isUpdating}
+              onFavoriteToggle={onFavoriteToggle}
             />
           </TooltipProvider>
         </div>
