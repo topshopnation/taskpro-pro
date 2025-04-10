@@ -11,6 +11,7 @@ interface TaskListProps {
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
   onFavoriteToggle?: (taskId: string, favorite: boolean) => void
+  hideTitle?: boolean
 }
 
 export function TaskList({ 
@@ -20,16 +21,17 @@ export function TaskList({
   emptyMessage = "No tasks found", 
   onComplete, 
   onDelete,
-  onFavoriteToggle
+  onFavoriteToggle,
+  hideTitle = false
 }: TaskListProps) {
   return (
     <Card>
-      {title && (
+      {title && !hideTitle && (
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
       )}
-      <CardContent className={!title ? "pt-6" : ""}>
+      <CardContent className={!title || hideTitle ? "pt-6" : ""}>
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, index) => (
