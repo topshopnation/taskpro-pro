@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -18,6 +17,7 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
+import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 
 export default function TodayView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -26,13 +26,11 @@ export default function TodayView() {
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const { user } = useAuth()
 
-  // Create a function to get today's date in the format YYYY-MM-DD
   const getTodayDate = () => {
     const today = new Date()
     return format(today, 'yyyy-MM-dd')
   }
 
-  // Fetch tasks due today
   const fetchTodayTasks = async () => {
     if (!user) return []
     
@@ -68,14 +66,12 @@ export default function TodayView() {
     }
   }
   
-  // Use React Query to fetch tasks
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['today-tasks', user?.id],
     queryFn: fetchTodayTasks,
     enabled: !!user
   })
 
-  // Handle task operations
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
       const { error } = await supabase
@@ -125,7 +121,6 @@ export default function TodayView() {
     }
   }
 
-  // Sort and group functions
   const sortTasks = (tasksToSort: Task[]) => {
     return [...tasksToSort].sort((a, b) => {
       if (sortBy === "title") {
@@ -133,7 +128,6 @@ export default function TodayView() {
           ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title)
       } else if (sortBy === "dueDate") {
-        // Handle null or undefined dates
         if (!a.dueDate && !b.dueDate) return 0
         if (!a.dueDate) return sortDirection === "asc" ? 1 : -1
         if (!b.dueDate) return sortDirection === "asc" ? -1 : 1
@@ -167,7 +161,6 @@ export default function TodayView() {
           ? format(task.dueDate, 'PPP') 
           : "No Due Date"
       } else if (groupBy === "title") {
-        // Group by first letter of title
         groupKey = task.title.charAt(0).toUpperCase()
       }
       
@@ -177,7 +170,6 @@ export default function TodayView() {
       grouped[groupKey].push(task)
     })
     
-    // Sort each group
     Object.keys(grouped).forEach(key => {
       grouped[key] = sortTasks(grouped[key])
     })
@@ -196,7 +188,6 @@ export default function TodayView() {
             <h1 className="text-2xl font-bold">Today</h1>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Sort Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -229,7 +220,6 @@ export default function TodayView() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Group Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -263,7 +253,6 @@ export default function TodayView() {
           </div>
         </div>
 
-        {/* Display grouped tasks */}
         <div className="space-y-6">
           {Object.keys(groupedTasks).length === 0 ? (
             <div className="bg-muted/30 rounded-lg p-8 text-center">

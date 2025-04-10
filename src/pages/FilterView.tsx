@@ -1,26 +1,15 @@
-
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AppLayout from "@/components/layout/AppLayout";
-import { TaskList } from "@/components/tasks/TaskList";
-import { Button } from "@/components/ui/button";
-import { useFilter } from "@/hooks/useFilter";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { FilterHeader } from "@/components/filters/FilterHeader";
+import { TaskList } from "@/components/tasks/TaskList";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
-import { ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator 
-} from "@/components/ui/dropdown-menu"
-import { format } from "date-fns"
-import { Task } from "@/components/tasks/TaskItem"
+import { useFilter } from "@/hooks/useFilter";
 
 export default function FilterView() {
   const navigate = useNavigate();
+  const { filterId } = useParams();
   const [sortBy, setSortBy] = useState<string>("title")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
@@ -49,14 +38,12 @@ export default function FilterView() {
     handleFavoriteToggle
   } = useFilteredTasks(currentFilter);
   
-  // Update filter name when current filter changes
   useEffect(() => {
     if (currentFilter) {
       setNewFilterName(currentFilter.name);
     }
   }, [currentFilter, setNewFilterName]);
 
-  // Sort and group functions
   const sortTasks = (tasksToSort: Task[]) => {
     return [...tasksToSort].sort((a, b) => {
       if (sortBy === "title") {
@@ -64,7 +51,6 @@ export default function FilterView() {
           ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title)
       } else if (sortBy === "dueDate") {
-        // Handle null or undefined dates
         if (!a.dueDate && !b.dueDate) return 0
         if (!a.dueDate) return sortDirection === "asc" ? 1 : -1
         if (!b.dueDate) return sortDirection === "asc" ? -1 : 1
@@ -98,7 +84,6 @@ export default function FilterView() {
           ? format(task.dueDate, 'PPP') 
           : "No Due Date"
       } else if (groupBy === "title") {
-        // Group by first letter of title
         groupKey = task.title.charAt(0).toUpperCase()
       }
       
@@ -108,7 +93,6 @@ export default function FilterView() {
       grouped[groupKey].push(task)
     })
     
-    // Sort each group
     Object.keys(grouped).forEach(key => {
       grouped[key] = sortTasks(grouped[key])
     })
@@ -155,7 +139,6 @@ export default function FilterView() {
             onColorChange={handleFilterColorChange}
           />
           <div className="flex items-center space-x-2">
-            {/* Sort Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -188,7 +171,6 @@ export default function FilterView() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Group Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -214,7 +196,6 @@ export default function FilterView() {
           </div>
         </div>
 
-        {/* Display grouped tasks */}
         <div className="space-y-6">
           {Object.keys(groupedTasks).length === 0 ? (
             <div className="bg-muted/30 rounded-lg p-8 text-center">

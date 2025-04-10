@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -8,6 +7,7 @@ import { Inbox } from "lucide-react"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
+import { TaskList } from "@/components/tasks/TaskList"
 
 export default function InboxView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)

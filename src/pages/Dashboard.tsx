@@ -1,20 +1,21 @@
-
 import { useState } from "react"
-import AppLayout from "@/components/layout/AppLayout"
-import { StatCards } from "@/components/dashboard/StatCards"
-import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton"
-import { useDashboardTasks } from "@/hooks/useDashboardTasks"
-import { TaskSortControls } from "@/components/tasks/TaskSortControls"
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
-import { sortTasks } from "@/utils/taskSortUtils"
-import { Task } from "@/components/tasks/TaskItem"
+import { useEffect } from "react";
+import { useDashboardTasks } from "@/hooks/useDashboardTasks";
+import AppLayout from "@/components/layout/AppLayout";
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { StatCards } from "@/components/dashboard/StatCards";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { TaskSortControls } from "@/components/tasks/TaskSortControls";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { sortTasks } from "@/utils/taskSortUtils";
+import { Task } from "@/components/tasks/TaskItem";
 
 export default function Dashboard() {
-  const [sortBy, setSortBy] = useState<string>("dueDate")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [groupBy, setGroupBy] = useState<string | null>(null)
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<string>("dueDate");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [groupBy, setGroupBy] = useState<string | null>(null);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   
   const { 
     tasks,

@@ -1,19 +1,17 @@
-
-import { useState } from "react"
-import AppLayout from "@/components/layout/AppLayout"
-import { TimeFilter } from "@/components/completed-tasks/TimeFilter"
-import { TasksByProject } from "@/components/completed-tasks/TasksByProject"
-import { ProjectLoadingState } from "@/components/projects/ProjectLoadingState"
-import { useCompletedTasks } from "@/hooks/useCompletedTasks"
+import { useCompletedTasks } from "@/hooks/useCompletedTasks";
+import { TasksByProject } from "@/components/completed-tasks/TasksByProject";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { TimeFilter } from "@/components/completed-tasks/TimeFilter";
+import { useState } from "react";
 
 export default function CompletedTasks() {
-  const [timeFilter, setTimeFilter] = useState("all")
+  const [timeFilter, setTimeFilter] = useState("all");
   const { 
     tasksByProject, 
     isLoading, 
     handleComplete, 
     handleDelete
-  } = useCompletedTasks(timeFilter)
+  } = useCompletedTasks(timeFilter);
 
   const getProjectName = (projectId: string): string => {
     // In a real app, you'd fetch this from the database
@@ -23,7 +21,7 @@ export default function CompletedTasks() {
       "personal": "Personal",
       "none": "No Project"
     }
-    return projectNames[projectId] || projectId
+    return projectNames[projectId] || projectId;
   }
 
   return (
@@ -48,5 +46,5 @@ export default function CompletedTasks() {
         )}
       </div>
     </AppLayout>
-  )
+  );
 }

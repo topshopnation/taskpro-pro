@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { useAuth } from "@/hooks/use-auth"
@@ -26,6 +25,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 
 export default function OverdueView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -37,13 +37,11 @@ export default function OverdueView() {
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined)
   const { user } = useAuth()
 
-  // Create a function to get today's date in the format YYYY-MM-DD
   const getTodayDate = () => {
     const today = new Date()
     return format(today, 'yyyy-MM-dd')
   }
 
-  // Fetch overdue tasks
   const fetchOverdueTasks = async () => {
     if (!user) return []
     
@@ -79,14 +77,12 @@ export default function OverdueView() {
     }
   }
   
-  // Use React Query to fetch tasks
   const { data: tasks = [], isLoading, refetch } = useQuery({
     queryKey: ['overdue-tasks', user?.id],
     queryFn: fetchOverdueTasks,
     enabled: !!user
   })
 
-  // Handle task operations
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
       const { error } = await supabase
@@ -174,7 +170,6 @@ export default function OverdueView() {
     }
   }
 
-  // Sort and group functions
   const sortTasks = (tasksToSort: Task[]) => {
     return [...tasksToSort].sort((a, b) => {
       if (sortBy === "title") {
@@ -182,7 +177,6 @@ export default function OverdueView() {
           ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title)
       } else if (sortBy === "dueDate") {
-        // Handle null or undefined dates
         if (!a.dueDate && !b.dueDate) return 0
         if (!a.dueDate) return sortDirection === "asc" ? 1 : -1
         if (!b.dueDate) return sortDirection === "asc" ? -1 : 1
@@ -216,7 +210,6 @@ export default function OverdueView() {
           ? format(task.dueDate, 'PPP') 
           : "No Due Date"
       } else if (groupBy === "title") {
-        // Group by first letter of title
         groupKey = task.title.charAt(0).toUpperCase()
       }
       
@@ -226,7 +219,6 @@ export default function OverdueView() {
       grouped[groupKey].push(task)
     })
     
-    // Sort each group
     Object.keys(grouped).forEach(key => {
       grouped[key] = sortTasks(grouped[key])
     })
@@ -245,7 +237,6 @@ export default function OverdueView() {
             <h1 className="text-2xl font-bold">Overdue</h1>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Reschedule Button */}
             <Button 
               variant="outline" 
               size="icon"
@@ -256,7 +247,6 @@ export default function OverdueView() {
               <CalendarRange className="h-4 w-4" />
             </Button>
             
-            {/* Sort Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -289,7 +279,6 @@ export default function OverdueView() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Group Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -323,7 +312,6 @@ export default function OverdueView() {
           </div>
         </div>
 
-        {/* Display grouped tasks */}
         <div className="space-y-6">
           {Object.keys(groupedTasks).length === 0 ? (
             <div className="bg-muted/30 rounded-lg p-8 text-center">
@@ -347,7 +335,6 @@ export default function OverdueView() {
           )}
         </div>
 
-        {/* Dialogs */}
         <CreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}

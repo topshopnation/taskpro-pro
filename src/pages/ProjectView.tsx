@@ -1,4 +1,4 @@
-
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import { ProjectHeader } from "@/components/projects/ProjectHeader"
@@ -50,7 +50,6 @@ export default function ProjectView() {
     }
   }, [currentProject, setNewProjectName, setProjectColor])
 
-  // Group tasks based on the current settings
   const groupedTasks = groupTasks(unsectionedTasks, groupBy, sortBy, sortDirection)
 
   if (isLoadingProject) {
@@ -90,7 +89,6 @@ export default function ProjectView() {
           />
         </div>
 
-        {/* Display grouped tasks */}
         <GroupedTaskLists
           groupedTasks={groupedTasks}
           groupBy={groupBy}
@@ -106,7 +104,6 @@ export default function ProjectView() {
           defaultProjectId={id}
         />
 
-        {/* Projects dialogs */}
         {isEditProjectOpen && (
           <ProjectDialogs
             projectId={id}
