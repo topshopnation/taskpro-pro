@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { Tag } from "./taskTypes"
 import { TaskItemDueDate } from "./TaskItemDueDate" 
+import { useTaskData } from "./hooks/useTaskData"
 
 export interface Task {
   id: string
@@ -37,57 +38,8 @@ interface TaskItemProps {
 export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
-  const [taskTags, setTaskTags] = useState<Tag[]>([])
-  const [projectName, setProjectName] = useState<string>("")
-  const { user } = useAuth()
-
-  useEffect(() => {
-    const fetchTaskTags = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await (supabase as any)
-          .from('task_tags')
-          .select('tags(id, name, color)')
-          .eq('task_id', task.id)
-          .eq('user_id', user.id);
-          
-        if (error) throw error;
-        
-        const tags = data.map((item: any) => item.tags as Tag);
-        setTaskTags(tags);
-      } catch (error: any) {
-        console.error("Failed to fetch task tags:", error.message);
-      }
-    };
-    
-    fetchTaskTags();
-  }, [task.id, user]);
-
-  useEffect(() => {
-    const fetchProjectName = async () => {
-      if (!task.projectId || !user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('name')
-          .eq('id', task.projectId)
-          .eq('user_id', user.id)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          setProjectName(data.name);
-        }
-      } catch (error: any) {
-        console.error("Failed to fetch project name:", error.message);
-      }
-    };
-    
-    fetchProjectName();
-  }, [task.projectId, user]);
+  
+  const { taskTags, projectName } = useTaskData(task.id, task.projectId)
 
   const handleCompletionToggle = async () => {
     setIsUpdating(true)
@@ -109,42 +61,42 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   }
 
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
-    setIsUpdating(true);
+    setIsUpdating(true)
     try {
       const { error } = await supabase
         .from('tasks')
         .update({ priority: newPriority })
-        .eq('id', task.id);
+        .eq('id', task.id)
       
-      if (error) throw error;
+      if (error) throw error
       
-      toast.success("Task priority updated");
+      toast.success("Task priority updated")
     } catch (error: any) {
-      toast.error(`Error updating task priority: ${error.message}`);
+      toast.error(`Error updating task priority: ${error.message}`)
     } finally {
-      setIsUpdating(false);
+      setIsUpdating(false)
     }
-  };
+  }
 
   const handleDateChange = async (date: Date | undefined) => {
-    setIsUpdating(true);
+    setIsUpdating(true)
     try {
-      const formattedDate = date ? date.toISOString() : null;
+      const formattedDate = date ? date.toISOString() : null
       
       const { error } = await supabase
         .from('tasks')
         .update({ due_date: formattedDate })
-        .eq('id', task.id);
+        .eq('id', task.id)
       
-      if (error) throw error;
+      if (error) throw error
       
-      toast.success(date ? "Due date updated" : "Due date removed");
+      toast.success(date ? "Due date updated" : "Due date removed")
     } catch (error: any) {
-      toast.error(`Error updating due date: ${error.message}`);
+      toast.error(`Error updating due date: ${error.message}`)
     } finally {
-      setIsUpdating(false);
+      setIsUpdating(false)
     }
-  };
+  }
 
   const handleDelete = async () => {
     setIsUpdating(true)
