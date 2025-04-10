@@ -127,3 +127,33 @@ export const updateTaskPriority = async (taskId: string, priority: 1 | 2 | 3 | 4
     throw error;
   }
 };
+
+// New functions extracted from useProjectTasks
+
+export const fetchProjectTasks = async (projectId: string, userId: string): Promise<Task[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('project_id', projectId)
+      .eq('user_id', userId);
+      
+    if (error) throw error;
+    
+    return data.map((task: any) => ({
+      id: task.id,
+      title: task.title,
+      notes: task.notes,
+      dueDate: task.due_date ? new Date(task.due_date) : undefined,
+      priority: task.priority || 4,
+      projectId: task.project_id,
+      completed: task.completed || false,
+      favorite: task.favorite || false
+    }));
+  } catch (error: any) {
+    toast.error("Failed to fetch tasks", {
+      description: error.message
+    });
+    return [];
+  }
+};
