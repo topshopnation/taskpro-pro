@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
-import AppSidebarContainer from "@/components/sidebar/SidebarContainer";
+import { SidebarContent } from "@/components/sidebar/SidebarContent";
+import { Sidebar } from "@/components/ui/sidebar";
 
 interface Project {
   id: string;
@@ -39,12 +40,10 @@ interface FavoriteItem {
 }
 
 interface AppSidebarProps {
-  isMobileMenuOpen?: boolean;
-  setIsMobileMenuOpen?: (open: boolean) => void;
   className?: string;
 }
 
-export function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen, className }: AppSidebarProps) {
+export function AppSidebar({ className }: AppSidebarProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [filters, setFilters] = useState<FilterItem[]>([]);
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
@@ -149,15 +148,14 @@ export function AppSidebar({ isMobileMenuOpen, setIsMobileMenuOpen, className }:
   }, [projects, filters]);
 
   return (
-    <AppSidebarContainer 
-      isMobileMenuOpen={isMobileMenuOpen || false} 
-      setIsMobileMenuOpen={setIsMobileMenuOpen || (() => {})}
-      projects={projects}
-      filters={filters}
-      favoriteItems={favoriteItems}
-      isLoadingProjects={isLoadingProjects}
-      isLoadingFilters={isLoadingFilters}
-      className={className}
-    />
+    <Sidebar className={className}>
+      <SidebarContent 
+        projects={projects}
+        filters={filters}
+        favoriteItems={favoriteItems}
+        isLoadingProjects={isLoadingProjects}
+        isLoadingFilters={isLoadingFilters}
+      />
+    </Sidebar>
   );
 }
