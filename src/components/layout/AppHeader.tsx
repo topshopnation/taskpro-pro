@@ -1,4 +1,5 @@
-import { AlignLeft, Plus, Search, User } from "lucide-react";
+
+import { AlignLeft, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
@@ -16,22 +17,23 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { useEffect, useState } from "react";
+import { TaskProLogo } from "@/components/ui/taskpro-logo";
 
 export function AppHeader({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
-  const { sidebarOpen, toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
   const auth = useAuth();
   const navigate = useNavigate();
   
   const [userProfile, setUserProfile] = useState({
-    name: auth.user?.name || "Guest",
-    imageUrl: auth.user?.image
+    name: auth.user?.firstName || "User",
+    imageUrl: auth.user?.avatarUrl
   });
   
   useEffect(() => {
     setUserProfile({
-      name: auth.user?.name || "Guest",
-      imageUrl: auth.user?.image
+      name: auth.user?.firstName || "User",
+      imageUrl: auth.user?.avatarUrl
     });
   }, [auth.user]);
 
@@ -49,6 +51,8 @@ export function AppHeader({ className, ...props }: React.HTMLAttributes<HTMLElem
             <span className="sr-only">Toggle sidebar</span>
           </Button>
         )}
+        
+        <TaskProLogo size="small" className="mr-4" />
         
         <div className="flex-1 flex items-center space-x-4">
           <Button variant="ghost" className="hidden md:flex h-9 px-3">
@@ -71,7 +75,6 @@ export function AppHeader({ className, ...props }: React.HTMLAttributes<HTMLElem
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => navigate('/settings')}>
-              <User className="h-4 w-4 mr-2" />
               <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
