@@ -11,12 +11,15 @@ import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { sortTasks } from "@/utils/taskSortUtils";
 import { Task } from "@/components/tasks/TaskItem";
+import { useOverdueTasks } from "@/hooks/useOverdueTasks";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Dashboard() {
   const [sortBy, setSortBy] = useState<string>("dueDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [groupBy, setGroupBy] = useState<string | null>(null);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const { user } = useAuth();
   
   const { 
     tasks,
@@ -27,12 +30,12 @@ export default function Dashboard() {
     handleDelete
   } = useDashboardTasks();
 
+  const { data: overdueTasks = [] } = useOverdueTasks(user?.id);
+
   // Apply sorting to all task lists
   const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed), sortBy, sortDirection)
   const sortedTodayTasks = sortTasks(todayTasks, sortBy, sortDirection)
   const sortedHighPriorityTasks = sortTasks(highPriorityTasks, sortBy, sortDirection)
-  // No favorite tasks since we're removing this feature
-  const sortedFavoriteTasks: Task[] = []
 
   if (isLoading) {
     return (
@@ -63,12 +66,11 @@ export default function Dashboard() {
         <StatCards 
           todayCount={todayTasks.length}
           highPriorityCount={highPriorityTasks.length}
-          favoritesCount={0}
+          overdueCount={overdueTasks.length}
         />
 
         <DashboardTabs
           todayTasks={sortedTodayTasks}
-          favoriteTasks={sortedFavoriteTasks}
           highPriorityTasks={sortedHighPriorityTasks}
           allTasks={sortedAllTasks}
           onComplete={handleComplete}
