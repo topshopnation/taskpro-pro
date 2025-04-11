@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tag, TaskTagRelation } from "@/components/tasks/taskTypes";
 
-export const updateTaskCompletion = async (taskId: string, completed: boolean): Promise<void> => {
+export const updateTaskCompletion = async (taskId: string, completed: boolean, taskTitle?: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('tasks')
@@ -12,6 +12,21 @@ export const updateTaskCompletion = async (taskId: string, completed: boolean): 
       .eq('id', taskId);
       
     if (error) throw error;
+    
+    if (taskTitle) {
+      toast(`"${taskTitle}" ${completed ? 'completed' : 'marked incomplete'}`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await updateTaskCompletion(taskId, !completed, taskTitle);
+            } catch (error) {
+              console.error("Failed to undo task completion", error);
+            }
+          }
+        }
+      });
+    }
   } catch (error: any) {
     toast.error("Failed to update task", {
       description: error.message
@@ -20,7 +35,7 @@ export const updateTaskCompletion = async (taskId: string, completed: boolean): 
   }
 };
 
-export const deleteTask = async (taskId: string): Promise<void> => {
+export const deleteTask = async (taskId: string, taskTitle?: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('tasks')
@@ -29,7 +44,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
       
     if (error) throw error;
     
-    toast.success("Task deleted");
+    toast.success(taskTitle ? `"${taskTitle}" deleted` : "Task deleted");
   } catch (error: any) {
     toast.error("Failed to delete task", {
       description: error.message

@@ -13,11 +13,8 @@ interface TaskItemConfirmDeleteProps {
   taskCompleted: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete: (taskId: string) => Promise<boolean>;
-  // Adding the open prop that's being passed from TaskItem
   open?: boolean;
-  // Adding an alias for onDelete named onConfirm to maintain compatibility
   onConfirm?: () => Promise<void>;
-  // Adding the isUpdating prop
   isUpdating?: boolean;
 }
 
@@ -28,7 +25,6 @@ export function TaskItemConfirmDelete({
   onOpenChange,
   onDelete,
   open,
-  // Use the isUpdating prop if provided, otherwise default to internal state
   isUpdating: externalIsUpdating,
   onConfirm,
 }: TaskItemConfirmDeleteProps) {
@@ -69,13 +65,7 @@ export function TaskItemConfirmDelete({
         // Then close the dialog
         onOpenChange(false);
         
-        // Show success toast with undo option
-        toast("Task marked as complete", {
-          action: {
-            label: "Undo",
-            onClick: () => handleUndo(),
-          },
-        });
+        // Toast is now handled in completeTask function
       }
     } catch (error) {
       console.error("Error completing task:", error);
@@ -89,7 +79,6 @@ export function TaskItemConfirmDelete({
   const handleUndo = async (): Promise<void> => {
     try {
       await completeTask(taskId, false);
-      toast.success("Task marked as incomplete");
     } catch (error) {
       console.error("Error undoing task completion:", error);
       toast.error("Failed to undo task completion");

@@ -22,3 +22,9 @@ export interface TaskFormValues {
   project: string;
   tags: string[];
 }
+
+export interface ProjectOption {
+  id: string;
+  name: string;
+  color?: string;
+}

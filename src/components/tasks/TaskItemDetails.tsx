@@ -42,7 +42,7 @@ export function TaskItemDetails({
               <Calendar className="h-3 w-3 mr-1" />
               {format(dueDate, "MMM d, yyyy")}
               {dueTime && (
-                <span className="ml-1 flex items-center">
+                <span className="flex items-center">
                   <Clock className="h-3 w-3 mx-1" />
                   {dueTime}
                 </span>

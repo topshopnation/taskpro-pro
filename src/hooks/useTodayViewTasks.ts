@@ -40,13 +40,21 @@ export function useTodayViewTasks() {
       // Map the data to include project names
       return taskData.map((task: any) => {
         const dueDate = task.due_date ? new Date(task.due_date) : undefined;
+        let dueTime = null;
+        
+        if (dueDate) {
+          const timeString = dueDate.toISOString().split('T')[1];
+          if (timeString && timeString !== '00:00:00.000Z') {
+            dueTime = dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+        }
         
         return {
           id: task.id,
           title: task.title,
           notes: task.notes,
           dueDate: dueDate,
-          dueTime: dueDate ? dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+          dueTime: dueTime,
           priority: task.priority || 4,
           projectId: task.project_id,
           projectName: task.projects?.name || "No Project",
@@ -86,6 +94,10 @@ export function useTodayViewTasks() {
   // Task operations
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
+      // Find the task to get its title
+      const taskToUpdate = tasks.find(task => task.id === taskId);
+      if (!taskToUpdate) return;
+
       const { error } = await supabase
         .from('tasks')
         .update({ completed })
@@ -100,7 +112,7 @@ export function useTodayViewTasks() {
       
       // Show only toast with undo
       if (completed) {
-        toast("Task completed", {
+        toast(`"${taskToUpdate.title}" completed`, {
           action: {
             label: "Undo",
             onClick: () => handleComplete(taskId, false)
