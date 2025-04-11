@@ -95,16 +95,7 @@ export default function ProjectView() {
             onColorChange={handleProjectColorChange}
           />
 
-          <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-            <Button 
-              size="sm" 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-            
+          <div className="flex items-center gap-2 flex-nowrap">
             <TaskSortControls
               sortBy={sortBy}
               setSortBy={setSortBy}
@@ -114,6 +105,15 @@ export default function ProjectView() {
               setGroupBy={setGroupBy}
               hideAddTaskButton={true}
             />
+            
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1 ml-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
           </div>
         </div>
 

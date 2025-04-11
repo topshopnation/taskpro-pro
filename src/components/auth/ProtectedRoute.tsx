@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
@@ -36,6 +36,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   // Redirect to auth page if user is not authenticated
   if (!user) {
     console.log("ProtectedRoute: No user, redirecting to /auth");
+    // Save the current location to redirect back after login
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

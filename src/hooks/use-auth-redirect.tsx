@@ -30,5 +30,7 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
       console.log("No user, redirecting to /auth from protected page");
       navigate('/auth');
     }
+
+    // IMPORTANT: Do NOT add any other redirects that would trigger on regular page loads
   }, [user, loading, location.pathname, navigate]);
 }

@@ -54,7 +54,7 @@ export function TaskSortControls({
       />
       
       {!hideAddTaskButton && onAddTask && (
-        <Button size="sm" onClick={onAddTask} className="flex items-center gap-1">
+        <Button size="sm" onClick={onAddTask} className="ml-2 flex items-center gap-1">
           <Plus className="h-4 w-4" />
           <span>Add Task</span>
         </Button>

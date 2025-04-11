@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -104,15 +103,6 @@ export default function FilterView() {
           </div>
           
           <div className="flex items-center justify-between mt-4">
-            <Button 
-              size="sm" 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-            
             <TaskSortControls
               sortBy={sortBy}
               setSortBy={setSortBy}
@@ -123,6 +113,15 @@ export default function FilterView() {
               hideAddTaskButton={true}
               showProjectSort={true}
             />
+            
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1 ml-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
           </div>
         </div>
 

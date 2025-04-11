@@ -37,9 +37,9 @@ export function SortControls({
   setGroupBy,
 }: SortControlsProps) {
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2">
       <div className="flex items-center">
-        <span className="text-sm text-muted-foreground mr-2">Sort:</span>
+        <span className="text-sm text-muted-foreground mr-1">Sort:</span>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="h-8 w-[110px]">
             <SelectValue placeholder="Sort by" />
@@ -69,12 +69,12 @@ export function SortControls({
       </Button>
 
       <div className="flex items-center">
-        <span className="text-sm text-muted-foreground mr-2">Group:</span>
+        <span className="text-sm text-muted-foreground mr-1">Group:</span>
         <Select 
           value={groupBy || "none"} 
           onValueChange={(value) => setGroupBy(value === "none" ? null : value)}
         >
-          <SelectTrigger className="h-8 w-[120px]">
+          <SelectTrigger className="h-8 w-[110px]">
             <SelectValue placeholder="Group by" />
           </SelectTrigger>
           <SelectContent>
