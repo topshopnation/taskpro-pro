@@ -6,11 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { filterTasks } from "@/utils/filterUtils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useFilteredTasks(filter: CustomFilter | null) {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Fetch tasks from Supabase with React Query
   const fetchTasks = async () => {
@@ -62,15 +63,15 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         table: 'tasks',
         filter: `user_id=eq.${user.id}`,
       }, async () => {
-        // Let React Query handle the refetch
-        // This is just to trigger the subscription
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
       })
       .subscribe();
       
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, queryClient]);
 
   // Apply filter whenever tasks or filter changes
   useEffect(() => {
@@ -98,6 +99,16 @@ export function useFilteredTasks(filter: CustomFilter | null) {
       setFilteredTasks(
         filteredTasks.filter(task => task.id !== taskId)
       );
+
+      // Show only one toast with undo capability
+      if (completed) {
+        toast("Task completed", {
+          action: {
+            label: "Undo",
+            onClick: () => handleComplete(taskId, false)
+          },
+        });
+      }
     } catch (error: any) {
       toast.error("Failed to update task", {
         description: error.message
@@ -146,11 +157,59 @@ export function useFilteredTasks(filter: CustomFilter | null) {
     }
   };
 
+  const handlePriorityChange = async (taskId: string, priority: number) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ priority })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      // Optimistic update
+      setFilteredTasks(
+        filteredTasks.map((task) =>
+          task.id === taskId ? { ...task, priority } : task
+        )
+      );
+    } catch (error: any) {
+      toast.error("Failed to update task priority", {
+        description: error.message
+      });
+    }
+  };
+
+  const handleDateChange = async (taskId: string, dueDate: Date | undefined) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          due_date: dueDate ? dueDate.toISOString() : null 
+        })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      // Optimistic update
+      setFilteredTasks(
+        filteredTasks.map((task) =>
+          task.id === taskId ? { ...task, dueDate } : task
+        )
+      );
+    } catch (error: any) {
+      toast.error("Failed to update task due date", {
+        description: error.message
+      });
+    }
+  };
+
   return {
     filteredTasks,
     isLoading,
     handleComplete,
     handleDelete,
-    handleFavoriteToggle
+    handleFavoriteToggle,
+    handlePriorityChange,
+    handleDateChange
   };
 }

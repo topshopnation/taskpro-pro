@@ -12,6 +12,8 @@ import { groupTasks } from "@/utils/taskSortUtils";
 import { FilterConditionsDisplay } from "@/components/filters/FilterConditionsDisplay";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { Button } from "@/components/ui/button";
+import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
+import { Task } from "@/components/tasks/TaskItem";
 
 export default function FilterView() {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ export default function FilterView() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [groupBy, setGroupBy] = useState<string | null>(null);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
 
   const {
     currentFilter,
@@ -56,7 +60,9 @@ export default function FilterView() {
     filteredTasks,
     handleComplete,
     handleDelete,
-    handleFavoriteToggle
+    handleFavoriteToggle,
+    handlePriorityChange,
+    handleDateChange
   } = useFilteredTasks(currentFilter);
   
   useEffect(() => {
@@ -68,6 +74,11 @@ export default function FilterView() {
   }, [currentFilter, setNewFilterName, setFilterColor, setFilterConditions]);
 
   const groupedTasks = groupTasks(filteredTasks, groupBy, sortBy, sortDirection);
+
+  const handleTaskEdit = (task: Task) => {
+    setEditingTask(task);
+    setIsEditTaskOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -144,6 +155,9 @@ export default function FilterView() {
               onDelete={handleDelete}
               onAddTask={() => setIsCreateTaskOpen(true)}
               onFavoriteToggle={handleFavoriteToggle}
+              onTaskEdit={handleTaskEdit}
+              onPriorityChange={handlePriorityChange}
+              onDateChange={handleDateChange}
               hideTitle={!groupBy}
             />
           )}
@@ -167,6 +181,12 @@ export default function FilterView() {
         <CreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}
+        />
+
+        <EditTaskDialog
+          open={isEditTaskOpen}
+          onOpenChange={setIsEditTaskOpen}
+          task={editingTask}
         />
       </div>
     </AppLayout>

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { getQuickDateOptions } from "@/utils/dateUtils";
 
 interface DateConditionValueProps {
   conditionValue: string;
@@ -30,8 +31,13 @@ export function DateConditionValue({
     handleDateSelect(date);
     if (date) {
       setConditionValue(formatDateToValue(date));
+    } else {
+      setConditionValue("");
     }
   };
+
+  // Get quick date options for consistency
+  const quickOptions = getQuickDateOptions();
 
   return (
     <div className="flex flex-col gap-2">
@@ -74,6 +80,8 @@ export function DateConditionValue({
               selected={selectedDate}
               onSelect={handleCalendarSelect}
               initialFocus
+              showQuickOptions={true}
+              onQuickOptionSelect={handleCalendarSelect}
               className="p-3 pointer-events-auto"
             />
           </PopoverContent>
