@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -32,9 +33,20 @@ interface TaskItemProps {
   onComplete: (taskId: string, completed: boolean) => void
   onDelete: (taskId: string) => void
   onFavoriteToggle?: (taskId: string, favorite: boolean) => void
+  onTaskEdit?: (task: Task) => void
+  onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void
+  onDateChange?: (taskId: string, date: Date | undefined) => void
 }
 
-export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
+export function TaskItem({ 
+  task, 
+  onComplete, 
+  onDelete, 
+  onFavoriteToggle,
+  onTaskEdit,
+  onPriorityChange,
+  onDateChange
+}: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -57,14 +69,18 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
     setIsUpdating(true)
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ priority: newPriority })
-        .eq('id', task.id)
-      
-      if (error) throw error
-      
-      toast.success("Task priority updated")
+      if (onPriorityChange) {
+        await onPriorityChange(task.id, newPriority)
+      } else {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ priority: newPriority })
+          .eq('id', task.id)
+        
+        if (error) throw error
+        
+        toast.success("Task priority updated")
+      }
     } catch (error: any) {
       toast.error(`Error updating task priority: ${error.message}`)
     } finally {
@@ -75,16 +91,20 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handleDateChange = async (date: Date | undefined) => {
     setIsUpdating(true)
     try {
-      const formattedDate = date ? date.toISOString() : null
-      
-      const { error } = await supabase
-        .from('tasks')
-        .update({ due_date: formattedDate })
-        .eq('id', task.id)
-      
-      if (error) throw error
-      
-      toast.success(date ? "Due date updated" : "Due date removed")
+      if (onDateChange) {
+        await onDateChange(task.id, date)
+      } else {
+        const formattedDate = date ? date.toISOString() : null
+        
+        const { error } = await supabase
+          .from('tasks')
+          .update({ due_date: formattedDate })
+          .eq('id', task.id)
+        
+        if (error) throw error
+        
+        toast.success(date ? "Due date updated" : "Due date removed")
+      }
     } catch (error: any) {
       toast.error(`Error updating due date: ${error.message}`)
     } finally {
@@ -122,7 +142,11 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       return;
     }
     
-    setIsEditDialogOpen(true);
+    if (onTaskEdit) {
+      onTaskEdit(task);
+    } else {
+      setIsEditDialogOpen(true);
+    }
   };
 
   return (
@@ -170,7 +194,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
               <TaskItemActions
                 task={task}
                 onDeleteClick={() => setIsDeleteDialogOpen(true)}
-                onEditClick={() => setIsEditDialogOpen(true)}
+                onEditClick={() => onTaskEdit ? onTaskEdit(task) : setIsEditDialogOpen(true)}
                 isUpdating={isUpdating}
                 onFavoriteToggle={onFavoriteToggle}
               />
@@ -192,11 +216,13 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
         isUpdating={isUpdating}
       />
 
-      <EditTaskDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        task={task}
-      />
+      {!onTaskEdit && (
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={task}
+        />
+      )}
     </>
   )
 }

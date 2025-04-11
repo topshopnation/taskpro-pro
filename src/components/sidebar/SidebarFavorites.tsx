@@ -9,6 +9,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface FavoriteItem {
   id: string;
@@ -44,6 +46,25 @@ export function SidebarFavorites({
     onMobileMenuClose();
   };
 
+  const handleRemoveFavorite = async (item: FavoriteItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from(item.type === 'project' ? 'projects' : 'filters')
+        .update({ favorite: false })
+        .eq('id', item.id);
+        
+      if (error) throw error;
+      
+      toast.success(`Removed from favorites`);
+    } catch (error: any) {
+      console.error('Error removing favorite:', error);
+      toast.error(`Failed to remove from favorites`);
+    }
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="mb-2">Favorites</SidebarGroupLabel>
@@ -68,7 +89,12 @@ export function SidebarFavorites({
                     />
                   )}
                   <span className="truncate">{item.name}</span>
-                  <Star className="h-4 w-4 ml-auto fill-yellow-400 text-yellow-400" />
+                  <button 
+                    onClick={(e) => handleRemoveFavorite(item, e)}
+                    className="ml-auto"
+                  >
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  </button>
                 </button>
               </SidebarMenuButton>
             </SidebarMenuItem>

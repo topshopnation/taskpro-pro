@@ -12,6 +12,9 @@ interface TaskListProps {
   onDelete: (taskId: string) => void
   onFavoriteToggle?: (taskId: string, favorite: boolean) => void
   hideTitle?: boolean
+  onTaskEdit?: (task: Task) => void
+  onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void
+  onDateChange?: (taskId: string, date: Date | undefined) => void
 }
 
 export function TaskList({ 
@@ -22,7 +25,10 @@ export function TaskList({
   onComplete, 
   onDelete,
   onFavoriteToggle,
-  hideTitle = false
+  hideTitle = false,
+  onTaskEdit,
+  onPriorityChange,
+  onDateChange
 }: TaskListProps) {
   return (
     <Card className="overflow-hidden">
@@ -55,6 +61,9 @@ export function TaskList({
                 onComplete={onComplete}
                 onDelete={onDelete}
                 onFavoriteToggle={onFavoriteToggle}
+                onTaskEdit={onTaskEdit}
+                onPriorityChange={onPriorityChange}
+                onDateChange={onDateChange}
               />
             ))}
           </div>

@@ -41,7 +41,12 @@ export function TaskItemDetails({
             <span className="text-xs text-muted-foreground flex items-center">
               <Calendar className="h-3 w-3 mr-1" />
               {format(dueDate, "MMM d, yyyy")}
-              {dueTime && <span className="ml-1">at {dueTime}</span>}
+              {dueTime && (
+                <span className="ml-1 flex items-center">
+                  <Clock className="h-3 w-3 mx-1" />
+                  {dueTime}
+                </span>
+              )}
             </span>
           )}
           

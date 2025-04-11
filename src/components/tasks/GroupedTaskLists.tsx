@@ -12,6 +12,9 @@ interface GroupedTaskListsProps {
   onAddTask: () => void
   hideTitle?: boolean
   onFavoriteToggle?: (taskId: string, favorite: boolean) => void
+  onTaskEdit?: (task: Task) => void
+  onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void
+  onDateChange?: (taskId: string, date: Date | undefined) => void
 }
 
 export function GroupedTaskLists({
@@ -22,7 +25,10 @@ export function GroupedTaskLists({
   onDelete,
   onAddTask,
   hideTitle = false,
-  onFavoriteToggle
+  onFavoriteToggle,
+  onTaskEdit,
+  onPriorityChange,
+  onDateChange
 }: GroupedTaskListsProps) {
   if (Object.keys(groupedTasks).length === 0) {
     return (
@@ -46,6 +52,9 @@ export function GroupedTaskLists({
           onComplete={onComplete}
           onDelete={onDelete}
           onFavoriteToggle={onFavoriteToggle}
+          onTaskEdit={onTaskEdit}
+          onPriorityChange={onPriorityChange}
+          onDateChange={onDateChange}
         />
       ))}
     </div>

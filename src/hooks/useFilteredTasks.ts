@@ -30,12 +30,13 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         title: task.title,
         notes: task.notes,
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        dueTime: task.due_date ? new Date(task.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
         section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
-      }));
+      } as Task));
     } catch (error: any) {
       console.error("Failed to fetch tasks:", error.message);
       toast.error("Failed to fetch tasks", {
@@ -157,7 +158,7 @@ export function useFilteredTasks(filter: CustomFilter | null) {
     }
   };
 
-  const handlePriorityChange = async (taskId: string, priority: number) => {
+  const handlePriorityChange = async (taskId: string, priority: 1 | 2 | 3 | 4) => {
     try {
       const { error } = await supabase
         .from('tasks')
@@ -172,6 +173,9 @@ export function useFilteredTasks(filter: CustomFilter | null) {
           task.id === taskId ? { ...task, priority } : task
         )
       );
+      
+      // Invalidate the query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error: any) {
       toast.error("Failed to update task priority", {
         description: error.message
@@ -196,6 +200,9 @@ export function useFilteredTasks(filter: CustomFilter | null) {
           task.id === taskId ? { ...task, dueDate } : task
         )
       );
+      
+      // Invalidate the query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error: any) {
       toast.error("Failed to update task due date", {
         description: error.message

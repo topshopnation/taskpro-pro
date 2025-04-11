@@ -38,18 +38,23 @@ export function useTodayViewTasks() {
       if (taskError) throw taskError
       
       // Map the data to include project names
-      return taskData.map((task: any) => ({
-        id: task.id,
-        title: task.title,
-        notes: task.notes,
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        priority: task.priority || 4,
-        projectId: task.project_id,
-        projectName: task.projects?.name || "No Project",
-        projectColor: task.projects?.color,
-        completed: task.completed || false,
-        favorite: task.favorite || false
-      }))
+      return taskData.map((task: any) => {
+        const dueDate = task.due_date ? new Date(task.due_date) : undefined;
+        
+        return {
+          id: task.id,
+          title: task.title,
+          notes: task.notes,
+          dueDate: dueDate,
+          dueTime: dueDate ? dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+          priority: task.priority || 4,
+          projectId: task.project_id,
+          projectName: task.projects?.name || "No Project",
+          projectColor: task.projects?.color,
+          completed: task.completed || false,
+          favorite: task.favorite || false
+        } as Task;
+      });
     } catch (error: any) {
       toast.error("Failed to fetch today's tasks", {
         description: error.message
@@ -93,7 +98,15 @@ export function useTodayViewTasks() {
         task.id === taskId ? { ...task, completed } : task
       ))
       
-      toast.success(completed ? "Task completed" : "Task uncompleted")
+      // Show only toast with undo
+      if (completed) {
+        toast("Task completed", {
+          action: {
+            label: "Undo",
+            onClick: () => handleComplete(taskId, false)
+          },
+        })
+      }
     } catch (error: any) {
       toast.error("Failed to update task", {
         description: error.message

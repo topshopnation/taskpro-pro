@@ -72,7 +72,7 @@ export function DateConditionValue({
             className="w-auto p-0" 
             align="start"
             avoidCollisions={true}
-            side="bottom"
+            side="right"
             sideOffset={5}
           >
             <Calendar
