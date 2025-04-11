@@ -169,6 +169,13 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
       </div>
 
       <TaskItemConfirmDelete 
+        taskId={task.id}
+        taskTitle={task.title}
+        taskCompleted={task.completed}
+        onDelete={async (id) => {
+          await handleDelete();
+          return true;
+        }}
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
