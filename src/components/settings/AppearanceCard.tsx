@@ -1,10 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { useTheme } from "@/components/theme-provider"
-import { ThemeToggleGroup } from "@/components/theme-toggle"
+import { Monitor, Moon, Sun } from "lucide-react"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export default function AppearanceCard() {
   const { theme, setTheme } = useTheme()
@@ -26,43 +25,27 @@ export default function AppearanceCard() {
             </p>
             
             <div className="flex justify-center">
-              <ThemeToggleGroup />
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <Label>Theme Presets</Label>
-            <p className="text-sm text-muted-foreground mb-4">
-              Choose a theme preset or customize your own
-            </p>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <Button 
-                variant={theme === "light" ? "default" : "outline"} 
-                onClick={() => setTheme("light")}
-                className="flex flex-col gap-2 h-auto py-4"
+              <ToggleGroup 
+                type="single" 
+                value={theme} 
+                onValueChange={(value) => {
+                  if (value) setTheme(value as "light" | "dark" | "system")
+                }}
+                className="flex items-center justify-center border rounded-md p-1"
               >
-                <div className="h-8 w-8 rounded-full bg-[#FFFFFF] border"></div>
-                <span>Light</span>
-              </Button>
-              <Button 
-                variant={theme === "dark" ? "default" : "outline"} 
-                onClick={() => setTheme("dark")}
-                className="flex flex-col gap-2 h-auto py-4"
-              >
-                <div className="h-8 w-8 rounded-full bg-[#1A1F2C] border"></div>
-                <span>Dark</span>
-              </Button>
-              <Button 
-                variant={theme === "system" ? "default" : "outline"} 
-                onClick={() => setTheme("system")}
-                className="flex flex-col gap-2 h-auto py-4"
-              >
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#FFFFFF] to-[#1A1F2C] border"></div>
-                <span>System</span>
-              </Button>
+                <ToggleGroupItem value="light" aria-label="Light mode" className="flex items-center gap-2 px-3">
+                  <Sun className="h-4 w-4" />
+                  <span>Light</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="dark" aria-label="Dark mode" className="flex items-center gap-2 px-3">
+                  <Moon className="h-4 w-4" />
+                  <span>Dark</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="system" aria-label="System mode" className="flex items-center gap-2 px-3">
+                  <Monitor className="h-4 w-4" />
+                  <span>System</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </div>
         </div>

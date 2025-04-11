@@ -1,216 +1,196 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
 
-import { createContext, useState, useEffect, useContext } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { addDays, differenceInDays, parseISO, format } from "date-fns";
+// Types for subscription status
+type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'canceled';
+type SubscriptionPlanType = 'monthly' | 'yearly';
 
-export type Subscription = {
+// Type for subscription data
+interface Subscription {
   id: string;
-  status: 'trial' | 'active' | 'expired' | 'canceled';
-  planType: 'monthly' | 'yearly';
-  trialStartDate: string | null;
-  trialEndDate: string | null;
-  currentPeriodStart: string | null;
-  currentPeriodEnd: string | null;
-  daysRemaining: number | null;
-};
+  user_id: string;
+  status: SubscriptionStatus;
+  plan_type: SubscriptionPlanType;
+  trial_start_date: string | null;
+  trial_end_date: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-type SubscriptionContextType = {
-  subscription: Subscription | null;
-  loading: boolean;
+// Type for subscription update
+interface SubscriptionUpdate {
+  status?: SubscriptionStatus;
+  planType?: SubscriptionPlanType;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+}
+
+// Context type definition
+interface SubscriptionContextType {
   isActive: boolean;
   isTrialActive: boolean;
-  activateTrial: () => Promise<void>;
-  updateSubscription: (planType: 'monthly' | 'yearly') => Promise<void>;
-  cancelSubscription: () => Promise<void>;
-  formattedExpiryDate: string | null;
-};
+  subscription: Subscription | null;
+  daysRemaining: number;
+  loading: boolean;
+  updateSubscription: (update: SubscriptionUpdate) => Promise<void>;
+}
 
-export const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+// Create the context
+const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
-export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
+// Provider component
+export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isActive, setIsActive] = useState(false);
+  const [isTrialActive, setIsTrialActive] = useState(false);
+  const [daysRemaining, setDaysRemaining] = useState(0);
 
-  const isActive = subscription?.status === 'active' || 
-    (subscription?.status === 'trial' && (subscription?.daysRemaining || 0) > 0);
-  
-  const isTrialActive = subscription?.status === 'trial' && (subscription?.daysRemaining || 0) > 0;
-  
-  const formattedExpiryDate = subscription?.currentPeriodEnd 
-    ? format(parseISO(subscription.currentPeriodEnd), 'MMM dd, yyyy')
-    : null;
+  // Function to calculate days remaining
+  const calculateDaysRemaining = (endDate: string | null) => {
+    if (!endDate) return 0;
+    
+    const end = new Date(endDate);
+    const now = new Date();
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 0 ? diffDays : 0;
+  };
 
-  useEffect(() => {
-    if (!user) {
-      setSubscription(null);
-      setLoading(false);
+  // Function to update subscription status
+  const updateSubscriptionStatus = (sub: Subscription | null) => {
+    if (!sub) {
+      setIsActive(false);
+      setIsTrialActive(false);
+      setDaysRemaining(0);
       return;
     }
 
-    const fetchSubscription = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+    const now = new Date();
+    
+    // Check if trial is active
+    if (sub.status === 'trial' && sub.trial_end_date) {
+      const trialEnd = new Date(sub.trial_end_date);
+      setIsTrialActive(trialEnd > now);
+      setDaysRemaining(calculateDaysRemaining(sub.trial_end_date));
+      setIsActive(trialEnd > now);
+    } 
+    // Check if subscription is active
+    else if (sub.status === 'active' && sub.current_period_end) {
+      const periodEnd = new Date(sub.current_period_end);
+      setIsTrialActive(false);
+      setDaysRemaining(calculateDaysRemaining(sub.current_period_end));
+      setIsActive(periodEnd > now);
+    } 
+    // Otherwise subscription is not active
+    else {
+      setIsActive(false);
+      setIsTrialActive(false);
+      setDaysRemaining(0);
+    }
+  };
 
-        if (error) {
-          console.error('Error fetching subscription:', error);
+  // Update subscription in database
+  const updateSubscription = async (update: SubscriptionUpdate) => {
+    if (!user || !subscription) return;
+    
+    try {
+      const { status, planType, trialStartDate, trialEndDate, currentPeriodStart, currentPeriodEnd } = update;
+      
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({
+          status: status as SubscriptionStatus,
+          plan_type: planType as SubscriptionPlanType,
+          trial_start_date: trialStartDate,
+          trial_end_date: trialEndDate,
+          current_period_start: currentPeriodStart,
+          current_period_end: currentPeriodEnd
+        })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      // Refresh subscription data
+      fetchSubscription();
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      toast.error('Failed to update subscription. Please try again.');
+    }
+  };
+
+  // Fetch subscription data
+  const fetchSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No subscription found, user might need to create one
           setSubscription(null);
-        } else if (data) {
-          // Calculate days remaining in trial or subscription
-          let daysRemaining = null;
-          if (data.status === 'trial' && data.trial_end_date) {
-            daysRemaining = differenceInDays(parseISO(data.trial_end_date), new Date());
-            
-            // Check if trial has expired
-            if (daysRemaining <= 0) {
-              // Update subscription status to expired if trial has ended
-              await supabase
-                .from('subscriptions')
-                .update({ status: 'expired' })
-                .eq('id', data.id);
-              
-              data.status = 'expired';
-              daysRemaining = 0;
-            }
-          } else if (data.status === 'active' && data.current_period_end) {
-            daysRemaining = differenceInDays(parseISO(data.current_period_end), new Date());
-            
-            // Check if subscription has expired
-            if (daysRemaining <= 0) {
-              // Update subscription status to expired
-              await supabase
-                .from('subscriptions')
-                .update({ status: 'expired' })
-                .eq('id', data.id);
-              
-              data.status = 'expired';
-              daysRemaining = 0;
-            }
-          }
-
-          setSubscription({
-            id: data.id,
-            status: data.status,
-            planType: data.plan_type,
-            trialStartDate: data.trial_start_date,
-            trialEndDate: data.trial_end_date,
-            currentPeriodStart: data.current_period_start,
-            currentPeriodEnd: data.current_period_end,
-            daysRemaining
-          });
+        } else {
+          throw error;
         }
-      } catch (error) {
-        console.error('Error processing subscription:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        setSubscription(data);
+        updateSubscriptionStatus(data);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      toast.error('Failed to load subscription data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchSubscription();
-
-    // Set up real-time subscription
+  // Setup realtime subscription updates
+  useEffect(() => {
+    if (!user) return;
+    
     const channel = supabase
-      .channel('subscription-changes')
+      .channel('subscription-updates')
       .on('postgres_changes', {
-        event: '*',
+        event: 'UPDATE',
         schema: 'public',
         table: 'subscriptions',
-        filter: `user_id=eq.${user.id}`
+        filter: `user_id=eq.${user.id}`,
       }, (payload) => {
-        console.log('Subscription updated:', payload);
-        fetchSubscription();
+        setSubscription(payload.new as Subscription);
+        updateSubscriptionStatus(payload.new as Subscription);
       })
       .subscribe();
-
+    
+    // Fetch initial data
+    fetchSubscription();
+    
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
 
-  const activateTrial = async () => {
-    if (!user || !subscription) return;
-
-    const now = new Date();
-    const trialEnd = addDays(now, 14);
-
-    try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          status: 'trial',
-          trial_start_date: now.toISOString(),
-          trial_end_date: trialEnd.toISOString(),
-          current_period_start: now.toISOString(),
-          current_period_end: trialEnd.toISOString()
-        })
-        .eq('id', subscription.id);
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Error activating trial:', error);
-      throw error;
-    }
-  };
-
-  const updateSubscription = async (planType: 'monthly' | 'yearly') => {
-    if (!user || !subscription) return;
-
-    const now = new Date();
-    // Set period end based on plan type
-    const periodEnd = planType === 'monthly' 
-      ? addDays(now, 30) 
-      : addDays(now, 365);
-
-    try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          plan_type: planType,
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString()
-        })
-        .eq('id', subscription.id);
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Error updating subscription:', error);
-      throw error;
-    }
-  };
-
-  const cancelSubscription = async () => {
-    if (!user || !subscription) return;
-
-    try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          status: 'canceled',
-        })
-        .eq('id', subscription.id);
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Error canceling subscription:', error);
-      throw error;
-    }
-  };
-
   const value = {
-    subscription,
-    loading,
     isActive,
     isTrialActive,
-    activateTrial,
-    updateSubscription,
-    cancelSubscription,
-    formattedExpiryDate
+    subscription,
+    daysRemaining,
+    loading,
+    updateSubscription
   };
 
   return (
@@ -218,12 +198,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       {children}
     </SubscriptionContext.Provider>
   );
-}
+};
 
-export function useSubscription() {
+// Hook to use the subscription context
+export const useSubscription = () => {
   const context = useContext(SubscriptionContext);
   if (context === undefined) {
-    throw new Error("useSubscription must be used within a SubscriptionProvider");
+    throw new Error('useSubscription must be used within a SubscriptionProvider');
   }
   return context;
-}
+};

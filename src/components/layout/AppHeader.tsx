@@ -1,96 +1,86 @@
-
-import { useEffect, useState } from "react";
+import { AlignLeft, Plus, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, UserCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useSidebar } from "@/components/ui/sidebar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TaskProLogo } from "@/components/ui/taskpro-logo";
-import { SearchDialog } from "@/components/search/SearchDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
+import { useEffect, useState } from "react";
 
-export function AppHeader() {
-  const { user } = useAuth();
+export function AppHeader({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
+  const { sidebarOpen, toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
-  const location = useLocation();
+  const auth = useAuth();
   const navigate = useNavigate();
-  const sidebar = useSidebar();
-  const [searchOpen, setSearchOpen] = useState(false);
   
-  // Skip rendering the header on auth and index pages
-  const isAuthPage = location.pathname === "/auth" || location.pathname.startsWith("/auth/");
-  const isIndexPage = location.pathname === "/";
+  const [userProfile, setUserProfile] = useState({
+    name: auth.user?.name || "Guest",
+    imageUrl: auth.user?.image
+  });
   
-  if (isAuthPage || isIndexPage) {
-    return null;
-  }
-  
-  return (
-    <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          {isMobile && (
-            <Button
-              variant="ghost"
-              className="mr-2"
-              size="icon"
-              onClick={() => sidebar.toggleMobileSidebar()}
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-          )}
-          
-          <div className="flex items-center">
-            <TaskProLogo />
-          </div>
+  useEffect(() => {
+    setUserProfile({
+      name: auth.user?.name || "Guest",
+      imageUrl: auth.user?.image
+    });
+  }, [auth.user]);
 
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            <SubscriptionStatus />
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className="ml-2"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search className="h-4 w-4" />
-              <span className="sr-only">Search tasks</span>
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full"
-                >
-                  {user?.avatarUrl ? (
-                    <img 
-                      src={user.avatarUrl} 
-                      alt={user.firstName || user.email || "User"} 
-                      className="h-8 w-8 rounded-full"
-                    />
-                  ) : (
-                    <UserCircle className="h-6 w-6" />
-                  )}
-                  <span className="sr-only">User menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+  return (
+    <header className={cn("border-b bg-background", className)} {...props}>
+      <div className="flex h-16 items-center px-4 md:px-6">
+        {isMobile && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2 md:hidden"
+            onClick={() => toggleSidebar()}
+          >
+            <AlignLeft className="h-5 w-5" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        )}
+        
+        <div className="flex-1 flex items-center space-x-4">
+          <Button variant="ghost" className="hidden md:flex h-9 px-3">
+            <Plus className="h-4 w-4 mr-2" />
+            New Task
+          </Button>
+          <Input type="search" placeholder="Search..." className="max-w-md" />
         </div>
-      </header>
-      
-      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-    </>
+        
+        <SubscriptionStatus />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={userProfile.imageUrl} alt={userProfile.name} />
+                <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <User className="h-4 w-4 mr-2" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => auth.signOut()}>
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
   );
 }

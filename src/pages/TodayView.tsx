@@ -2,79 +2,90 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useTodayViewTasks } from "@/hooks/useTodayViewTasks";
-import { TaskList } from "@/components/tasks/TaskList";
 import { TodayViewHeader } from "@/components/today/TodayViewHeader";
 import { TodaySortControls } from "@/components/today/TodaySortControls";
-import { EmptyTodayState } from "@/components/today/EmptyTodayState";
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
-import { sortTasks } from "@/utils/taskSortUtils";
-import { groupTasksBy } from "@/utils/todayViewUtils";
+import { TaskList } from "@/components/tasks/TaskList";
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
-import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { EmptyTodayState } from "@/components/today/EmptyTodayState";
+import { groupTasks } from "@/utils/todayViewUtils";
 
 export default function TodayView() {
-  const [groupBy, setGroupBy] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>("priority");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-  const { todayTasks, isLoading, error, handleComplete, handleDelete } = useTodayViewTasks();
+  const [groupBy, setGroupBy] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<string>("dueDate");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Apply sorting
-  const sortedTasks = sortTasks(todayTasks, sortBy, sortDirection);
-  
-  // Apply grouping if specified
-  const groupedTasks = groupBy ? groupTasksBy(sortedTasks, groupBy) : null;
+  const { tasks, isLoading, handleComplete, handleDelete, handleFavoriteToggle } = useTodayViewTasks({
+    sortField,
+    sortDirection,
+  });
+
+  // Handle adding task
+  const handleAddTask = () => {
+    setIsCreateTaskOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="py-10 space-y-4">
+          <div className="h-8 w-48 bg-muted rounded animate-pulse mb-6"></div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <SubscriptionBanner />
-        
-        <TodayViewHeader 
-          tasksCount={todayTasks.length} 
-          onAddTask={() => setIsCreateTaskOpen(true)} 
+      <TodayViewHeader
+        tasksCount={tasks.length}
+        onAddTask={handleAddTask}
+      />
+
+      <TodaySortControls 
+        sortField={sortField}
+        sortDirection={sortDirection}
+        groupBy={groupBy}
+        onSortFieldChange={setSortField}
+        onSortDirectionChange={setSortDirection}
+        onGroupByChange={setGroupBy}
+      />
+
+      {tasks.length === 0 ? (
+        <EmptyTodayState onAddTask={handleAddTask} />
+      ) : groupBy ? (
+        <GroupedTaskLists
+          tasks={tasks}
+          groupBy={groupBy}
+          isLoadingTasks={isLoading}
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+          onFavoriteToggle={handleFavoriteToggle}
+          onAddTask={handleAddTask}
         />
-
-        {todayTasks.length > 0 && (
-          <TodaySortControls
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            onAddTask={() => setIsCreateTaskOpen(true)}
-          />
-        )}
-
-        {isLoading ? (
-          <div className="animate-pulse space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-muted h-16 rounded-md"></div>
-            ))}
-          </div>
-        ) : todayTasks.length === 0 ? (
-          <EmptyTodayState onAddTask={() => setIsCreateTaskOpen(true)} />
-        ) : groupedTasks ? (
-          <GroupedTaskLists 
-            groupedTasks={groupedTasks} 
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <TaskList 
-            tasks={sortedTasks} 
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-          />
-        )}
-
-        <CreateTaskDialog
-          open={isCreateTaskOpen}
-          onOpenChange={setIsCreateTaskOpen}
-          defaultDueDate={new Date()}
+      ) : (
+        <TaskList
+          title="Today's Tasks"
+          tasks={tasks}
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+          onFavoriteToggle={handleFavoriteToggle}
         />
-      </div>
+      )}
+
+      <CreateTaskDialog
+        open={isCreateTaskOpen}
+        onOpenChange={setIsCreateTaskOpen}
+        defaultValues={{
+          dueDate: new Date(),
+        }}
+      />
     </AppLayout>
   );
 }
