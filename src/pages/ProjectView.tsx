@@ -80,7 +80,7 @@ export default function ProjectView() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
           <ProjectHeader
             name={currentProject.name}
             favorite={currentProject.favorite}
@@ -92,29 +92,28 @@ export default function ProjectView() {
               setIsEditProjectOpen(true)
             }}
             onDeleteClick={() => setIsDeleteProjectOpen(true)}
-            onColorChange={handleProjectColorChange}
           />
+        </div>
 
-          <div className="flex items-center gap-2 flex-nowrap">
-            <TaskSortControls
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-              hideAddTaskButton={true}
-            />
-            
-            <Button 
-              size="sm" 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1 ml-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-          </div>
+        <div className="flex items-center justify-end gap-2">
+          <TaskSortControls
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
+            hideAddTaskButton={true}
+          />
+          
+          <Button 
+            size="sm" 
+            onClick={() => setIsCreateTaskOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Task</span>
+          </Button>
         </div>
 
         <GroupedTaskLists

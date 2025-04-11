@@ -1,5 +1,4 @@
 
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SortControls } from "@/components/ui/sort-controls";
 
@@ -52,13 +51,6 @@ export function TaskSortControls({
         groupBy={groupBy}
         setGroupBy={setGroupBy}
       />
-      
-      {!hideAddTaskButton && onAddTask && (
-        <Button size="sm" onClick={onAddTask} className="ml-2 flex items-center gap-1">
-          <Plus className="h-4 w-4" />
-          <span>Add Task</span>
-        </Button>
-      )}
     </div>
   );
 }

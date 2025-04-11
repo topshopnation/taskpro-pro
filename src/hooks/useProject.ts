@@ -1,7 +1,7 @@
 
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth"
 export function useProject() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false)
   const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
@@ -52,7 +53,7 @@ export function useProject() {
   })
 
   const handleProjectFavoriteToggle = async () => {
-    if (!currentProject) return
+    if (!currentProject || !id) return
     
     try {
       const newValue = !currentProject.favorite
@@ -63,6 +64,10 @@ export function useProject() {
         .eq('id', id)
         
       if (error) throw error
+      
+      // Update the local state and invalidate queries to refresh the sidebar favorites
+      queryClient.invalidateQueries({ queryKey: ['project', id, user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['favorite-projects'] })
       
       toast.success(newValue ? "Added to favorites" : "Removed from favorites")
     } catch (error: any) {
@@ -98,6 +103,12 @@ export function useProject() {
       if (error) throw error
       
       setIsEditProjectOpen(false)
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['project', id, user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['favorite-projects'] })
+      
       toast.success("Project updated successfully")
     } catch (error: any) {
       toast.error("Failed to update project", {
@@ -147,6 +158,11 @@ export function useProject() {
           .eq('id', id)
           
         if (error) throw error
+        
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['project', id, user?.id] })
+        queryClient.invalidateQueries({ queryKey: ['projects'] })
+        queryClient.invalidateQueries({ queryKey: ['favorite-projects'] })
         
         toast.success("Project color updated")
       } catch (error: any) {

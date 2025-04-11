@@ -1,6 +1,6 @@
 
 import { Task } from "@/components/tasks/TaskItem"
-import { format } from "date-fns"
+import { format, startOfDay } from "date-fns"
 
 export function sortTasks(tasks: Task[], sortBy: string, sortDirection: "asc" | "desc"): Task[] {
   return [...tasks].sort((a, b) => {
@@ -61,4 +61,9 @@ export function groupTasks(tasks: Task[], groupBy: string | null, sortBy: string
 export function getTodayDate(): string {
   const today = new Date()
   return format(today, 'yyyy-MM-dd')
+}
+
+// New function to get the start of today for comparison
+export function getStartOfToday(): Date {
+  return startOfDay(new Date())
 }

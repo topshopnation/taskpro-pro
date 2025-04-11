@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { Task } from "@/components/tasks/TaskItem"
-import { getTodayDate } from "@/utils/overdueTaskUtils"
+import { getStartOfToday } from "@/utils/overdueTaskUtils"
 
 export function useOverdueTasks(userId: string | undefined) {
   const fetchOverdueTasks = async () => {
     if (!userId) return []
     
-    const todayDate = getTodayDate()
+    const startOfToday = getStartOfToday()
     
     try {
       const { data, error } = await supabase
@@ -17,7 +17,7 @@ export function useOverdueTasks(userId: string | undefined) {
         .select('*')
         .eq('user_id', userId)
         .eq('completed', false)
-        .lt('due_date', `${todayDate}T00:00:00`)
+        .lt('due_date', startOfToday.toISOString())
         .not('due_date', 'is', null)
         
       if (error) throw error

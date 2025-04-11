@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -10,7 +11,6 @@ import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { groupTasks } from "@/utils/taskSortUtils";
 import { FilterConditionsDisplay } from "@/components/filters/FilterConditionsDisplay";
-import { Plus } from "lucide-react";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 
 export default function FilterView() {
@@ -102,7 +102,7 @@ export default function FilterView() {
             />
           </div>
           
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-end mt-4">
             <TaskSortControls
               sortBy={sortBy}
               setSortBy={setSortBy}
@@ -113,15 +113,6 @@ export default function FilterView() {
               hideAddTaskButton={true}
               showProjectSort={true}
             />
-            
-            <Button 
-              size="sm" 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1 ml-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
           </div>
         </div>
 
@@ -130,6 +121,7 @@ export default function FilterView() {
             <div className="bg-muted/30 rounded-lg p-8 text-center">
               <h3 className="text-lg font-medium mb-2">No tasks match this filter</h3>
               <p className="text-muted-foreground mb-4">Try adjusting your filter criteria.</p>
+              <Button onClick={() => setIsCreateTaskOpen(true)}>Add Task</Button>
             </div>
           ) : (
             <GroupedTaskLists

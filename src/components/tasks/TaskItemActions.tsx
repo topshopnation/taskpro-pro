@@ -16,13 +16,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 interface TaskItemActionsProps {
   task: Task;
   onDeleteClick: () => void;
+  onEditClick: () => void;
   isUpdating: boolean;
   onFavoriteToggle?: (taskId: string, favorite: boolean) => void;
 }
 
-export function TaskItemActions({ task, onDeleteClick, isUpdating, onFavoriteToggle }: TaskItemActionsProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-
+export function TaskItemActions({ task, onDeleteClick, onEditClick, isUpdating, onFavoriteToggle }: TaskItemActionsProps) {
   return (
     <>
       <DropdownMenu>
@@ -37,7 +36,7 @@ export function TaskItemActions({ task, onDeleteClick, isUpdating, onFavoriteTog
           <TooltipContent side="bottom">More options</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+          <DropdownMenuItem onClick={onEditClick}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </DropdownMenuItem>
@@ -52,12 +51,6 @@ export function TaskItemActions({ task, onDeleteClick, isUpdating, onFavoriteTog
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <EditTaskDialog 
-        task={task} 
-        open={isEditDialogOpen} 
-        onOpenChange={setIsEditDialogOpen} 
-      />
     </>
   )
 }

@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -12,6 +11,7 @@ import { useTaskData } from "./hooks/useTaskData"
 import { useTaskOperations } from "@/hooks/useTaskOperations"
 import { TaskItemDueDate } from "./TaskItemDueDate"
 import { supabase } from "@/integrations/supabase/client"
+import { EditTaskDialog } from "./EditTaskDialog"
 
 export interface Task {
   id: string
@@ -36,6 +36,7 @@ interface TaskItemProps {
 
 export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskItemProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   
   const { taskTags, projectName } = useTaskData(task.id, task.projectId)
@@ -44,11 +45,8 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handleCompletionToggle = async () => {
     setIsUpdating(true)
     try {
-      // Use the useTaskOperations hook to complete the task
       await completeTask(task.id, !task.completed)
       onComplete(task.id, !task.completed)
-      
-      // No need for toast here as completeTask already shows one with undo option
     } catch (error: any) {
       toast.error(`Error updating task: ${error.message}`)
     } finally {
@@ -114,13 +112,29 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     }
   }
 
+  const handleTaskClick = (e: React.MouseEvent) => {
+    if (
+      e.target instanceof HTMLElement && 
+      (e.target.closest('button') || 
+       e.target.closest('input[type="checkbox"]') ||
+       e.target.getAttribute('role') === 'checkbox')
+    ) {
+      return;
+    }
+    
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <>
-      <div className={cn(
-        "flex items-start gap-2 p-3 rounded-md hover:bg-muted/50 transition-colors",
-        `task-priority-${task.priority}`
-      )}>
-        <div className="mt-1">
+      <div 
+        className={cn(
+          "flex items-start gap-2 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
+          `task-priority-${task.priority}`
+        )}
+        onClick={handleTaskClick}
+      >
+        <div className="mt-1" onClick={e => e.stopPropagation()}>
           <Checkbox 
             checked={task.completed} 
             onCheckedChange={handleCompletionToggle}
@@ -138,7 +152,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
           projectName={projectName}
         />
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
           <TooltipProvider>
             <div className="flex items-center space-x-1">
               <TaskItemPriority 
@@ -156,6 +170,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
               <TaskItemActions
                 task={task}
                 onDeleteClick={() => setIsDeleteDialogOpen(true)}
+                onEditClick={() => setIsEditDialogOpen(true)}
                 isUpdating={isUpdating}
                 onFavoriteToggle={onFavoriteToggle}
               />
@@ -175,6 +190,12 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         isUpdating={isUpdating}
+      />
+
+      <EditTaskDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        task={task}
       />
     </>
   )
