@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { TaskItemPriority } from "./TaskItemPriority"
@@ -8,11 +7,9 @@ import { TaskItemActions } from "./TaskItemActions"
 import { TaskItemConfirmDelete } from "./TaskItemConfirmDelete"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { toast } from "sonner"
-import { supabase } from "@/integrations/supabase/client"
-import { useAuth } from "@/hooks/use-auth"
-import { Tag } from "./taskTypes"
-import { TaskItemDueDate } from "./TaskItemDueDate" 
 import { useTaskData } from "./hooks/useTaskData"
+import { useTaskOperations } from "@/hooks/useTaskOperations"
+import { TaskItemDueDate } from "./TaskItemDueDate"
 
 export interface Task {
   id: string
@@ -40,19 +37,16 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const [isUpdating, setIsUpdating] = useState(false)
   
   const { taskTags, projectName } = useTaskData(task.id, task.projectId)
+  const { completeTask } = useTaskOperations()
 
   const handleCompletionToggle = async () => {
     setIsUpdating(true)
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed: !task.completed })
-        .eq('id', task.id)
-      
-      if (error) throw error
-      
+      // Use the useTaskOperations hook to complete the task
+      await completeTask(task.id, !task.completed)
       onComplete(task.id, !task.completed)
-      toast.success(task.completed ? "Task marked as incomplete" : "Task completed!")
+      
+      // No need for toast here as completeTask already shows one with undo option
     } catch (error: any) {
       toast.error(`Error updating task: ${error.message}`)
     } finally {
@@ -63,7 +57,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
     setIsUpdating(true)
     try {
-      const { error } = await supabase
+      const { error } = await fetch("tasks")
         .from('tasks')
         .update({ priority: newPriority })
         .eq('id', task.id)
@@ -83,7 +77,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     try {
       const formattedDate = date ? date.toISOString() : null
       
-      const { error } = await supabase
+      const { error } = await fetch("tasks")
         .from('tasks')
         .update({ due_date: formattedDate })
         .eq('id', task.id)
@@ -101,7 +95,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handleDelete = async () => {
     setIsUpdating(true)
     try {
-      const { error } = await supabase
+      const { error } = await fetch("tasks")
         .from('tasks')
         .delete()
         .eq('id', task.id)
@@ -173,12 +167,11 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
         taskTitle={task.title}
         taskCompleted={task.completed}
         onDelete={async (id) => {
-          await handleDelete();
+          await onDelete(id);
           return true;
         }}
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
         isUpdating={isUpdating}
       />
     </>

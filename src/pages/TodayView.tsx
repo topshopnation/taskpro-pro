@@ -51,6 +51,7 @@ export default function TodayView() {
               setSortDirection={setSortDirection}
               groupBy={groupBy}
               setGroupBy={setGroupBy}
+              onAddTask={() => setIsCreateTaskOpen(true)}
             />
           </div>
         </div>

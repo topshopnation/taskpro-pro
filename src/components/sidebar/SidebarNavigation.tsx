@@ -1,5 +1,5 @@
 
-import { Search, Inbox, CalendarClock, Clock, BarChart2 } from "lucide-react";
+import { Search, Inbox, CalendarClock, Clock, BarChart2, Plus } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarGroup,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { SearchDialog } from "@/components/search/SearchDialog";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 
 interface SidebarNavigationProps {
   onMobileMenuClose: () => void;
@@ -17,11 +18,26 @@ interface SidebarNavigationProps {
 
 export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={() => {
+                setIsCreateTaskOpen(true);
+                onMobileMenuClose();
+              }}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors 
+                transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
           <SidebarMenuItem>
             <SidebarMenuButton 
               onClick={() => {
@@ -107,6 +123,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
       </SidebarGroupContent>
       
       <SearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
+      <CreateTaskDialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen} />
     </SidebarGroup>
   )
 }

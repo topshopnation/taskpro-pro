@@ -41,10 +41,11 @@ export function useTaskOperations() {
       // Generate a unique toast ID to prevent duplicates
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
-      // Add undo action to toast
+      // Add undo action to toast - Always displayed for 3 seconds
       const status = completed ? "Task completed" : "Task marked incomplete";
       toast(status, {
         id: uniqueId,
+        duration: 3000, // Ensure toast stays for 3 seconds
         action: {
           label: "Undo",
           onClick: async () => {
@@ -125,6 +126,7 @@ export function useTaskOperations() {
       // Add toast with undo option
       toast("Task deleted", {
         id: uniqueId,
+        duration: 3000, // Ensure toast stays for 3 seconds
         action: {
           label: "Undo",
           onClick: async () => {

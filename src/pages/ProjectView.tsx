@@ -80,7 +80,7 @@ export default function ProjectView() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <ProjectHeader
             name={currentProject.name}
             favorite={currentProject.favorite}
@@ -95,7 +95,7 @@ export default function ProjectView() {
             onColorChange={handleProjectColorChange}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
             <Button 
               size="sm" 
               onClick={() => setIsCreateTaskOpen(true)}

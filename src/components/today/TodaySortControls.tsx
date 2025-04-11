@@ -1,7 +1,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter, ArrowDown, ArrowUp } from "lucide-react"
+import { Filter, ArrowDown, ArrowUp } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,15 +119,6 @@ export function TodaySortControls({
         ) : (
           <ArrowDown className="h-4 w-4" />
         )}
-      </Button>
-
-      <Button 
-        onClick={onAddTask} 
-        size={isMobile ? "sm" : "default"}
-        className="h-9 sm:h-10"
-      >
-        <Plus className="h-4 w-4 mr-1" />
-        <span className={isMobile ? "hidden sm:inline" : ""}>Add Task</span>
       </Button>
     </div>
   )

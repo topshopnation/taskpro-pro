@@ -5,6 +5,7 @@ import { AppHeader } from "./AppHeader";
 import { SidebarProvider } from "@/components/ui/sidebar/sidebar-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
+import { Toaster } from "sonner";
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
@@ -25,6 +26,14 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
             {children || <Outlet />}
           </main>
         </div>
+        
+        {/* Adding Toaster for notifications */}
+        <Toaster 
+          position="bottom-right"
+          duration={3000}
+          richColors
+          closeButton
+        />
       </div>
     </SidebarProvider>
   );
