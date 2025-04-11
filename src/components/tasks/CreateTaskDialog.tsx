@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -12,18 +11,25 @@ interface CreateTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   defaultProjectId?: string
+  defaultValues?: {
+    dueDate?: Date;
+    title?: string;
+    notes?: string;
+    priority?: string;
+    project?: string;
+  }
 }
 
-export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, defaultProjectId, defaultValues }: CreateTaskDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
   const [formValues, setFormValues] = useState<TaskFormValues>({
-    title: "",
-    notes: "",
-    dueDate: undefined,
+    title: defaultValues?.title || "",
+    notes: defaultValues?.notes || "",
+    dueDate: defaultValues?.dueDate,
     dueTime: "",
-    priority: "4",
-    project: "inbox",
+    priority: defaultValues?.priority || "4",
+    project: defaultValues?.project || defaultProjectId || "inbox",
     tags: []
   })
 
@@ -34,7 +40,18 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
         project: defaultProjectId
       }))
     }
-  }, [defaultProjectId, open])
+    
+    if (defaultValues && open) {
+      setFormValues(prev => ({
+        ...prev,
+        title: defaultValues.title || prev.title,
+        notes: defaultValues.notes || prev.notes,
+        dueDate: defaultValues.dueDate || prev.dueDate,
+        priority: defaultValues.priority || prev.priority,
+        project: defaultValues.project || defaultProjectId || prev.project
+      }))
+    }
+  }, [defaultProjectId, defaultValues, open])
 
   const handleSubmit = async () => {
     if (!formValues.title.trim()) {
@@ -50,7 +67,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     setIsLoading(true)
 
     try {
-      // First, insert the task - only use due_date (the time is already part of the Date object)
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
@@ -68,7 +84,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
 
       if (taskError) throw taskError
 
-      // Then, if there are tags, create task-tag associations
       if (formValues.tags.length > 0 && taskData) {
         const taskTagRelations = formValues.tags.map(tagId => ({
           task_id: taskData.id,
@@ -76,7 +91,6 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
           user_id: user.id
         }))
 
-        // Use type assertion to bypass TypeScript constraints
         const { error: tagRelationError } = await (supabase as any)
           .from('task_tags')
           .insert(taskTagRelations)

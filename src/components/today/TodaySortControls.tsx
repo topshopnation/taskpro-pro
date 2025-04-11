@@ -8,7 +8,7 @@ interface TodaySortControlsProps {
   setSortDirection: (value: "asc" | "desc") => void;
   groupBy: string | null;
   setGroupBy: (value: string | null) => void;
-  onAddTask: () => void;
+  onAddTask?: () => void;
 }
 
 export function TodaySortControls({
@@ -18,6 +18,7 @@ export function TodaySortControls({
   setSortDirection,
   groupBy,
   setGroupBy,
+  onAddTask,
 }: TodaySortControlsProps) {
   const handleSortChange = (newSortBy: string, newDirection: "asc" | "desc") => {
     setSortBy(newSortBy);

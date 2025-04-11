@@ -16,15 +16,17 @@ export default function TodayView() {
   const [sortField, setSortField] = useState<string>("dueDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const { tasks, isLoading, handleComplete, handleDelete, handleFavoriteToggle } = useTodayViewTasks({
-    sortField,
-    sortDirection,
-  });
+  const { tasks, isLoading, handleComplete, handleDelete, handleFavoriteToggle } = useTodayViewTasks();
 
   // Handle adding task
   const handleAddTask = () => {
     setIsCreateTaskOpen(true);
   };
+
+  // Group tasks when needed
+  const groupedTasks = groupBy 
+    ? groupTasks(tasks, groupBy, sortField, sortDirection)
+    : { "Today's Tasks": tasks };
 
   if (isLoading) {
     return (
@@ -43,25 +45,23 @@ export default function TodayView() {
 
   return (
     <AppLayout>
-      <TodayViewHeader
-        tasksCount={tasks.length}
-        onAddTask={handleAddTask}
-      />
+      <TodayViewHeader />
 
       <TodaySortControls 
-        sortField={sortField}
+        sortBy={sortField}
+        setSortBy={setSortField}
         sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
         groupBy={groupBy}
-        onSortFieldChange={setSortField}
-        onSortDirectionChange={setSortDirection}
-        onGroupByChange={setGroupBy}
+        setGroupBy={setGroupBy}
+        onAddTask={handleAddTask}
       />
 
       {tasks.length === 0 ? (
         <EmptyTodayState onAddTask={handleAddTask} />
       ) : groupBy ? (
         <GroupedTaskLists
-          tasks={tasks}
+          groupedTasks={groupedTasks}
           groupBy={groupBy}
           isLoadingTasks={isLoading}
           onComplete={handleComplete}
@@ -82,9 +82,6 @@ export default function TodayView() {
       <CreateTaskDialog
         open={isCreateTaskOpen}
         onOpenChange={setIsCreateTaskOpen}
-        defaultValues={{
-          dueDate: new Date(),
-        }}
       />
     </AppLayout>
   );
