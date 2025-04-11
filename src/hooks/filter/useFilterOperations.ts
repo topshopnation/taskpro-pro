@@ -34,7 +34,7 @@ export function useFilterOperations(filterId: string) {
   };
 
   const updateFilter = async (name: string, conditions: any, color?: string) => {
-    if (!user) return;
+    if (!user) return false;
     
     try {
       setIsLoading(true);

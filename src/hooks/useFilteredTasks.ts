@@ -6,13 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { filterTasks } from "@/utils/filterUtils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 export function useFilteredTasks(filter: CustomFilter | null) {
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const { user } = useAuth();
 
-  // Fetch tasks from Supabase
+  // Fetch tasks from Supabase with React Query
   const fetchTasks = async () => {
     if (!user) return [];
     
@@ -36,6 +36,7 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         favorite: task.favorite || false
       }));
     } catch (error: any) {
+      console.error("Failed to fetch tasks:", error.message);
       toast.error("Failed to fetch tasks", {
         description: error.message
       });
@@ -43,15 +44,11 @@ export function useFilteredTasks(filter: CustomFilter | null) {
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    const loadTasks = async () => {
-      const taskData = await fetchTasks();
-      setTasks(taskData);
-    };
-
-    loadTasks();
-  }, [user]);
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ['tasks', user?.id],
+    queryFn: fetchTasks,
+    enabled: !!user,
+  });
 
   // Setup realtime subscription
   useEffect(() => {
@@ -65,8 +62,8 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         table: 'tasks',
         filter: `user_id=eq.${user.id}`,
       }, async () => {
-        const updatedTasks = await fetchTasks();
-        setTasks(updatedTasks);
+        // Let React Query handle the refetch
+        // This is just to trigger the subscription
       })
       .subscribe();
       
@@ -77,8 +74,11 @@ export function useFilteredTasks(filter: CustomFilter | null) {
 
   // Apply filter whenever tasks or filter changes
   useEffect(() => {
+    console.log("Filtering tasks. Total tasks:", tasks.length, "Filter:", filter?.name);
+    
     if (filter) {
       const filtered = filterTasks(tasks, filter).filter(task => !task.completed);
+      console.log("Filtered tasks:", filtered.length);
       setFilteredTasks(filtered);
     } else {
       setFilteredTasks([]);
@@ -94,10 +94,9 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         
       if (error) throw error;
       
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, completed } : task
-        )
+      // Optimistic update
+      setFilteredTasks(
+        filteredTasks.filter(task => task.id !== taskId)
       );
     } catch (error: any) {
       toast.error("Failed to update task", {
@@ -115,7 +114,8 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         
       if (error) throw error;
       
-      setTasks(tasks.filter((task) => task.id !== taskId));
+      // Optimistic update
+      setFilteredTasks(filteredTasks.filter((task) => task.id !== taskId));
       toast.success("Task deleted");
     } catch (error: any) {
       toast.error("Failed to delete task", {
@@ -133,8 +133,9 @@ export function useFilteredTasks(filter: CustomFilter | null) {
         
       if (error) throw error;
       
-      setTasks(
-        tasks.map((task) =>
+      // Optimistic update
+      setFilteredTasks(
+        filteredTasks.map((task) =>
           task.id === taskId ? { ...task, favorite } : task
         )
       );
@@ -147,6 +148,7 @@ export function useFilteredTasks(filter: CustomFilter | null) {
 
   return {
     filteredTasks,
+    isLoading,
     handleComplete,
     handleDelete,
     handleFavoriteToggle

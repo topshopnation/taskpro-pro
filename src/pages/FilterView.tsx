@@ -30,6 +30,8 @@ export default function FilterView() {
     setNewFilterName,
     filterColor,
     setFilterColor,
+    filterConditions,
+    setFilterConditions,
     handleFilterFavoriteToggle,
     handleFilterRename,
     handleFilterDelete,
@@ -47,8 +49,9 @@ export default function FilterView() {
     if (currentFilter) {
       setNewFilterName(currentFilter.name);
       setFilterColor(currentFilter.color || "");
+      setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
     }
-  }, [currentFilter, setNewFilterName, setFilterColor]);
+  }, [currentFilter, setNewFilterName, setFilterColor, setFilterConditions]);
 
   const groupedTasks = groupTasks(filteredTasks, groupBy, sortBy, sortDirection);
 
@@ -83,6 +86,7 @@ export default function FilterView() {
             onRenameClick={() => {
               setNewFilterName(currentFilter.name);
               setFilterColor(currentFilter.color || "");
+              setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
               setIsEditFilterOpen(true);
             }}
             onDeleteClick={() => setIsDeleteFilterOpen(true)}
@@ -135,10 +139,12 @@ export default function FilterView() {
           isDeleteDialogOpen={isDeleteFilterOpen}
           filterName={newFilterName}
           filterColor={filterColor}
+          filterConditions={filterConditions}
           onEditDialogChange={setIsEditFilterOpen}
           onDeleteDialogChange={setIsDeleteFilterOpen}
           onFilterNameChange={setNewFilterName}
           onFilterColorChange={setFilterColor}
+          onFilterConditionsChange={setFilterConditions}
           onRename={handleFilterRename}
           onDelete={handleFilterDelete}
         />

@@ -7,11 +7,13 @@ export function useFilterEditState(currentFilter: CustomFilter | null) {
   const [isDeleteFilterOpen, setIsDeleteFilterOpen] = useState(false);
   const [newFilterName, setNewFilterName] = useState("");
   const [filterColor, setFilterColor] = useState("");
+  const [filterConditions, setFilterConditions] = useState<any>({ items: [], logic: "and" });
   
   useEffect(() => {
     if (currentFilter) {
       setNewFilterName(currentFilter.name);
       setFilterColor(currentFilter.color || "");
+      setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
     }
   }, [currentFilter]);
   
@@ -23,6 +25,8 @@ export function useFilterEditState(currentFilter: CustomFilter | null) {
     newFilterName,
     setNewFilterName,
     filterColor,
-    setFilterColor
+    setFilterColor,
+    filterConditions,
+    setFilterConditions
   };
 }

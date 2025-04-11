@@ -14,7 +14,9 @@ export function useFilter() {
     newFilterName,
     setNewFilterName,
     filterColor,
-    setFilterColor
+    setFilterColor,
+    filterConditions,
+    setFilterConditions
   } = useFilterEditState(currentFilter);
   
   const {
@@ -34,8 +36,10 @@ export function useFilter() {
     setNewFilterName,
     filterColor,
     setFilterColor,
+    filterConditions,
+    setFilterConditions,
     handleFilterFavoriteToggle: () => toggleFavorite(currentFilter?.favorite || false),
-    handleFilterRename: () => updateFilter(newFilterName, currentFilter?.conditions, filterColor).then(success => {
+    handleFilterRename: () => updateFilter(newFilterName, filterConditions, filterColor).then(success => {
       if (success) setIsEditFilterOpen(false);
       return success;
     }),

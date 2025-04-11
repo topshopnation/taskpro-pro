@@ -10,15 +10,38 @@ export const isStandardFilter = (filterId: string | undefined): boolean => {
 export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] => {
   if (!filter) return tasks;
   
-  // Handle case where conditions could be an array or an object with items property
-  const conditions = Array.isArray(filter.conditions) 
-    ? filter.conditions 
-    : filter.conditions?.items || [];
+  // Handle different formats of conditions (array or object with items)
+  let conditions = [];
+  let logic = "and";
   
-  if (conditions.length === 0) return tasks;
+  if (Array.isArray(filter.conditions)) {
+    conditions = filter.conditions;
+    logic = filter.logic || "and";
+  } else if (filter.conditions?.items) {
+    conditions = filter.conditions.items;
+    logic = filter.conditions.logic || filter.logic || "and";
+  } else if (typeof filter.conditions === 'object' && filter.conditions !== null) {
+    // Try to extract items in a safer way
+    conditions = Array.isArray(filter.conditions.items) ? filter.conditions.items : [];
+    logic = filter.conditions.logic || filter.logic || "and";
+  }
+  
+  // Extra safety check
+  if (!Array.isArray(conditions)) {
+    console.warn("Invalid filter conditions format:", filter.conditions);
+    return tasks;
+  }
+  
+  if (conditions.length === 0) {
+    return tasks;
+  }
+  
+  console.log("Filtering with conditions:", conditions, "and logic:", logic);
   
   return tasks.filter(task => {
     const results = conditions.map((condition: any) => {
+      console.log("Checking condition:", condition, "for task:", task.title);
+      
       if (condition.type === "due" && condition.value === "today" && task.dueDate) {
         const today = new Date();
         const taskDate = new Date(task.dueDate);
@@ -40,6 +63,18 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
         return task.priority === 1;
       }
       
+      if (condition.type === "priority" && condition.value === "2") {
+        return task.priority === 2;
+      }
+      
+      if (condition.type === "priority" && condition.value === "3") {
+        return task.priority === 3;
+      }
+      
+      if (condition.type === "priority" && condition.value === "4") {
+        return task.priority === 4;
+      }
+      
       if (condition.type === "project") {
         return task.projectId === condition.value;
       }
@@ -47,11 +82,7 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
       return false;
     });
     
-    // Use the filter's logic if available, otherwise default to "and"
-    const logic = Array.isArray(filter.conditions) 
-      ? filter.logic 
-      : filter.conditions?.logic || "and";
-    
+    // Apply the filter logic (AND/OR)
     if (logic === "and") {
       return results.every(Boolean);
     } else {
