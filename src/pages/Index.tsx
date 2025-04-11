@@ -87,9 +87,9 @@ const Index = () => {
                   <Button
                     size="lg"
                     className="text-lg h-12 px-8 animate-fade-in"
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => navigate("/today")}
                   >
-                    Go to Dashboard
+                    Go to App
                   </Button>
                 ) : (
                   <Button

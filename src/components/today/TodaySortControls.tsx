@@ -1,14 +1,17 @@
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, ArrowDownAZ, ArrowUpZA, Layers } from "lucide-react"
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator 
+import { Plus, Filter, ArrowDown, ArrowUp } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface TodaySortControlsProps {
   sortBy: string
@@ -27,91 +30,105 @@ export function TodaySortControls({
   setSortDirection,
   groupBy,
   setGroupBy,
-  onAddTask
+  onAddTask,
 }: TodaySortControlsProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const isMobile = useIsMobile()
+
+  const sortOptions = [
+    { value: "dueDate", label: "Due Date" },
+    { value: "priority", label: "Priority" },
+    { value: "title", label: "Title" },
+  ]
+
+  const groupOptions = [
+    { value: null, label: "No Grouping" },
+    { value: "priority", label: "By Priority" },
+    { value: "project", label: "By Project" },
+  ]
+
+  const handleSort = (value: string) => {
+    setSortBy(value)
+    setIsOpen(false)
+  }
+
+  const handleGroup = (value: string | null) => {
+    setGroupBy(value)
+    setIsOpen(false)
+  }
+
+  const toggleSortDirection = () => {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+  }
+
   return (
-    <TooltipProvider>
-      <div className="flex items-center space-x-2">
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  {sortDirection === "asc" 
-                    ? <ArrowDownAZ className="h-4 w-4" /> 
-                    : <ArrowUpZA className="h-4 w-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Sort tasks</TooltipContent>
-          </Tooltip>
-          
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("asc"); }}>
-              Sort by Name (A-Z)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy("title"); setSortDirection("desc"); }}>
-              Sort by Name (Z-A)
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("asc"); }}>
-              Sort by Due Date (Earliest)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy("dueDate"); setSortDirection("desc"); }}>
-              Sort by Due Date (Latest)
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("asc"); }}>
-              Sort by Project (A-Z)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy("project"); setSortDirection("desc"); }}>
-              Sort by Project (Z-A)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Layers className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Group tasks</TooltipContent>
-          </Tooltip>
-          
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setGroupBy(null)}>
-              No Grouping
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setGroupBy("title")}>
-              Group by Name
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setGroupBy("project")}>
-              Group by Project
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setGroupBy("dueDate")}>
-              Group by Due Date
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              onClick={onAddTask}
-              className="flex items-center space-x-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Create a new task</TooltipContent>
-        </Tooltip>
-      </div>
-    </TooltipProvider>
+    <div className="flex items-center gap-1 md:gap-2">
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size={isMobile ? "sm" : "default"} className="flex gap-1 h-9">
+            <Filter className="h-4 w-4" />
+            <span className="hidden sm:inline">Sort & Group</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            {sortOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => handleSort(option.value)}
+              >
+                <span className={sortBy === option.value ? "font-semibold" : ""}>
+                  {option.label}
+                </span>
+                {sortBy === option.value && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {sortDirection === "asc" ? "A-Z" : "Z-A"}
+                  </span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Group Options</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            {groupOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value || "none"}
+                onClick={() => handleGroup(option.value)}
+              >
+                <span className={groupBy === option.value ? "font-semibold" : ""}>
+                  {option.label}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Button 
+        variant="outline" 
+        size={isMobile ? "sm" : "default"}
+        onClick={toggleSortDirection}
+        className="h-9 px-2 flex-shrink-0"
+      >
+        {sortDirection === "asc" ? (
+          <ArrowUp className="h-4 w-4" />
+        ) : (
+          <ArrowDown className="h-4 w-4" />
+        )}
+      </Button>
+
+      <Button 
+        onClick={onAddTask} 
+        size={isMobile ? "sm" : "default"}
+        className="h-9 sm:h-10"
+      >
+        <Plus className="h-4 w-4 mr-1" />
+        <span className={isMobile ? "hidden sm:inline" : ""}>Add Task</span>
+      </Button>
+    </div>
   )
 }

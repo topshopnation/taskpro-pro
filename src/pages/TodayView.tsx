@@ -28,8 +28,8 @@ export default function TodayView() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 max-w-screen-xl mx-auto px-2 sm:px-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <TodayViewHeader />
           
           <TodaySortControls
@@ -43,7 +43,7 @@ export default function TodayView() {
           />
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {Object.keys(groupedTasks).length === 0 ? (
             <EmptyTodayState onAddTask={() => setIsCreateTaskOpen(true)} />
           ) : (

@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,28 +19,28 @@ export function AppHeader() {
     : user?.email?.substring(0, 2).toUpperCase() || "U";
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 flex h-14 md:h-16 w-full items-center justify-between border-b bg-background px-3 md:px-6 shadow-sm">
+      <div className="flex items-center gap-1 md:gap-2">
         <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="md:hidden">
+            <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0">
-            <SidebarContent />
+            <SidebarContent closeSheet={() => setShowSidebar(false)} />
           </SheetContent>
         </Sheet>
-        <TaskProLogo size="small" />
+        <TaskProLogo size="small" withText className="ml-1" />
       </div>
       <div className="flex items-center">
         <Avatar 
-          className="cursor-pointer"
+          className="cursor-pointer h-9 w-9 md:h-10 md:w-10"
           onClick={() => navigate("/settings")} 
         >
           <AvatarImage src={user?.avatarUrl || ""} />
-          <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
+          <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center text-sm">
             {userInitials}
           </AvatarFallback>
         </Avatar>
