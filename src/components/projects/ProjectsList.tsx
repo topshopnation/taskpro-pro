@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, Edit, Trash2, ListTodo } from "lucide-react";
@@ -60,7 +59,8 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
 
-  const handleProjectClick = (projectId: string) => {
+  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
+    e.preventDefault();
     navigate(`/projects/${projectId}`);
   };
 
@@ -137,7 +137,6 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     if (!selectedProject) return;
     
     try {
-      // Delete all tasks in this project first
       const { error: tasksError } = await supabase
         .from('tasks')
         .delete()
@@ -145,7 +144,6 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         
       if (tasksError) throw tasksError;
       
-      // Then delete the project
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -169,7 +167,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           <Card 
             key={project.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleProjectClick(project.id)}
+            onClick={(e) => handleProjectClick(project.id, e)}
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -221,7 +219,6 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         ))}
       </div>
 
-      {/* Edit Project Dialog */}
       <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -255,7 +252,6 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Project Dialog */}
       <AlertDialog open={isDeleteProjectOpen} onOpenChange={setIsDeleteProjectOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

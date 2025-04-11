@@ -147,6 +147,11 @@ export function AppSidebar({ className }: AppSidebarProps) {
     setFavoriteItems([...favProjects, ...favFilters]);
   }, [projects, filters]);
 
+  // Debug navigation issues
+  console.log('Current projects:', projects);
+  console.log('Current filters:', filters);
+  console.log('Current favorites:', favoriteItems);
+
   return (
     <Sidebar className={className}>
       <SidebarContent 

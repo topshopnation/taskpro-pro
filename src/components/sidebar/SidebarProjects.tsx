@@ -1,6 +1,6 @@
 
 import { ListTodo, Plus, ChevronRight, Loader2 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -33,12 +33,20 @@ export function SidebarProjects({
   onMobileMenuClose 
 }: SidebarProjectsProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  
   // Filter out any "inbox" project that may be listed
   const filteredProjects = projects.filter(project => project.id !== "inbox");
   
   // Only show the top 5 projects in the sidebar, the rest are in the projects page
   const topProjects = filteredProjects.slice(0, 5);
   const hasMoreProjects = filteredProjects.length > 5;
+
+  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(`/projects/${projectId}`);
+    onMobileMenuClose();
+  };
 
   return (
     <SidebarGroup>
@@ -81,14 +89,15 @@ export function SidebarProjects({
               {topProjects.map((project) => (
                 <SidebarMenuItem key={project.id}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={`/projects/${project.id}`}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                        }`
-                      }
-                      onClick={onMobileMenuClose}
+                    <a
+                      href={`/projects/${project.id}`}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                        location.pathname === `/projects/${project.id}` 
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                          : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                      )}
+                      onClick={(e) => handleProjectClick(project.id, e)}
                     >
                       <ListTodo 
                         className="h-4 w-4" 
@@ -96,7 +105,7 @@ export function SidebarProjects({
                       />
                       <span className="truncate">{project.name}</span>
                       <ChevronRight className="h-4 w-4 ml-auto" />
-                    </NavLink>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

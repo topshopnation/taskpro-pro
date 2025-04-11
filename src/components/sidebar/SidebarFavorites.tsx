@@ -1,6 +1,7 @@
 
-import { Star, ListTodo, Filter } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Star, Loader2, Filter, ListTodo } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -9,10 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface FavoriteItem {
   id: string;
@@ -26,86 +24,53 @@ interface SidebarFavoritesProps {
   onMobileMenuClose: () => void;
 }
 
-export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFavoritesProps) {
-  const [updatingItem, setUpdatingItem] = useState<string | null>(null);
+export function SidebarFavorites({ 
+  favoriteItems, 
+  onMobileMenuClose 
+}: SidebarFavoritesProps) {
+  const navigate = useNavigate();
 
-  const handleFavoriteToggle = async (item: FavoriteItem, e: React.MouseEvent) => {
+  if (favoriteItems.length === 0) {
+    return null;
+  }
+
+  const handleFavoriteClick = (item: FavoriteItem, e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    if (updatingItem) return; // Prevent multiple clicks
-    
-    setUpdatingItem(`${item.type}-${item.id}`);
-    
-    try {
-      const table = item.type === 'project' ? 'projects' : 'filters';
-      
-      const { error } = await supabase
-        .from(table)
-        .update({ favorite: false })
-        .eq('id', item.id);
-        
-      if (error) throw error;
-      
-      toast.success(`Removed from favorites`);
-    } catch (error: any) {
-      toast.error(`Failed to update favorite status: ${error.message}`);
-    } finally {
-      setUpdatingItem(null);
-    }
+    const path = item.type === 'project' ? `/projects/${item.id}` : `/filters/${item.id}`;
+    navigate(path);
+    onMobileMenuClose();
   };
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Favorites</SidebarGroupLabel>
+      <SidebarGroupLabel className="mb-2">Favorites</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {favoriteItems.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
-              No favorites yet
-            </div>
-          ) : (
-            favoriteItems.map((item) => (
-              <SidebarMenuItem key={`fav-${item.id}-${item.type}`}>
-                <SidebarMenuButton asChild>
-                  <div className="flex w-full">
-                    <NavLink
-                      to={item.type === "project" ? `/projects/${item.id}` : `/filters/${item.id}`}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors flex-grow ${
-                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                        }`
-                      }
-                      onClick={onMobileMenuClose}
-                    >
-                      {item.type === "project" ? (
-                        <ListTodo 
-                          className="h-4 w-4" 
-                          style={item.color ? { color: item.color } : undefined}
-                        />
-                      ) : (
-                        <Filter 
-                          className="h-4 w-4" 
-                          style={item.color ? { color: item.color } : undefined}
-                        />
-                      )}
-                      <span>{item.name}</span>
-                    </NavLink>
-                    <Button
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 ml-auto"
-                      onClick={(e) => handleFavoriteToggle(item, e)}
-                      disabled={updatingItem === `${item.type}-${item.id}`}
-                    >
-                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                      <span className="sr-only">Remove from favorites</span>
-                    </Button>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))
-          )}
+          {favoriteItems.map((item) => (
+            <SidebarMenuItem key={item.id}>
+              <SidebarMenuButton asChild>
+                <a
+                  href={item.type === 'project' ? `/projects/${item.id}` : `/filters/${item.id}`}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  onClick={(e) => handleFavoriteClick(item, e)}
+                >
+                  {item.type === 'project' ? (
+                    <ListTodo 
+                      className="h-4 w-4" 
+                      style={item.color ? { color: item.color } : undefined} 
+                    />
+                  ) : (
+                    <Filter 
+                      className="h-4 w-4" 
+                      style={item.color ? { color: item.color } : undefined}
+                    />
+                  )}
+                  <span className="truncate">{item.name}</span>
+                  <Star className="h-4 w-4 ml-auto fill-yellow-400 text-yellow-400" />
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
