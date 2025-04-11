@@ -1,1 +1,29 @@
+
 project_id = "rfjydtygaymoovkkmyuj"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[auth]
+enabled = true
+port = 54325
+
+[storage]
+enabled = true
+
+[realtime]
+enabled = true
+
+[functions.paypal-webhook]
+verify_jwt = false # This needs to be public to receive webhooks from PayPal

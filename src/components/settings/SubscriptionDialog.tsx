@@ -1,4 +1,3 @@
-
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Check, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -20,6 +20,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { updateSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
   
   // Reset plan type to monthly when dialog opens
   useEffect(() => {
@@ -78,7 +79,21 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   };
   
   const openPaymentLink = () => {
+    if (!user) {
+      toast.error("You must be signed in to subscribe");
+      return;
+    }
+    
     let paymentUrl = "";
+    
+    // Create custom data for PayPal to pass back in webhooks
+    const customData = JSON.stringify({
+      user_id: user.id,
+      plan_type: planType
+    });
+    
+    // Encode the custom data for URL safety
+    const encodedCustomData = encodeURIComponent(customData);
     
     if (planType === "monthly") {
       paymentUrl = "https://www.paypal.com/ncp/payment/CGBFJLX2VMHCA";
@@ -86,8 +101,11 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       paymentUrl = "https://www.paypal.com/ncp/payment/G226AU9Q5AW2S";
     }
     
+    // Add custom data to the PayPal URL
+    paymentUrl += `?custom_id=${encodedCustomData}`;
+    
     // Append return parameters to track payment type
-    paymentUrl += `?return=${encodeURIComponent(window.location.origin + window.location.pathname + "?payment_success=true&plan_type=" + planType)}`;
+    paymentUrl += `&return=${encodeURIComponent(window.location.origin + window.location.pathname + "?payment_success=true&plan_type=" + planType)}`;
     
     // Open payment link in a new window
     if (paymentUrl) {
@@ -181,6 +199,15 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
               </div>
               {getPriceDisplay()}
             </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+            <p className="flex items-center">
+              <CreditCard className="h-4 w-4 mr-2" />
+              <span>
+                Your subscription will automatically renew through PayPal. You can cancel anytime through your PayPal account.
+              </span>
+            </p>
           </div>
         </div>
         
