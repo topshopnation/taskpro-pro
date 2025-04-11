@@ -1,83 +1,80 @@
 
-import { useState } from "react"
-import { AppLayout } from "@/components/layout/AppLayout"
-import { useTodayViewTasks } from "@/hooks/useTodayViewTasks"
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
-import { TodaySortControls } from "@/components/today/TodaySortControls"
-import { TodayViewHeader } from "@/components/today/TodayViewHeader"
-import { EmptyTodayState } from "@/components/today/EmptyTodayState"
-import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
-import { groupTasks } from "@/utils/todayViewUtils"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { useState } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { useTodayViewTasks } from "@/hooks/useTodayViewTasks";
+import { TaskList } from "@/components/tasks/TaskList";
+import { TodayViewHeader } from "@/components/today/TodayViewHeader";
+import { TodaySortControls } from "@/components/today/TodaySortControls";
+import { EmptyTodayState } from "@/components/today/EmptyTodayState";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { sortTasks } from "@/utils/taskSortUtils";
+import { groupTasksBy } from "@/utils/todayViewUtils";
+import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
+import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
 
 export default function TodayView() {
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
-  const [sortBy, setSortBy] = useState<string>("dueDate")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [groupBy, setGroupBy] = useState<string | null>(null)
-  
-  const { 
-    tasks, 
-    isLoading, 
-    handleComplete, 
-    handleDelete, 
-    handleFavoriteToggle 
-  } = useTodayViewTasks()
+  const [groupBy, setGroupBy] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("priority");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const { todayTasks, isLoading, error, handleComplete, handleDelete } = useTodayViewTasks();
 
-  // Group tasks based on current settings
-  const groupedTasks = groupTasks(tasks, groupBy, sortBy, sortDirection)
+  // Apply sorting
+  const sortedTasks = sortTasks(todayTasks, sortBy, sortDirection);
+  
+  // Apply grouping if specified
+  const groupedTasks = groupBy ? groupTasksBy(sortedTasks, groupBy) : null;
 
   return (
     <AppLayout>
-      <div className="space-y-4 max-w-screen-xl mx-auto px-2 sm:px-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <TodayViewHeader />
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-            
-            <TodaySortControls
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-              onAddTask={() => setIsCreateTaskOpen(true)}
-            />
-          </div>
-        </div>
+      <div className="space-y-6">
+        <SubscriptionBanner />
+        
+        <TodayViewHeader 
+          tasksCount={todayTasks.length} 
+          onAddTask={() => setIsCreateTaskOpen(true)} 
+        />
 
-        <div className="space-y-4">
-          {Object.keys(groupedTasks).length === 0 ? (
-            <EmptyTodayState onAddTask={() => setIsCreateTaskOpen(true)} />
-          ) : (
-            <GroupedTaskLists
-              groupedTasks={groupedTasks}
-              groupBy={groupBy}
-              isLoadingTasks={isLoading}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-              onAddTask={() => setIsCreateTaskOpen(true)}
-              onFavoriteToggle={handleFavoriteToggle}
-              hideTitle={!groupBy}
-            />
-          )}
-        </div>
+        {todayTasks.length > 0 && (
+          <TodaySortControls
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+            onAddTask={() => setIsCreateTaskOpen(true)}
+          />
+        )}
+
+        {isLoading ? (
+          <div className="animate-pulse space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-muted h-16 rounded-md"></div>
+            ))}
+          </div>
+        ) : todayTasks.length === 0 ? (
+          <EmptyTodayState onAddTask={() => setIsCreateTaskOpen(true)} />
+        ) : groupedTasks ? (
+          <GroupedTaskLists 
+            groupedTasks={groupedTasks} 
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <TaskList 
+            tasks={sortedTasks} 
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+          />
+        )}
 
         <CreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}
+          defaultDueDate={new Date()}
         />
       </div>
     </AppLayout>
-  )
+  );
 }

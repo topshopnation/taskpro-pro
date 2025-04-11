@@ -22,6 +22,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import CompletedTasks from "./pages/CompletedTasks";
 import { queryClient } from "./lib/react-query";
+import { SubscriptionProvider } from "@/contexts/subscription-context";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -31,30 +32,32 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={<Navigate to="/today" replace />} />
-              <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
-              <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
-              <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
-              <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
-              <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-              <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
-              <Route path="/projects/:id/:name" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
-              <Route path="/filters" element={<ProtectedRoute><FiltersPage /></ProtectedRoute>} />
-              <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
-              <Route path="/filters/:id/:name" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
-              
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <SubscriptionProvider>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={<Navigate to="/today" replace />} />
+                <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
+                <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
+                <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
+                <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+                <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
+                <Route path="/projects/:id/:name" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
+                <Route path="/filters" element={<ProtectedRoute><FiltersPage /></ProtectedRoute>} />
+                <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
+                <Route path="/filters/:id/:name" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
+                
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </SubscriptionProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

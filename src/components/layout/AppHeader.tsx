@@ -1,147 +1,96 @@
 
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SidebarContent } from "@/components/sidebar/SidebarContent";
-import { useState, useEffect } from "react";
-import { TaskProLogo } from "@/components/ui/taskpro-logo";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Menu, Search, UserCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSidebar } from "@/components/ui/sidebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { TaskProLogo } from "@/components/ui/taskpro-logo";
+import { SearchDialog } from "@/components/search/SearchDialog";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 
 export function AppHeader() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [projects, setProjects] = useState([]);
-  const [filters, setFilters] = useState([]);
-  const [favoriteItems, setFavoriteItems] = useState([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+  const { user } = useAuth();
   const isMobile = useIsMobile();
-
-  const userInitials = user?.firstName && user?.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`
-    : user?.email?.substring(0, 2).toUpperCase() || "U";
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchProjects = async () => {
-      try {
-        setIsLoadingProjects(true);
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('name');
-
-        if (error) throw error;
-
-        setProjects(data || []);
-        
-        // Update favorites
-        const favProjects = (data || [])
-          .filter(project => project.favorite)
-          .map(project => ({
-            ...project,
-            type: 'project'
-          }));
-        
-        const favFilters = filters
-          .filter(filter => filter.favorite)
-          .map(filter => ({
-            ...filter,
-            type: 'filter'
-          }));
-        
-        setFavoriteItems([...favProjects, ...favFilters]);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-      } finally {
-        setIsLoadingProjects(false);
-      }
-    };
-
-    const fetchFilters = async () => {
-      try {
-        setIsLoadingFilters(true);
-        const { data, error } = await supabase
-          .from('filters')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('name');
-
-        if (error) throw error;
-
-        setFilters(data || []);
-        
-        // Update favorites
-        const favProjects = projects
-          .filter(project => project.favorite)
-          .map(project => ({
-            ...project,
-            type: 'project'
-          }));
-        
-        const favFilters = (data || [])
-          .filter(filter => filter.favorite)
-          .map(filter => ({
-            ...filter,
-            type: 'filter'
-          }));
-        
-        setFavoriteItems([...favProjects, ...favFilters]);
-      } catch (error) {
-        console.error('Error fetching filters:', error);
-      } finally {
-        setIsLoadingFilters(false);
-      }
-    };
-
-    fetchProjects();
-    fetchFilters();
-  }, [user]);
-
+  const location = useLocation();
+  const navigate = useNavigate();
+  const sidebar = useSidebar();
+  const [searchOpen, setSearchOpen] = useState(false);
+  
+  // Skip rendering the header on auth and index pages
+  const isAuthPage = location.pathname === "/auth" || location.pathname.startsWith("/auth/");
+  const isIndexPage = location.pathname === "/";
+  
+  if (isAuthPage || isIndexPage) {
+    return null;
+  }
+  
   return (
-    <header className="sticky top-0 z-30 flex h-14 md:h-16 w-full items-center justify-between border-b bg-background px-3 md:px-6 shadow-sm">
-      <div className="flex items-center gap-1 md:gap-2">
-        {isMobile && (
-          <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle sidebar</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
-              <SidebarContent 
-                onMobileMenuClose={() => setShowSidebar(false)}
-                projects={projects}
-                filters={filters}
-                favoriteItems={favoriteItems}
-                isLoadingProjects={isLoadingProjects}
-                isLoadingFilters={isLoadingFilters}
-              />
-            </SheetContent>
-          </Sheet>
-        )}
-        <TaskProLogo size="small" withText className="ml-1" />
-      </div>
-      <div className="flex items-center">
-        <Avatar 
-          className="cursor-pointer h-9 w-9 md:h-10 md:w-10"
-          onClick={() => navigate("/settings")} 
-        >
-          <AvatarImage src={user?.avatarUrl || ""} />
-          <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center text-sm">
-            {userInitials}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-    </header>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          {isMobile && (
+            <Button
+              variant="ghost"
+              className="mr-2"
+              size="icon"
+              onClick={() => sidebar.toggleMobileSidebar()}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          )}
+          
+          <div className="flex items-center">
+            <TaskProLogo />
+          </div>
+
+          <div className="flex flex-1 items-center justify-end space-x-2">
+            <SubscriptionStatus />
+            
+            <Button
+              variant="outline"
+              size="icon"
+              className="ml-2"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-4 w-4" />
+              <span className="sr-only">Search tasks</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                >
+                  {user?.avatarUrl ? (
+                    <img 
+                      src={user.avatarUrl} 
+                      alt={user.firstName || user.email || "User"} 
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <UserCircle className="h-6 w-6" />
+                  )}
+                  <span className="sr-only">User menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+      
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+    </>
   );
 }

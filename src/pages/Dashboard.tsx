@@ -13,6 +13,7 @@ import { sortTasks } from "@/utils/taskSortUtils";
 import { Task } from "@/components/tasks/TaskItem";
 import { useOverdueTasks } from "@/hooks/useOverdueTasks";
 import { useAuth } from "@/hooks/use-auth";
+import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
 
 export default function Dashboard() {
   const [sortBy, setSortBy] = useState<string>("dueDate");
@@ -48,6 +49,8 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <SubscriptionBanner />
+        
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           

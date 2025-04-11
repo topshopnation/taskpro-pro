@@ -6,15 +6,20 @@ import { SidebarProvider } from "@/components/ui/sidebar/sidebar-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
+import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction";
+import { useSubscriptionCheck } from "@/hooks/use-subscription-check";
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { shouldRestrict } = useSubscriptionCheck();
   
   // Log navigation for debugging
   useEffect(() => {
     console.log("AppLayout rendering at path:", location.pathname);
   }, [location.pathname]);
+
+  const content = children || <Outlet />;
 
   return (
     <SidebarProvider>
@@ -23,7 +28,13 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
         <div className="flex flex-1 w-full">
           <AppSidebar className="hidden md:block" />
           <main className="flex-1 p-3 md:p-6 overflow-x-hidden">
-            {children || <Outlet />}
+            {shouldRestrict ? (
+              <SubscriptionRestriction>
+                {content}
+              </SubscriptionRestriction>
+            ) : (
+              content
+            )}
           </main>
         </div>
         
