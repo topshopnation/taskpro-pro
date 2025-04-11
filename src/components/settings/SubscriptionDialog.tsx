@@ -1,6 +1,6 @@
 
 import { useSubscription } from "@/contexts/subscription";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Check, CreditCard } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 interface SubscriptionDialogProps {
@@ -21,6 +20,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { updateSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const location = useLocation();
+  
+  // Reset plan type to monthly when dialog opens
+  useEffect(() => {
+    if (open) {
+      setPlanType("monthly");
+    }
+  }, [open]);
   
   // PayPal return handling
   useEffect(() => {
@@ -98,6 +104,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           <Badge variant="outline" className="mt-2 w-fit">
             Billed monthly
           </Badge>
+          <span className="text-xs text-muted-foreground mt-1">Auto-renews monthly</span>
         </div>
       );
     } else {
@@ -107,6 +114,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           <Badge variant="secondary" className="mt-2 w-fit">
             Save 16%
           </Badge>
+          <span className="text-xs text-muted-foreground mt-1">Auto-renews yearly</span>
         </div>
       );
     }
@@ -130,12 +138,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
               onValueChange={(value) => setPlanType(value as "monthly" | "yearly")}
               className="grid grid-cols-2 gap-4 mt-2"
             >
-              <div className={`flex flex-col p-4 border rounded-lg ${planType === "monthly" ? "border-primary" : ""}`}>
+              <div className={`flex flex-col p-4 border rounded-lg cursor-pointer ${planType === "monthly" ? "border-primary" : ""}`}
+                   onClick={() => setPlanType("monthly")}>
                 <RadioGroupItem value="monthly" id="monthly" className="sr-only" />
                 <Label htmlFor="monthly" className="flex justify-between items-start cursor-pointer">
                   <div>
                     <h3 className="font-medium">Monthly</h3>
-                    <p className="text-sm text-muted-foreground">Flexible month-to-month</p>
+                    <p className="text-sm text-muted-foreground">Flexible payment</p>
                   </div>
                   {planType === "monthly" && <Check className="h-5 w-5 text-primary" />}
                 </Label>
@@ -144,7 +153,8 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                 </div>
               </div>
               
-              <div className={`flex flex-col p-4 border rounded-lg ${planType === "yearly" ? "border-primary" : ""}`}>
+              <div className={`flex flex-col p-4 border rounded-lg cursor-pointer ${planType === "yearly" ? "border-primary" : ""}`}
+                   onClick={() => setPlanType("yearly")}>
                 <RadioGroupItem value="yearly" id="yearly" className="sr-only" />
                 <Label htmlFor="yearly" className="flex justify-between items-start cursor-pointer">
                   <div>
@@ -166,7 +176,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                 <h3 className="font-medium">TaskPro {planType === "monthly" ? "Monthly" : "Annual"} Plan</h3>
                 <div className="flex items-center text-sm text-muted-foreground mt-1">
                   <CalendarDays className="h-4 w-4 mr-1" />
-                  <span>Renews {planType === "monthly" ? "monthly" : "yearly"}</span>
+                  <span>Auto-renews {planType === "monthly" ? "monthly" : "yearly"}</span>
                 </div>
               </div>
               {getPriceDisplay()}

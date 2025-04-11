@@ -10,13 +10,14 @@ import DataManagementCard from "@/components/settings/DataManagementCard";
 import ProfileDialog from "@/components/settings/ProfileDialog";
 import SubscriptionDialog from "@/components/settings/SubscriptionDialog";
 import SignOutCard from "@/components/settings/SignOutCard";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check for payment success in URL params when component mounts
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function Settings() {
     if (paymentSuccess === 'true') {
       // Open subscription dialog to handle payment confirmation
       setIsUpgradeDialogOpen(true);
+      toast.info("Processing your subscription...");
     }
   }, [location]);
 

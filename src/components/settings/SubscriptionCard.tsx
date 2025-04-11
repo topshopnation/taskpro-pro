@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -131,14 +132,14 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             </div>
             <div>
               <h4 className="font-medium">TaskPro Pro</h4>
-              <p className="text-sm text-muted-foreground">
-                Unlock all premium features
-              </p>
+              <div className="text-sm text-muted-foreground">
+                <p>Choose between:</p>
+                <ul className="pl-4 mt-1 space-y-1">
+                  <li>$3.00 per month</li>
+                  <li>$30.00 per year (save 16%)</li>
+                </ul>
+              </div>
             </div>
-          </div>
-          <div className="text-right">
-            <p className="font-medium">$3.00</p>
-            <p className="text-xs text-muted-foreground">per month</p>
           </div>
         </div>
         <ul className="space-y-2">
@@ -157,6 +158,10 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           <li className="flex items-center gap-2 text-sm">
             <BadgeCheck className="h-4 w-4 text-green-500" />
             <span>Theme customization</span>
+          </li>
+          <li className="flex items-center gap-2 text-sm">
+            <BadgeCheck className="h-4 w-4 text-green-500" />
+            <span>Automatic renewal for uninterrupted service</span>
           </li>
         </ul>
       </CardContent>
