@@ -59,10 +59,9 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
 
-  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("ProjectsList - Navigating to project:", projectId);
-    navigate(`/projects/${projectId}`);
+  const handleProjectClick = (project: Project) => {
+    const slugName = project.name.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/projects/${project.id}/${slugName}`);
   };
 
   const handleEditClick = (project: Project, e: React.MouseEvent) => {
@@ -168,7 +167,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           <Card 
             key={project.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={(e) => handleProjectClick(project.id, e)}
+            onClick={(e) => handleProjectClick(project)}
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">

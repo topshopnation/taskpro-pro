@@ -1,6 +1,6 @@
 
 import { Filter, Plus, Loader2 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -32,11 +32,21 @@ export function SidebarFilters({
   onMobileMenuClose 
 }: SidebarFiltersProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Only show the top 5 filters in the sidebar, the rest are in the filters page
   const topFilters = filters.slice(0, 5);
   const hasMoreFilters = filters.length > 5;
   
+  const handleFilterClick = (filter: FilterItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    // Use slugified name in URL
+    const slugName = filter.name.toLowerCase().replace(/\s+/g, '-');
+    console.log("Navigating to filter:", filter.id, slugName);
+    navigate(`/filters/${filter.id}/${slugName}`);
+    onMobileMenuClose();
+  };
+
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between mb-2">
@@ -78,22 +88,20 @@ export function SidebarFilters({
               {topFilters.map((filter) => (
                 <SidebarMenuItem key={filter.id}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={`/filters/${filter.id}`}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                        }`
-                      }
-                      onClick={onMobileMenuClose}
-                      end
+                    <button
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                        location.pathname.includes(`/filters/${filter.id}`) 
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                          : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                      }`}
+                      onClick={(e) => handleFilterClick(filter, e)}
                     >
                       <Filter 
                         className="h-4 w-4" 
                         style={filter.color ? { color: filter.color } : undefined}
                       />
                       <span className="truncate">{filter.name}</span>
-                    </NavLink>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

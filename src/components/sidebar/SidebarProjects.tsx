@@ -42,10 +42,12 @@ export function SidebarProjects({
   const topProjects = filteredProjects.slice(0, 5);
   const hasMoreProjects = filteredProjects.length > 5;
 
-  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
+  const handleProjectClick = (project: Project, e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Navigating to project:", projectId);
-    navigate(`/projects/${projectId}`);
+    // Use slugified name in URL
+    const slugName = project.name.toLowerCase().replace(/\s+/g, '-');
+    console.log("Navigating to project:", project.id, slugName);
+    navigate(`/projects/${project.id}/${slugName}`);
     onMobileMenuClose();
   };
 
@@ -93,11 +95,11 @@ export function SidebarProjects({
                     <button
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        location.pathname === `/projects/${project.id}` 
+                        location.pathname.includes(`/projects/${project.id}`) 
                           ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                           : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       )}
-                      onClick={(e) => handleProjectClick(project.id, e)}
+                      onClick={(e) => handleProjectClick(project, e)}
                     >
                       <ListTodo 
                         className="h-4 w-4" 

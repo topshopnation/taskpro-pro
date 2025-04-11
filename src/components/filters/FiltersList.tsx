@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, Edit, Trash2, Filter } from "lucide-react";
@@ -62,9 +61,9 @@ export function FiltersList({ filters }: FiltersListProps) {
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
 
-  const handleFilterClick = (filterId: string) => {
-    // Prevent default behavior and use programmatic navigation
-    navigate(`/filters/${filterId}`);
+  const handleFilterClick = (filter: FilterItem) => {
+    const slugName = filter.name.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/filters/${filter.id}/${slugName}`);
   };
 
   const handleEditClick = (filter: FilterItem, e: React.MouseEvent) => {
@@ -178,7 +177,7 @@ export function FiltersList({ filters }: FiltersListProps) {
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={(e) => {
               e.preventDefault();
-              handleFilterClick(filter.id);
+              handleFilterClick(filter);
             }}
           >
             <CardHeader className="pb-2">

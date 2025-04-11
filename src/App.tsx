@@ -45,8 +45,10 @@ const App = () => (
               <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
               <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
+              <Route path="/projects/:id/:name" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
               <Route path="/filters" element={<ProtectedRoute><FiltersPage /></ProtectedRoute>} />
               <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
+              <Route path="/filters/:id/:name" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
               

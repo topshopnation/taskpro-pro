@@ -11,8 +11,6 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -20,9 +18,9 @@ export default function ProjectView() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { id, name } = useParams();
 
   const {
-    id,
     currentProject,
     isLoadingProject,
     isEditProjectOpen,
@@ -37,7 +35,19 @@ export default function ProjectView() {
     handleProjectRename,
     handleProjectDelete,
     handleProjectColorChange
-  } = useProject()
+  } = useProject();
+
+  // Update URL if project name changes
+  useEffect(() => {
+    if (currentProject && !isLoadingProject) {
+      const currentSlug = name;
+      const newSlug = currentProject.name.toLowerCase().replace(/\s+/g, '-');
+      
+      if (currentSlug !== newSlug) {
+        navigate(`/projects/${id}/${newSlug}`, { replace: true });
+      }
+    }
+  }, [currentProject, id, name, navigate, isLoadingProject]);
 
   const {
     tasks,
@@ -45,23 +55,23 @@ export default function ProjectView() {
     unsectionedTasks,
     handleComplete,
     handleDelete
-  } = useProjectTasks(id)
+  } = useProjectTasks(id);
 
   useEffect(() => {
     if (currentProject) {
-      setNewProjectName(currentProject.name)
-      setProjectColor(currentProject.color || "")
+      setNewProjectName(currentProject.name);
+      setProjectColor(currentProject.color || "");
     }
-  }, [currentProject, setNewProjectName, setProjectColor])
+  }, [currentProject, setNewProjectName, setProjectColor]);
 
-  const groupedTasks = groupTasks(unsectionedTasks, groupBy, sortBy, sortDirection)
+  const groupedTasks = groupTasks(unsectionedTasks, groupBy, sortBy, sortDirection);
 
   if (isLoadingProject) {
-    return <ProjectLoadingState isLoading={true} projectExists={true} />
+    return <ProjectLoadingState isLoading={true} projectExists={true} />;
   }
 
   if (!currentProject) {
-    return <ProjectLoadingState isLoading={false} projectExists={false} />
+    return <ProjectLoadingState isLoading={false} projectExists={false} />;
   }
 
   const projectColors = [
@@ -71,7 +81,7 @@ export default function ProjectView() {
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
 
-  // Modified to redirect to Today page instead of Home
+  // Redirect to Today page instead of Home after project deletion
   const handleProjectDeleteWithRedirect = async () => {
     await handleProjectDelete();
     navigate('/today');
@@ -133,7 +143,7 @@ export default function ProjectView() {
         />
 
         <ProjectDialogs
-          projectId={id}
+          projectId={id || ''}
           isCreateTaskOpen={isCreateTaskOpen}
           setIsCreateTaskOpen={setIsCreateTaskOpen}
           isEditProjectOpen={isEditProjectOpen}

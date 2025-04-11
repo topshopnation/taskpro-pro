@@ -34,8 +34,12 @@ export function SidebarFavorites({
 
   const handleFavoriteClick = (item: FavoriteItem, e: React.MouseEvent) => {
     e.preventDefault();
-    console.log(`Navigating to ${item.type}:`, item.id);
-    const path = item.type === 'project' ? `/projects/${item.id}` : `/filters/${item.id}`;
+    // Use slugified name in URL
+    const slugName = item.name.toLowerCase().replace(/\s+/g, '-');
+    console.log(`Navigating to ${item.type}:`, item.id, slugName);
+    const path = item.type === 'project' 
+      ? `/projects/${item.id}/${slugName}` 
+      : `/filters/${item.id}/${slugName}`;
     navigate(path);
     onMobileMenuClose();
   };

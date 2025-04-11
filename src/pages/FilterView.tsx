@@ -6,7 +6,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { FilterHeader } from "@/components/filters/FilterHeader";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { useFilter } from "@/hooks/filter";
-import { Button } from "@/components/ui/button";
 import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { groupTasks } from "@/utils/taskSortUtils";
@@ -15,11 +14,11 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 
 export default function FilterView() {
   const navigate = useNavigate();
-  const { filterId } = useParams();
-  const [sortBy, setSortBy] = useState<string>("title")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [groupBy, setGroupBy] = useState<string | null>(null)
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const { id, name } = useParams();
+  const [sortBy, setSortBy] = useState<string>("title");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [groupBy, setGroupBy] = useState<string | null>(null);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   const {
     currentFilter,
@@ -39,6 +38,18 @@ export default function FilterView() {
     handleFilterDelete,
     handleFilterColorChange
   } = useFilter();
+
+  // Update URL if filter name changes
+  useEffect(() => {
+    if (currentFilter && !isLoading) {
+      const currentSlug = name;
+      const newSlug = currentFilter.name.toLowerCase().replace(/\s+/g, '-');
+      
+      if (currentSlug !== newSlug) {
+        navigate(`/filters/${id}/${newSlug}`, { replace: true });
+      }
+    }
+  }, [currentFilter, id, name, navigate, isLoading]);
 
   const {
     filteredTasks,
