@@ -13,7 +13,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <AppHeader />
         <div className="flex flex-1 w-full">
-          <AppSidebar className={`${isMobile ? 'hidden' : 'hidden md:block'}`} />
+          <AppSidebar className="hidden md:block" />
           <main className="flex-1 p-3 md:p-6 overflow-x-hidden">
             {children || <Outlet />}
           </main>
