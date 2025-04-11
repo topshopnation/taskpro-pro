@@ -29,7 +29,7 @@ export function AppHeader() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0">
-            <SidebarContent closeSheet={() => setShowSidebar(false)} />
+            <SidebarContent onMobileMenuClose={() => setShowSidebar(false)} />
           </SheetContent>
         </Sheet>
         <TaskProLogo size="small" withText className="ml-1" />
