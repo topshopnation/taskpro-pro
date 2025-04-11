@@ -17,6 +17,7 @@ interface TaskFormDueDateProps {
 
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const [timeInput, setTimeInput] = useState<string>("");
+  const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false);
   
   // Initialize timeInput when dueDate changes, but only if it has hours/minutes set
   useEffect(() => {
@@ -77,7 +78,25 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
     }
   };
 
+  // Handle time input focus - set default to 8:00 AM if empty
+  const handleTimeInputFocus = () => {
+    setTimeInputFocused(true);
+    if (!timeInput) {
+      setTimeInput("08:00");
+      
+      // If we have a date, update it with the default time
+      if (dueDate) {
+        const dateWithDefaultTime = new Date(dueDate);
+        dateWithDefaultTime.setHours(8, 0, 0, 0);
+        onChange(dateWithDefaultTime);
+      }
+    }
+  };
+
   const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "Pick a date", day: "" };
+  
+  // Only show time in the label if it's not empty and not midnight (00:00)
+  const shouldShowTime = timeInput && timeInput !== "00:00";
   
   return (
     <div className="grid gap-2">
@@ -97,7 +116,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
               <span>
                 {dateLabel.label}{' '}
                 <span className="text-muted-foreground">{dateLabel.day}</span>
-                {timeInput && <span className="ml-1 text-muted-foreground">at {timeInput}</span>}
+                {shouldShowTime && <span className="ml-1 text-muted-foreground">at {timeInput}</span>}
               </span>
             ) : (
               <span>Pick a date</span>
@@ -119,6 +138,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
                 placeholder="Add time"
                 value={timeInput}
                 onChange={handleTimeInputChange}
+                onFocus={handleTimeInputFocus}
                 className="h-7 py-1"
               />
             </div>

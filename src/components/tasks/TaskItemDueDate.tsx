@@ -21,6 +21,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const isOverdue = dueDate && new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0))
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [timeInput, setTimeInput] = useState<string>("")
+  const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
   
   // Initialize timeInput when dueDate changes, but only if hours/minutes are not zero
@@ -81,12 +82,29 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     }
   };
 
+  // Handle time input focus - set default to 8:00 AM if empty
+  const handleTimeInputFocus = () => {
+    setTimeInputFocused(true);
+    if (!timeInput) {
+      setTimeInput("08:00");
+      
+      // If we have a date, update it with the default time
+      if (dueDate) {
+        const dateWithDefaultTime = new Date(dueDate);
+        dateWithDefaultTime.setHours(8, 0, 0, 0);
+        onDateChange(dateWithDefaultTime);
+      }
+    }
+  };
+
   const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "No due date", day: "" };
   
   // Format time string for display, only if hours or minutes are not zero
-  const timeString = dueDate && (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0) 
-    ? format(dueDate, "HH:mm") 
-    : "";
+  // Don't show time if it's empty or 00:00 (midnight)
+  const shouldShowTime = dueDate && 
+    (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0);
+  
+  const timeString = shouldShowTime ? format(dueDate, "HH:mm") : "";
   
   return (
     <Popover>
@@ -134,6 +152,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               placeholder="Add time"
               value={timeInput}
               onChange={handleTimeInputChange}
+              onFocus={handleTimeInputFocus}
               className="h-7 py-1"
             />
           </div>

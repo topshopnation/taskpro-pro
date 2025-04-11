@@ -24,6 +24,9 @@ export function TaskItemDetails({
   tags = [],
   projectName
 }: TaskItemDetailsProps) {
+  // Check if time should be shown - hide if empty or 12:00 AM (midnight)
+  const shouldShowTime = dueTime && dueTime !== "" && dueTime !== "00:00";
+  
   return (
     <div className="flex-1 min-w-0">
       <div className="flex flex-col">
@@ -41,7 +44,7 @@ export function TaskItemDetails({
             <span className="text-xs text-muted-foreground flex items-center">
               <Calendar className="h-3 w-3 mr-1" />
               {format(dueDate, "MMM d, yyyy")}
-              {dueTime && (
+              {shouldShowTime && (
                 <span className="flex items-center">
                   <Clock className="h-3 w-3 mx-1" />
                   {dueTime}
