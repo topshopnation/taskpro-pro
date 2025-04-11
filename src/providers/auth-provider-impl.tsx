@@ -54,32 +54,44 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      console.log("Initial session check:", existingSession ? "session exists" : "no session");
-      
-      if (existingSession?.user) {
-        setSession(existingSession);
-        fetchUserProfile(existingSession.user.id).then(profile => {
-          setUser({
-            id: existingSession.user.id,
-            email: existingSession.user.email,
-            firstName: profile?.first_name,
-            lastName: profile?.last_name,
-            avatarUrl: profile?.avatar_url || existingSession.user.user_metadata?.avatar_url,
-          });
-        }).catch(error => {
-          console.error("Failed to fetch profile:", error);
-          setUser({
-            id: existingSession.user.id,
-            email: existingSession.user.email,
-          });
-        }).finally(() => {
+    const initializeAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
           setIsLoading(false);
-        });
-      } else {
+          return;
+        }
+
+        if (data?.session) {
+          setSession(data.session);
+          try {
+            const profile = await fetchUserProfile(data.session.user.id);
+            setUser({
+              id: data.session.user.id,
+              email: data.session.user.email,
+              firstName: profile?.first_name,
+              lastName: profile?.last_name,
+              avatarUrl: profile?.avatar_url || data.session.user.user_metadata?.avatar_url,
+            });
+          } catch (error) {
+            console.error("Failed to fetch profile:", error);
+            setUser({
+              id: data.session.user.id,
+              email: data.session.user.email,
+            });
+          }
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing auth:", error);
         setIsLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
@@ -171,10 +183,23 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("Signing out, current session:", session ? "exists" : "null");
+      if (!session) {
+        console.warn("No session found during sign out, proceeding anyway");
+      }
+
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
+      
+      setUser(null);
+      setSession(null);
       
       toast.success("Signed out successfully");
+      navigate('/auth');
     } catch (error: any) {
       console.error('Error signing out:', error);
       toast.error("Failed to sign out", { description: error.message });

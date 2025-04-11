@@ -21,8 +21,9 @@ export default function SignOutCard() {
         title: "Signed out successfully",
         description: "You have been signed out of your account."
       });
-      // Navigate is handled in the signOut function in useAuthActions
+      // Navigate will be handled by the auth state change in the provider
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast({
         title: "Error signing out",
         description: error.message || "Something went wrong. Please try again.",
