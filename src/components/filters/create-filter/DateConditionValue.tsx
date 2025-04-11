@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
 
 interface DateConditionValueProps {
   conditionValue: string;
@@ -21,6 +20,19 @@ export function DateConditionValue({
   selectedDate,
   handleDateSelect
 }: DateConditionValueProps) {
+  // Function to format date to required string format
+  const formatDateToValue = (date: Date): string => {
+    return format(date, "yyyy-MM-dd");
+  };
+
+  // Handle date selection and update condition value
+  const handleCalendarSelect = (date: Date | undefined) => {
+    handleDateSelect(date);
+    if (date) {
+      setConditionValue(formatDateToValue(date));
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <Select value={conditionValue} onValueChange={setConditionValue}>
@@ -60,7 +72,7 @@ export function DateConditionValue({
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={handleDateSelect}
+              onSelect={handleCalendarSelect}
               initialFocus
               className="p-3 pointer-events-auto"
             />

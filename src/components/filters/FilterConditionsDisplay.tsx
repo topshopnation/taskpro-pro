@@ -1,6 +1,7 @@
 
 import { CalendarIcon, Calendar, Star, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTaskProjects } from "@/components/tasks/useTaskProjects";
 
 interface FilterCondition {
   type: string;
@@ -17,6 +18,9 @@ export function FilterConditionsDisplay({
   conditions = [],
   logic = "and"
 }: FilterConditionsDisplayProps) {
+  // Get projects to display names instead of IDs
+  const { projects } = useTaskProjects();
+  
   // Handle empty conditions
   if (!conditions) {
     return <div className="text-muted-foreground text-sm">No conditions</div>;
@@ -49,6 +53,16 @@ export function FilterConditionsDisplay({
     }
     
     if (condition.type === "project") {
+      // Find project name from ID
+      if (condition.value === "inbox") {
+        return { icon: <Tag className="h-3 w-3 mr-1" />, label: "Project: Inbox" };
+      }
+      
+      const project = projects?.find(p => p.id === condition.value);
+      if (project) {
+        return { icon: <Tag className="h-3 w-3 mr-1" />, label: `Project: ${project.name}` };
+      }
+      
       return { icon: <Tag className="h-3 w-3 mr-1" />, label: `Project: ${condition.value}` };
     }
     

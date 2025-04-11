@@ -43,6 +43,14 @@ export function AddConditionForm({
     setConditionValue("");
   };
 
+  // Function to format date to required string format and update condition value
+  const handleCalendarSelect = (date: Date | undefined) => {
+    handleDateSelect(date);
+    if (date) {
+      setConditionValue(format(date, "yyyy-MM-dd"));
+    }
+  };
+
   return (
     <div className="border-t pt-4">
       <Label>Add New Condition</Label>
@@ -113,11 +121,17 @@ export function AddConditionForm({
                       {selectedDate ? format(selectedDate, "PPP") : "Select date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent 
+                    className="w-auto p-0" 
+                    align="start"
+                    avoidCollisions={true}
+                    side="bottom"
+                    sideOffset={5}
+                  >
                     <Calendar
                       mode="single"
                       selected={selectedDate}
-                      onSelect={handleDateSelect}
+                      onSelect={handleCalendarSelect}
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
