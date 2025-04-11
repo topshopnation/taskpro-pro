@@ -1,5 +1,4 @@
-
-import { useSubscription } from "@/contexts/subscription-context";
+import { useSubscription } from "@/contexts/subscription";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Clock, AlertTriangle, X } from "lucide-react";

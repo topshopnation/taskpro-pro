@@ -1,5 +1,4 @@
-
-import { useSubscription } from "@/contexts/subscription-context";
+import { useSubscription } from "@/contexts/subscription";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";

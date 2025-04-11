@@ -1,5 +1,4 @@
-
-import { useSubscription } from "@/contexts/subscription-context";
+import { useSubscription } from "@/contexts/subscription";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";

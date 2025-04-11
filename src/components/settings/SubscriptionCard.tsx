@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, BadgeCheck, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useSubscription } from "@/contexts/subscription-context";
+import { useSubscription } from "@/contexts/subscription";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { format } from "date-fns";

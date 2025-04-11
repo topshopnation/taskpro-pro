@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { useSubscription } from "@/contexts/subscription-context";
+import { useSubscription } from "@/contexts/subscription";
 import { useLocation } from "react-router-dom";
 
 // List of routes that should not be subscription restricted
