@@ -10,6 +10,7 @@ import { SidebarFavorites } from "./SidebarFavorites";
 import { SidebarNavigation } from "./SidebarNavigation";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarFilters } from "./SidebarFilters";
+import { TaskProLogo } from "@/components/ui/taskpro-logo";
 
 interface FavoriteItem {
   id: string;
@@ -56,7 +57,12 @@ export function SidebarContent({
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-6">
-        {/* Add Task Button at the top */}
+        {/* TaskPro Logo at the top */}
+        <div className="mb-4 hidden md:block">
+          <TaskProLogo size="medium" className="mx-auto" />
+        </div>
+        
+        {/* Add Task Button */}
         <div className="mb-4">
           <Button 
             className="w-full flex items-center justify-center gap-2"
