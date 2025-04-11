@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ export function TaskItemConfirmDelete({
   taskCompleted,
   onOpenChange,
   onDelete,
+  open,
   // Use the isUpdating prop if provided, otherwise default to internal state
   isUpdating: externalIsUpdating,
   onConfirm,
@@ -96,50 +97,52 @@ export function TaskItemConfirmDelete({
   };
 
   return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete Task</AlertDialogTitle>
-        <AlertDialogDescription>
-          Are you sure you want to delete "{taskTitle}"? This action cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-        <div className="flex gap-2 w-full sm:w-auto">
-          <AlertDialogCancel className="w-full sm:w-auto" asChild>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-          </AlertDialogCancel>
+    <AlertDialog open={open}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Task</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{taskTitle}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <AlertDialogCancel className="w-full sm:w-auto" asChild>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+            </AlertDialogCancel>
+            
+            {!taskCompleted && (
+              <Button
+                variant="secondary"
+                className="w-full sm:w-auto"
+                onClick={handleMarkComplete}
+                disabled={isCurrentlyDeleting}
+              >
+                {isCurrentlyDeleting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Mark Complete
+              </Button>
+            )}
+          </div>
           
-          {!taskCompleted && (
+          <AlertDialogAction asChild>
             <Button
-              variant="secondary"
+              variant="destructive"
               className="w-full sm:w-auto"
-              onClick={handleMarkComplete}
+              onClick={handleDelete}
               disabled={isCurrentlyDeleting}
             >
               {isCurrentlyDeleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              Mark Complete
+              Delete
             </Button>
-          )}
-        </div>
-        
-        <AlertDialogAction asChild>
-          <Button
-            variant="destructive"
-            className="w-full sm:w-auto"
-            onClick={handleDelete}
-            disabled={isCurrentlyDeleting}
-          >
-            {isCurrentlyDeleting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Delete
-          </Button>
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

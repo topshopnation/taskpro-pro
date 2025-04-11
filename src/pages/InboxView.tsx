@@ -1,7 +1,7 @@
 
 import { useState } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/hooks/use-auth-context"
 import { useInboxTasks } from "@/hooks/useInboxTasks"
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { Inbox } from "lucide-react"

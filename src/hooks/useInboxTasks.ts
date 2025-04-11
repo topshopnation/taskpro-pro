@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/hooks/use-auth-context"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"

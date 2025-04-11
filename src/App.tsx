@@ -17,7 +17,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/providers/auth-provider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import CompletedTasks from "./pages/CompletedTasks";
