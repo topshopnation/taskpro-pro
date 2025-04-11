@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const signInWithProvider = async (provider: Provider) => {
+  const signInWithProvider = async (provider: Provider): Promise<void> => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -145,9 +145,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) throw error;
-      return { error: null };
     } catch (error) {
-      return { error };
+      console.error('Error signing in with provider:', error);
+      throw error;
     }
   };
   
