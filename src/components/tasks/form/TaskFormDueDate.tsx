@@ -80,7 +80,14 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2" align="start" side="bottom" sideOffset={5}>
+        <PopoverContent 
+          className="w-auto p-2" 
+          align="start" 
+          side="bottom" 
+          sideOffset={5}
+          alignOffset={0}
+          avoidCollisions={true}
+        >
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-2">
               <Input
@@ -88,7 +95,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
                 placeholder="Add time"
                 value={timeInput}
                 onChange={handleTimeInputChange}
-                className="h-8 py-1"
+                className="h-7 py-1"
               />
             </div>
             

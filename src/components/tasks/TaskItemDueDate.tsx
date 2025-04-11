@@ -98,6 +98,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
         side={isMobile ? "bottom" : "right"}
         alignOffset={isMobile ? -40 : 0}
         sideOffset={5}
+        avoidCollisions={true}
       >
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-2">
@@ -106,7 +107,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               placeholder="Add time"
               value={timeInput}
               onChange={handleTimeInputChange}
-              className="h-8 py-1"
+              className="h-7 py-1"
             />
           </div>
           

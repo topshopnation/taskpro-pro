@@ -50,7 +50,13 @@ export function DateConditionValue({
               {selectedDate ? format(selectedDate, "PPP") : "Select date"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent 
+            className="w-auto p-0" 
+            align="start"
+            avoidCollisions={true}
+            side="bottom"
+            sideOffset={5}
+          >
             <Calendar
               mode="single"
               selected={selectedDate}
