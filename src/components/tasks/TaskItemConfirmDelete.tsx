@@ -13,6 +13,12 @@ interface TaskItemConfirmDeleteProps {
   taskCompleted: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete: (taskId: string) => Promise<boolean>;
+  // Adding the open prop that's being passed from TaskItem
+  open?: boolean;
+  // Adding an alias for onDelete named onConfirm to maintain compatibility
+  onConfirm?: () => Promise<void>;
+  // Adding the isUpdating prop
+  isUpdating?: boolean;
 }
 
 export function TaskItemConfirmDelete({
@@ -21,14 +27,27 @@ export function TaskItemConfirmDelete({
   taskCompleted,
   onOpenChange,
   onDelete,
+  // Use the isUpdating prop if provided, otherwise default to internal state
+  isUpdating: externalIsUpdating,
+  onConfirm,
 }: TaskItemConfirmDeleteProps) {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const { completeTask } = useTaskOperations();
+  
+  // Use the external isUpdating prop if provided, otherwise use the internal state
+  const isCurrentlyDeleting = externalIsUpdating !== undefined ? externalIsUpdating : isDeleting;
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await onDelete(taskId);
+      
+      // If onConfirm is provided, use it, otherwise use onDelete
+      if (onConfirm) {
+        await onConfirm();
+      } else {
+        await onDelete(taskId);
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -97,9 +116,9 @@ export function TaskItemConfirmDelete({
               variant="secondary"
               className="w-full sm:w-auto"
               onClick={handleMarkComplete}
-              disabled={isDeleting}
+              disabled={isCurrentlyDeleting}
             >
-              {isDeleting ? (
+              {isCurrentlyDeleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Mark Complete
@@ -112,9 +131,9 @@ export function TaskItemConfirmDelete({
             variant="destructive"
             className="w-full sm:w-auto"
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isCurrentlyDeleting}
           >
-            {isDeleting ? (
+            {isCurrentlyDeleting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
             Delete
