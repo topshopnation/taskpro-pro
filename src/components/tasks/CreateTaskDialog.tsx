@@ -50,14 +50,13 @@ export function CreateTaskDialog({ open, onOpenChange, defaultProjectId }: Creat
     setIsLoading(true)
 
     try {
-      // First, insert the task
+      // First, insert the task - only use due_date (the time is already part of the Date object)
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
           title: formValues.title,
           notes: formValues.notes,
           due_date: formValues.dueDate ? formValues.dueDate.toISOString() : null,
-          due_time: formValues.dueTime || null,
           priority: parseInt(formValues.priority),
           project_id: formValues.project === "inbox" ? null : formValues.project,
           completed: false,

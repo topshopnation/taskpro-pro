@@ -97,7 +97,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     setIsLoading(true);
 
     try {
-      // Update task
+      // Update task - only use due_date (the time is already part of the Date object)
       const { error: taskError } = await supabase
         .from('tasks')
         .update({
