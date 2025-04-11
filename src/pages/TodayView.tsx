@@ -8,6 +8,8 @@ import { TodayViewHeader } from "@/components/today/TodayViewHeader"
 import { EmptyTodayState } from "@/components/today/EmptyTodayState"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/todayViewUtils"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 export default function TodayView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -32,15 +34,26 @@ export default function TodayView() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <TodayViewHeader />
           
-          <TodaySortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            onAddTask={() => setIsCreateTaskOpen(true)}
-          />
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
+            
+            <TodaySortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+            />
+          </div>
         </div>
 
         <div className="space-y-4">

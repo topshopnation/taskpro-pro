@@ -11,6 +11,8 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
+import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -93,16 +95,26 @@ export default function ProjectView() {
             onColorChange={handleProjectColorChange}
           />
 
-          <TaskSortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            onAddTask={() => setIsCreateTaskOpen(true)}
-            hideAddTaskButton={true}
-          />
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
+            
+            <TaskSortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+            />
+          </div>
         </div>
 
         <GroupedTaskLists

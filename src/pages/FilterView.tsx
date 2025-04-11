@@ -11,6 +11,8 @@ import { TaskSortControls } from "@/components/tasks/TaskSortControls";
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { groupTasks } from "@/utils/taskSortUtils";
 import { FilterConditionsDisplay } from "@/components/filters/FilterConditionsDisplay";
+import { Plus } from "lucide-react";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 
 export default function FilterView() {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ export default function FilterView() {
   const [sortBy, setSortBy] = useState<string>("title")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
   const {
     currentFilter,
@@ -101,16 +104,27 @@ export default function FilterView() {
           </div>
           
           <div className="flex items-center justify-between mt-4">
-            <TaskSortControls
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-              hideAddTaskButton={true}
-              showProjectSort={true}
-            />
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => setIsCreateTaskOpen(true)}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Task</span>
+              </Button>
+              
+              <TaskSortControls
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                groupBy={groupBy}
+                setGroupBy={setGroupBy}
+                hideAddTaskButton={true}
+                showProjectSort={true}
+              />
+            </div>
           </div>
         </div>
 
@@ -127,7 +141,7 @@ export default function FilterView() {
               isLoadingTasks={isLoading}
               onComplete={handleComplete}
               onDelete={handleDelete}
-              onAddTask={() => {}}
+              onAddTask={() => setIsCreateTaskOpen(true)}
               onFavoriteToggle={handleFavoriteToggle}
               hideTitle={!groupBy}
             />
@@ -147,6 +161,11 @@ export default function FilterView() {
           onFilterConditionsChange={setFilterConditions}
           onRename={handleFilterRename}
           onDelete={handleFilterDelete}
+        />
+        
+        <CreateTaskDialog
+          open={isCreateTaskOpen}
+          onOpenChange={setIsCreateTaskOpen}
         />
       </div>
     </AppLayout>

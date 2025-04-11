@@ -32,6 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FilterDialogsProps {
   isEditDialogOpen: boolean;
@@ -163,8 +167,9 @@ export function FilterDialogs({
   const getConditionValueLabel = (type: string, value: string) => {
     if (type === "due") {
       if (value === "today") return "Today";
+      if (value === "tomorrow") return "Tomorrow";
       if (value === "this_week") return "This Week";
-      if (value === "future") return "In the Future";
+      if (value === "next_week") return "Next Week";
     }
     
     if (type === "priority") {
@@ -191,7 +196,7 @@ export function FilterDialogs({
             <TabsContent value="basics" className="space-y-4 py-4">
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <FormLabel>Filter Name</FormLabel>
+                  <Label htmlFor="filter-name">Filter Name</Label>
                   <Input
                     id="filter-name"
                     value={filterName}
@@ -203,7 +208,7 @@ export function FilterDialogs({
                 
                 {onFilterColorChange && (
                   <div>
-                    <FormLabel>Filter Color</FormLabel>
+                    <Label>Filter Color</Label>
                     <IconPicker 
                       colors={filterColors} 
                       onChange={onFilterColorChange} 
@@ -217,44 +222,46 @@ export function FilterDialogs({
             <TabsContent value="conditions" className="space-y-4 py-4">
               <div className="space-y-4">
                 <div>
-                  <FormLabel>Filter Logic</FormLabel>
-                  <div className="flex space-x-2 mt-1">
-                    <Button
-                      variant={filterConditions.logic === "and" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleLogicChange("and")}
-                    >
-                      Match ALL conditions (AND)
-                    </Button>
-                    <Button
-                      variant={filterConditions.logic === "or" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleLogicChange("or")}
-                    >
-                      Match ANY condition (OR)
-                    </Button>
-                  </div>
+                  <Label>Filter Logic</Label>
+                  <RadioGroup 
+                    value={filterConditions.logic || "and"} 
+                    onValueChange={handleLogicChange}
+                    className="flex space-x-4 mt-1"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="and" id="logic-and" />
+                      <Label htmlFor="logic-and">Match ALL conditions (AND)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="or" id="logic-or" />
+                      <Label htmlFor="logic-or">Match ANY condition (OR)</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 
                 {filterConditions.items && filterConditions.items.length > 0 ? (
                   <div className="space-y-2">
-                    <FormLabel>Current Conditions</FormLabel>
-                    <div className="space-y-2 border rounded-md p-3">
+                    <Label>Current Conditions</Label>
+                    <div className="flex flex-wrap gap-2">
                       {filterConditions.items.map((condition: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center">
-                          <div>
-                            <span className="font-medium">{getConditionTypeLabel(condition.type)}</span>
-                            <span className="text-muted-foreground mx-1">{condition.operator || "equals"}</span>
-                            <span>{getConditionValueLabel(condition.type, condition.value)}</span>
-                          </div>
+                        <Badge 
+                          key={index}
+                          variant="secondary"
+                          className="flex items-center gap-1 px-2 py-1"
+                        >
+                          {getConditionTypeLabel(condition.type)}{' '}
+                          {condition.operator === "not_equals" ? "is not" : "is"}{' '}
+                          {getConditionValueLabel(condition.type, condition.value)}
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-4 w-4 p-0 ml-1"
                             onClick={() => handleRemoveCondition(index)}
                           >
-                            Remove
+                            <X className="h-3 w-3" />
+                            <span className="sr-only">Remove</span>
                           </Button>
-                        </div>
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -263,77 +270,117 @@ export function FilterDialogs({
                 )}
                 
                 <div className="border-t pt-4">
-                  <FormLabel>Add New Condition</FormLabel>
+                  <Label>Add New Condition</Label>
                   <Form {...form}>
                     <div className="grid gap-4 py-2">
-                      <FormField
-                        control={form.control}
-                        name="type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Condition Type</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="due">Due Date</SelectItem>
-                                <SelectItem value="priority">Priority</SelectItem>
-                                <SelectItem value="project">Project</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="type"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Condition Type</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="due">Due Date</SelectItem>
+                                  <SelectItem value="priority">Priority</SelectItem>
+                                  <SelectItem value="project">Project</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="operator"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Operator</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select operator" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="equals">is</SelectItem>
+                                  <SelectItem value="not_equals">is not</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <FormField
                         control={form.control}
                         name="value"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Condition Value</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select value" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {form.watch("type") === "due" && (
-                                  <>
-                                    <SelectItem value="today">Today</SelectItem>
-                                    <SelectItem value="this_week">This Week</SelectItem>
-                                  </>
-                                )}
-                                
-                                {form.watch("type") === "priority" && (
-                                  <>
-                                    <SelectItem value="1">Priority 1</SelectItem>
-                                    <SelectItem value="2">Priority 2</SelectItem>
-                                    <SelectItem value="3">Priority 3</SelectItem>
-                                    <SelectItem value="4">Priority 4</SelectItem>
-                                  </>
-                                )}
-                                
-                                {form.watch("type") === "project" && (
-                                  <SelectItem value="inbox">Inbox</SelectItem>
-                                  // Ideally would list all user projects here
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const type = form.watch("type");
+                          return (
+                            <FormItem>
+                              <FormLabel>Condition Value</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select value" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {type === "due" && (
+                                    <>
+                                      <SelectItem value="today">Today</SelectItem>
+                                      <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                                      <SelectItem value="this_week">This Week</SelectItem>
+                                      <SelectItem value="next_week">Next Week</SelectItem>
+                                    </>
+                                  )}
+                                  
+                                  {type === "priority" && (
+                                    <>
+                                      <SelectItem value="1">Priority 1</SelectItem>
+                                      <SelectItem value="2">Priority 2</SelectItem>
+                                      <SelectItem value="3">Priority 3</SelectItem>
+                                      <SelectItem value="4">Priority 4</SelectItem>
+                                    </>
+                                  )}
+                                  
+                                  {type === "project" && (
+                                    <>
+                                      <SelectItem value="inbox">Inbox</SelectItem>
+                                      <SelectItem value="work">Work</SelectItem>
+                                      <SelectItem value="personal">Personal</SelectItem>
+                                    </>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          );
+                        }}
                       />
                       
-                      <Button type="button" onClick={handleAddCondition}>
+                      <Button 
+                        type="button" 
+                        onClick={handleAddCondition}
+                        className="w-full mt-2"
+                        variant="outline"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Condition
                       </Button>
                     </div>

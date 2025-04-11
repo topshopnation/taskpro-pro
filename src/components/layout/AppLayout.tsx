@@ -16,7 +16,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
   }, [location.pathname]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider hideToggleOnDesktop={true}>
       <div className="flex min-h-screen flex-col w-full">
         <AppHeader />
         <div className="flex flex-1 w-full">
