@@ -20,8 +20,21 @@ interface TaskItemDueDateProps {
 export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemDueDateProps) {
   const isOverdue = dueDate && new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0))
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [timeInput, setTimeInput] = useState<string>(dueDate ? format(dueDate, "HH:mm") : "")
+  const [timeInput, setTimeInput] = useState<string>("")
   const isMobile = useMediaQuery("(max-width: 768px)")
+  
+  // Initialize timeInput when dueDate changes, but only if hours/minutes are not zero
+  useEffect(() => {
+    if (dueDate) {
+      if (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0) {
+        setTimeInput(format(dueDate, "HH:mm"));
+      } else {
+        setTimeInput("");
+      }
+    } else {
+      setTimeInput("");
+    }
+  }, [dueDate]);
   
   // Function to add time to a date
   const addTimeToDate = (date: Date, timeStr: string) => {
@@ -44,22 +57,36 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       const dateWithTime = addTimeToDate(date, timeInput);
       onDateChange(dateWithTime);
     } else {
-      onDateChange(date);
+      // Set time to beginning of day (midnight) when no time is specified
+      const dateWithoutTime = new Date(date);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onDateChange(dateWithoutTime);
     }
   };
 
   // Handle setting time for a date
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTimeInput(e.target.value);
+    const newTimeInput = e.target.value;
+    setTimeInput(newTimeInput);
     
     // If we already have a date, update it with the new time
-    if (dueDate && e.target.value) {
-      const dateWithTime = addTimeToDate(dueDate, e.target.value);
+    if (dueDate && newTimeInput) {
+      const dateWithTime = addTimeToDate(dueDate, newTimeInput);
       onDateChange(dateWithTime);
+    } else if (dueDate && !newTimeInput) {
+      // If time input is cleared, reset to beginning of day
+      const dateWithoutTime = new Date(dueDate);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onDateChange(dateWithoutTime);
     }
   };
 
   const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "No due date", day: "" };
+  
+  // Format time string for display, only if hours or minutes are not zero
+  const timeString = dueDate && (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0) 
+    ? format(dueDate, "HH:mm") 
+    : "";
   
   return (
     <Popover>
@@ -85,8 +112,8 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
         <TooltipContent side="bottom">
           {dueDate 
             ? isOverdue 
-              ? `Overdue: ${format(dueDate, "MMM d, yyyy")}`
-              : `Due: ${dateLabel.label} ${dateLabel.day}`
+              ? `Overdue: ${format(dueDate, "MMM d, yyyy")}${timeString ? ` at ${timeString}` : ""}`
+              : `Due: ${dateLabel.label} ${dateLabel.day}${timeString ? ` at ${timeString}` : ""}`
             : "Set due date"
           }
         </TooltipContent>
@@ -119,7 +146,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
             onMonthChange={setCurrentMonth}
             showQuickOptions={true}
             onQuickOptionSelect={handleDateTimeSelection}
-            className="rounded-md border shadow-sm bg-background"
+            className="rounded-md border shadow-sm bg-background pointer-events-auto"
           />
         </div>
       </PopoverContent>

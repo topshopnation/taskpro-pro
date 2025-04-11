@@ -2,7 +2,7 @@
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -16,7 +16,21 @@ interface TaskFormDueDateProps {
 }
 
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
-  const [timeInput, setTimeInput] = useState<string>(dueDate ? format(dueDate, "HH:mm") : "");
+  const [timeInput, setTimeInput] = useState<string>("");
+  
+  // Initialize timeInput when dueDate changes, but only if it has hours/minutes set
+  useEffect(() => {
+    if (dueDate) {
+      // Only set time input if the hours or minutes are not zero (indicating time was set)
+      if (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0) {
+        setTimeInput(format(dueDate, "HH:mm"));
+      } else {
+        setTimeInput("");
+      }
+    } else {
+      setTimeInput("");
+    }
+  }, [dueDate]);
   
   // Function to add time to a date
   const addTimeToDate = (date: Date, timeStr: string) => {
@@ -39,18 +53,27 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
       const dateWithTime = addTimeToDate(date, timeInput);
       onChange(dateWithTime);
     } else {
-      onChange(date);
+      // Set time to beginning of day (midnight) when no time is specified
+      const dateWithoutTime = new Date(date);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onChange(dateWithoutTime);
     }
   };
 
   // Handle setting time for a date
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTimeInput(e.target.value);
+    const newTimeInput = e.target.value;
+    setTimeInput(newTimeInput);
     
     // If we already have a date, update it with the new time
-    if (dueDate && e.target.value) {
-      const dateWithTime = addTimeToDate(dueDate, e.target.value);
+    if (dueDate && newTimeInput) {
+      const dateWithTime = addTimeToDate(dueDate, newTimeInput);
       onChange(dateWithTime);
+    } else if (dueDate && !newTimeInput) {
+      // If time input is cleared, reset to beginning of day
+      const dateWithoutTime = new Date(dueDate);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onChange(dateWithoutTime);
     }
   };
 
@@ -74,6 +97,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
               <span>
                 {dateLabel.label}{' '}
                 <span className="text-muted-foreground">{dateLabel.day}</span>
+                {timeInput && <span className="ml-1 text-muted-foreground">at {timeInput}</span>}
               </span>
             ) : (
               <span>Pick a date</span>

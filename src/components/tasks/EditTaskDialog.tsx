@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { TaskFormContent } from "@/components/tasks/TaskFormContent";
 import { TaskFormValues } from "@/components/tasks/taskTypes";
+import { queryClient } from "@/lib/react-query";
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -122,6 +123,21 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           .insert(taskTagRelations);
 
         if (tagRelationError) throw tagRelationError;
+      }
+
+      // Invalidate queries to refresh data across the app
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+      
+      // Specifically for the Filter page, invalidate filtered task queries
+      if (window.location.pathname.includes('/filters/')) {
+        const filterId = window.location.pathname.split('/')[2];
+        if (filterId) {
+          queryClient.invalidateQueries({ queryKey: ['filter', filterId] });
+        }
       }
 
       toast.success("Task updated successfully");
