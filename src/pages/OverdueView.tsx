@@ -11,7 +11,7 @@ import { useOverdueTaskOperations } from "@/hooks/useOverdueTaskOperations";
 export default function OverdueView() {
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const { user } = useAuth();
-  const { tasks, isLoading, refetch } = useOverdueTasks(user?.id);
+  const { data: tasks = [], isLoading, refetch } = useOverdueTasks(user?.id);
   const { handleComplete, handleDelete, handleFavoriteToggle } = useOverdueTaskOperations();
 
   const handleRescheduleClick = () => {
