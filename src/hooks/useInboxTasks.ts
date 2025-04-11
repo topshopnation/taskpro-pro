@@ -46,7 +46,7 @@ export function useInboxTasks() {
   }
   
   // Use React Query to fetch tasks
-  const { data: inboxTasks, isLoading } = useQuery({
+  const { data: inboxTasks, isLoading, refetch } = useQuery({
     queryKey: ['inboxTasks', user?.id],
     queryFn: fetchTasks,
     enabled: !!user
@@ -54,8 +54,8 @@ export function useInboxTasks() {
   
   // Set up realtime subscription using the shared hook
   useTaskRealtime(user, async () => {
-    const updatedTasks = await fetchTasks()
-    setTasks(updatedTasks)
+    // Directly refetch data from the database to ensure we get updated data
+    refetch();
   })
   
   // Update local state when data is fetched
@@ -76,6 +76,8 @@ export function useInboxTasks() {
           task.id === taskId ? { ...task, completed } : task
         )
       )
+      
+      // Toast with undo option is shown in the utility function
     } catch (error) {
       // Error is handled in the taskOperations utility
     }

@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -10,6 +11,7 @@ import { toast } from "sonner"
 import { useTaskData } from "./hooks/useTaskData"
 import { useTaskOperations } from "@/hooks/useTaskOperations"
 import { TaskItemDueDate } from "./TaskItemDueDate"
+import { supabase } from "@/integrations/supabase/client"
 
 export interface Task {
   id: string
@@ -57,7 +59,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
     setIsUpdating(true)
     try {
-      const { error } = await fetch("tasks")
+      const { error } = await supabase
         .from('tasks')
         .update({ priority: newPriority })
         .eq('id', task.id)
@@ -77,7 +79,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
     try {
       const formattedDate = date ? date.toISOString() : null
       
-      const { error } = await fetch("tasks")
+      const { error } = await supabase
         .from('tasks')
         .update({ due_date: formattedDate })
         .eq('id', task.id)
@@ -95,7 +97,7 @@ export function TaskItem({ task, onComplete, onDelete, onFavoriteToggle }: TaskI
   const handleDelete = async () => {
     setIsUpdating(true)
     try {
-      const { error } = await fetch("tasks")
+      const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', task.id)

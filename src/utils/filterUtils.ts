@@ -1,7 +1,7 @@
 
 import { Task } from "@/components/tasks/TaskItem";
 import { CustomFilter } from "@/types/filterTypes";
-import { format, addDays, startOfWeek, endOfWeek, addWeeks, isWithinInterval, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, addWeeks, isWithinInterval, isSameDay, parse, isValid } from "date-fns";
 
 export const isStandardFilter = (filterId: string | undefined): boolean => {
   if (!filterId) return false;
@@ -56,7 +56,10 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
           return condition.value === "no-date" ? true : false;
         }
         
-        const taskDate = new Date(task.dueDate);
+        // Make sure task.dueDate is a Date object
+        const taskDate = task.dueDate instanceof Date 
+          ? task.dueDate 
+          : new Date(task.dueDate);
         
         if (condition.value === "today") {
           matches = isSameDay(taskDate, today);
@@ -75,13 +78,28 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
           const nextWeekEnd = addWeeks(endOfWeek(today, { weekStartsOn: 1 }), 1);
           matches = isWithinInterval(taskDate, { start: nextWeekStart, end: nextWeekEnd });
         }
+        else if (condition.value.includes('-')) {
+          // Handle custom date in format yyyy-MM-dd
+          try {
+            const customDate = parse(condition.value, 'yyyy-MM-dd', new Date());
+            if (isValid(customDate)) {
+              matches = isSameDay(taskDate, customDate);
+            }
+          } catch (error) {
+            console.error("Error parsing custom date:", error);
+          }
+        }
       }
       else if (condition.type === "priority") {
         const priorityValue = parseInt(condition.value, 10);
         matches = task.priority === priorityValue;
       }
       else if (condition.type === "project") {
-        matches = task.projectId === condition.value;
+        if (condition.value === "inbox") {
+          matches = !task.projectId || task.projectId === null;
+        } else {
+          matches = task.projectId === condition.value;
+        }
       }
       
       // Return the result, applying the operator logic (equals or not_equals)

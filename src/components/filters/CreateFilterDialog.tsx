@@ -1,17 +1,22 @@
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "sonner"
-import { Plus, X } from "lucide-react"
+import { Plus, X, CalendarIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 
 interface Condition {
   id: string
@@ -36,6 +41,10 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
   const [conditionType, setConditionType] = useState("due")
   const [conditionValue, setConditionValue] = useState("")
   const [conditionOperator, setConditionOperator] = useState("equals")
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  
+  // Fetch projects for project selection
+  const { projects } = useTaskProjects()
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -86,6 +95,41 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     return true
   }
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      // Convert date to a format our filter system can understand
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const nextWeekStart = new Date(today);
+      nextWeekStart.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7);
+      
+      const thisWeekStart = new Date(today);
+      thisWeekStart.setDate(today.getDate() - today.getDay());
+      const thisWeekEnd = new Date(thisWeekStart);
+      thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
+      
+      // Determine which standard date period to use
+      if (date.getTime() === today.getTime()) {
+        setConditionValue("today");
+      } else if (date.getTime() === tomorrow.getTime()) {
+        setConditionValue("tomorrow");
+      } else if (date >= thisWeekStart && date <= thisWeekEnd) {
+        setConditionValue("this_week");
+      } else if (date >= nextWeekStart && date < new Date(nextWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+        setConditionValue("next_week");
+      } else {
+        // For dates that don't fit standard periods, use the date directly
+        // This requires custom handling in the filter logic
+        setConditionValue(format(date, "yyyy-MM-dd"));
+      }
+    }
+  };
+
   const addCondition = () => {
     if (!conditionValue) {
       toast.error("Condition value is required")
@@ -104,6 +148,7 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     setConditionType("due")
     setConditionValue("")
     setConditionOperator("equals")
+    setSelectedDate(undefined)
   }
 
   const removeCondition = (id: string) => {
@@ -182,6 +227,7 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     setConditionValue("")
     setConditionOperator("equals")
     setIsNameError(false)
+    setSelectedDate(undefined)
   }
 
   const getConditionLabel = (condition: Condition) => {
@@ -217,16 +263,37 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
     let valueLabel = condition.value
     if (condition.type in valueLabels && condition.value in valueLabels[condition.type]) {
       valueLabel = valueLabels[condition.type][condition.value]
+    } else if (condition.type === "project" && projects) {
+      const project = projects.find(p => p.id === condition.value)
+      if (project) {
+        valueLabel = project.name
+      } else if (condition.value === "inbox") {
+        valueLabel = "Inbox"
+      }
     }
 
     return `${typeLabel} ${operatorLabel} ${valueLabel}`
   }
+
+  // Helper function to get date placeholder based on condition value
+  const getDatePlaceholder = () => {
+    switch (conditionValue) {
+      case "today": return "Today";
+      case "tomorrow": return "Tomorrow";
+      case "this_week": return "This Week";
+      case "next_week": return "Next Week";
+      default: return selectedDate ? format(selectedDate, "PPP") : "Select date";
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Filter</DialogTitle>
+          <DialogDescription>
+            Create a filter to easily find tasks that match specific criteria.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -279,7 +346,11 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="condition-type">Condition Type</Label>
-                <Select value={conditionType} onValueChange={setConditionType}>
+                <Select value={conditionType} onValueChange={(value) => {
+                  setConditionType(value);
+                  setConditionValue("");
+                  setSelectedDate(undefined);
+                }}>
                   <SelectTrigger id="condition-type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -307,21 +378,50 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
             <div className="grid gap-2">
               <Label htmlFor="condition-value">Value</Label>
               {conditionType === "due" ? (
-                <Select value={conditionValue} onValueChange={setConditionValue}>
-                  <SelectTrigger id="condition-value-select">
-                    <SelectValue placeholder="Select value" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                    <SelectItem value="this_week">This Week</SelectItem>
-                    <SelectItem value="next_week">Next Week</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col gap-2">
+                  <Select value={conditionValue} onValueChange={setConditionValue}>
+                    <SelectTrigger id="condition-value-select">
+                      <SelectValue placeholder="Select value" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                      <SelectItem value="this_week">This Week</SelectItem>
+                      <SelectItem value="next_week">Next Week</SelectItem>
+                      <SelectItem value="custom">Custom Date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {conditionValue === "custom" && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, "PPP") : "Select date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateSelect}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
               ) : conditionType === "priority" ? (
                 <Select value={conditionValue} onValueChange={setConditionValue}>
                   <SelectTrigger id="condition-value-select">
-                    <SelectValue placeholder="Select value" />
+                    <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">Priority 1</SelectItem>
@@ -333,12 +433,15 @@ export function CreateFilterDialog({ open, onOpenChange }: CreateFilterDialogPro
               ) : conditionType === "project" ? (
                 <Select value={conditionValue} onValueChange={setConditionValue}>
                   <SelectTrigger id="condition-value-select">
-                    <SelectValue placeholder="Select value" />
+                    <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="inbox">Inbox</SelectItem>
-                    <SelectItem value="work">Work</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
+                    {projects && projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               ) : (

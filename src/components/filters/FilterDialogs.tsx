@@ -8,6 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -34,8 +35,13 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Plus, X } from "lucide-react";
+import { Plus, X, CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useTaskProjects } from "@/components/tasks/useTaskProjects";
 
 interface FilterDialogsProps {
   isEditDialogOpen: boolean;
@@ -85,6 +91,10 @@ export function FilterDialogs({
   const [conditionType, setConditionType] = useState("due");
   const [conditionValue, setConditionValue] = useState("");
   const [conditionOperator, setConditionOperator] = useState("equals");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
+  // Fetch projects for project selection
+  const { projects } = useTaskProjects();
   
   // Initialize form for condition
   const form = useForm({
@@ -92,7 +102,7 @@ export function FilterDialogs({
     defaultValues: {
       type: "due",
       operator: "equals",
-      value: "today",
+      value: "",
     },
   });
 
@@ -102,6 +112,7 @@ export function FilterDialogs({
       setConditionType("due");
       setConditionValue("");
       setConditionOperator("equals");
+      setSelectedDate(undefined);
       form.reset({
         type: "due",
         operator: "equals",
@@ -110,7 +121,40 @@ export function FilterDialogs({
     }
   }, [isEditDialogOpen, form]);
 
-  console.log("Current filter conditions:", filterConditions);
+  // Handle date selection
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      // Convert date to a format our filter system can understand
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const nextWeekStart = new Date(today);
+      nextWeekStart.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7);
+      
+      const thisWeekStart = new Date(today);
+      thisWeekStart.setDate(today.getDate() - today.getDay());
+      const thisWeekEnd = new Date(thisWeekStart);
+      thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
+      
+      // Determine which standard date period to use
+      if (date.getTime() === today.getTime()) {
+        setConditionValue("today");
+      } else if (date.getTime() === tomorrow.getTime()) {
+        setConditionValue("tomorrow");
+      } else if (date >= thisWeekStart && date <= thisWeekEnd) {
+        setConditionValue("this_week");
+      } else if (date >= nextWeekStart && date < new Date(nextWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+        setConditionValue("next_week");
+      } else {
+        // For dates that don't fit standard periods, use the date directly
+        setConditionValue(format(date, "yyyy-MM-dd"));
+      }
+    }
+  };
 
   // Handle adding a new condition
   const handleAddCondition = () => {
@@ -145,6 +189,7 @@ export function FilterDialogs({
     setConditionType("due");
     setConditionValue("");
     setConditionOperator("equals");
+    setSelectedDate(undefined);
     form.reset({
       type: "due",
       operator: "equals",
@@ -191,6 +236,7 @@ export function FilterDialogs({
     setConditionType(type);
     // Reset value when type changes
     setConditionValue("");
+    setSelectedDate(undefined);
   };
 
   // Get condition type label
@@ -220,6 +266,15 @@ export function FilterDialogs({
       return `Priority ${value}`;
     }
     
+    if (type === "project" && projects) {
+      const project = projects.find(p => p.id === value);
+      if (project) {
+        return project.name;
+      } else if (value === "inbox") {
+        return "Inbox";
+      }
+    }
+    
     return value;
   };
 
@@ -239,6 +294,9 @@ export function FilterDialogs({
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Filter</DialogTitle>
+            <DialogDescription>
+              Modify your filter criteria to find tasks more efficiently.
+            </DialogDescription>
           </DialogHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -364,21 +422,50 @@ export function FilterDialogs({
                     <div className="grid gap-2">
                       <Label htmlFor="condition-value">Value</Label>
                       {conditionType === "due" ? (
-                        <Select value={conditionValue} onValueChange={setConditionValue}>
-                          <SelectTrigger id="condition-value-select">
-                            <SelectValue placeholder="Select value" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="today">Today</SelectItem>
-                            <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                            <SelectItem value="this_week">This Week</SelectItem>
-                            <SelectItem value="next_week">Next Week</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-col gap-2">
+                          <Select value={conditionValue} onValueChange={setConditionValue}>
+                            <SelectTrigger id="condition-value-select">
+                              <SelectValue placeholder="Select value" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="today">Today</SelectItem>
+                              <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                              <SelectItem value="this_week">This Week</SelectItem>
+                              <SelectItem value="next_week">Next Week</SelectItem>
+                              <SelectItem value="custom">Custom Date</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          {conditionValue === "custom" && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !selectedDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {selectedDate ? format(selectedDate, "PPP") : "Select date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={selectedDate}
+                                  onSelect={handleDateSelect}
+                                  initialFocus
+                                  className="p-3 pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
                       ) : conditionType === "priority" ? (
                         <Select value={conditionValue} onValueChange={setConditionValue}>
                           <SelectTrigger id="condition-value-select">
-                            <SelectValue placeholder="Select value" />
+                            <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="1">Priority 1</SelectItem>
@@ -390,12 +477,15 @@ export function FilterDialogs({
                       ) : conditionType === "project" ? (
                         <Select value={conditionValue} onValueChange={setConditionValue}>
                           <SelectTrigger id="condition-value-select">
-                            <SelectValue placeholder="Select value" />
+                            <SelectValue placeholder="Select project" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="inbox">Inbox</SelectItem>
-                            <SelectItem value="work">Work</SelectItem>
-                            <SelectItem value="personal">Personal</SelectItem>
+                            {projects && projects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (
@@ -428,7 +518,7 @@ export function FilterDialogs({
               Cancel
             </Button>
             <Button onClick={onRename} disabled={isUpdating}>
-              {isUpdating ? "Updating..." : "Save"}
+              {isUpdating ? "Updating..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
