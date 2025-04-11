@@ -92,7 +92,13 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
         </TooltipContent>
       </Tooltip>
       
-      <PopoverContent align="end" className="w-auto p-2" side="right">
+      <PopoverContent 
+        align="end" 
+        className="w-auto p-2" 
+        side={isMobile ? "bottom" : "right"}
+        alignOffset={isMobile ? -40 : 0}
+        sideOffset={5}
+      >
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-2">
             <Input

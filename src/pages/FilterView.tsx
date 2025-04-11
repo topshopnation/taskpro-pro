@@ -81,7 +81,7 @@ export default function FilterView() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-screen-xl mx-auto">
         <div className="space-y-2">
           <FilterHeader
             filter={currentFilter}
@@ -104,27 +104,25 @@ export default function FilterView() {
           </div>
           
           <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                onClick={() => setIsCreateTaskOpen(true)}
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Task</span>
-              </Button>
-              
-              <TaskSortControls
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                sortDirection={sortDirection}
-                setSortDirection={setSortDirection}
-                groupBy={groupBy}
-                setGroupBy={setGroupBy}
-                hideAddTaskButton={true}
-                showProjectSort={true}
-              />
-            </div>
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
+            
+            <TaskSortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+              showProjectSort={true}
+            />
           </div>
         </div>
 

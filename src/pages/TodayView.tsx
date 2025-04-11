@@ -51,7 +51,6 @@ export default function TodayView() {
               setSortDirection={setSortDirection}
               groupBy={groupBy}
               setGroupBy={setGroupBy}
-              hideAddTaskButton={true}
             />
           </div>
         </div>

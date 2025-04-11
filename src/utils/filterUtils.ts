@@ -1,6 +1,7 @@
 
 import { Task } from "@/components/tasks/TaskItem";
 import { CustomFilter } from "@/types/filterTypes";
+import { format, addDays, startOfWeek, endOfWeek, addWeeks, isWithinInterval, isSameDay } from "date-fns";
 
 export const isStandardFilter = (filterId: string | undefined): boolean => {
   if (!filterId) return false;
@@ -42,48 +43,53 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
     const results = conditions.map((condition: any) => {
       console.log("Checking condition:", condition, "for task:", task.title);
       
-      if (condition.type === "due" && condition.value === "today" && task.dueDate) {
+      // Determine if the condition should be inverted based on operator
+      const isInverted = condition.operator === "not_equals";
+      let matches = false;
+      
+      if (condition.type === "due") {
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (!task.dueDate) {
+          // Special case: if we're looking for tasks without due dates
+          return condition.value === "no-date" ? true : false;
+        }
+        
         const taskDate = new Date(task.dueDate);
-        return (
-          taskDate.getDate() === today.getDate() &&
-          taskDate.getMonth() === today.getMonth() &&
-          taskDate.getFullYear() === today.getFullYear()
-        );
+        
+        if (condition.value === "today") {
+          matches = isSameDay(taskDate, today);
+        } 
+        else if (condition.value === "tomorrow") {
+          const tomorrow = addDays(today, 1);
+          matches = isSameDay(taskDate, tomorrow);
+        }
+        else if (condition.value === "this_week") {
+          const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+          const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 }); // Sunday
+          matches = isWithinInterval(taskDate, { start: startOfThisWeek, end: endOfThisWeek });
+        }
+        else if (condition.value === "next_week") {
+          const nextWeekStart = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+          const nextWeekEnd = addWeeks(endOfWeek(today, { weekStartsOn: 1 }), 1);
+          matches = isWithinInterval(taskDate, { start: nextWeekStart, end: nextWeekEnd });
+        }
+      }
+      else if (condition.type === "priority") {
+        const priorityValue = parseInt(condition.value, 10);
+        matches = task.priority === priorityValue;
+      }
+      else if (condition.type === "project") {
+        matches = task.projectId === condition.value;
       }
       
-      if (condition.type === "due" && condition.value === "this_week" && task.dueDate) {
-        const today = new Date();
-        const taskDate = new Date(task.dueDate);
-        const dayDiff = Math.round((taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return dayDiff >= 0 && dayDiff <= 7;
-      }
-      
-      if (condition.type === "priority" && condition.value === "1") {
-        return task.priority === 1;
-      }
-      
-      if (condition.type === "priority" && condition.value === "2") {
-        return task.priority === 2;
-      }
-      
-      if (condition.type === "priority" && condition.value === "3") {
-        return task.priority === 3;
-      }
-      
-      if (condition.type === "priority" && condition.value === "4") {
-        return task.priority === 4;
-      }
-      
-      if (condition.type === "project") {
-        return task.projectId === condition.value;
-      }
-      
-      return false;
+      // Return the result, applying the operator logic (equals or not_equals)
+      return isInverted ? !matches : matches;
     });
     
     // Apply the filter logic (AND/OR)
-    if (logic === "and") {
+    if (logic.toLowerCase() === "and") {
       return results.every(Boolean);
     } else {
       return results.some(Boolean);

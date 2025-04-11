@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,6 +82,9 @@ export function FilterDialogs({
   ];
 
   const [activeTab, setActiveTab] = useState("basics");
+  const [conditionType, setConditionType] = useState("due");
+  const [conditionValue, setConditionValue] = useState("");
+  const [conditionOperator, setConditionOperator] = useState("equals");
   
   // Initialize form for condition
   const form = useForm({
@@ -93,30 +96,59 @@ export function FilterDialogs({
     },
   });
 
+  // Reset form values when dialog opens
+  useEffect(() => {
+    if (isEditDialogOpen) {
+      setConditionType("due");
+      setConditionValue("");
+      setConditionOperator("equals");
+      form.reset({
+        type: "due",
+        operator: "equals",
+        value: "",
+      });
+    }
+  }, [isEditDialogOpen, form]);
+
+  console.log("Current filter conditions:", filterConditions);
+
   // Handle adding a new condition
   const handleAddCondition = () => {
+    if (!conditionValue && !form.getValues().value) {
+      console.log("No condition value selected");
+      return;
+    }
+
     const values = form.getValues();
     const newCondition = {
-      type: values.type,
-      operator: values.operator,
-      value: values.value,
+      type: conditionType || values.type,
+      operator: conditionOperator || values.operator,
+      value: conditionValue || values.value,
     };
     
+    console.log("Adding new condition:", newCondition);
+    
     // Add to existing conditions
+    const currentItems = Array.isArray(filterConditions.items) ? filterConditions.items : [];
     const updatedConditions = {
-      items: [...(Array.isArray(filterConditions.items) ? filterConditions.items : []), newCondition],
+      items: [...currentItems, newCondition],
       logic: filterConditions.logic || "and",
     };
+    
+    console.log("Updated conditions:", updatedConditions);
     
     if (onFilterConditionsChange) {
       onFilterConditionsChange(updatedConditions);
     }
     
     // Reset form
+    setConditionType("due");
+    setConditionValue("");
+    setConditionOperator("equals");
     form.reset({
       type: "due",
       operator: "equals",
-      value: "today",
+      value: "",
     });
   };
 
@@ -132,6 +164,8 @@ export function FilterDialogs({
       items: updatedItems,
     };
     
+    console.log("After removing condition:", updatedConditions);
+    
     if (onFilterConditionsChange) {
       onFilterConditionsChange(updatedConditions);
     }
@@ -144,9 +178,19 @@ export function FilterDialogs({
       logic,
     };
     
+    console.log("Logic changed to:", logic);
+    console.log("Updated conditions:", updatedConditions);
+    
     if (onFilterConditionsChange) {
       onFilterConditionsChange(updatedConditions);
     }
+  };
+
+  // Handle condition type change
+  const handleConditionTypeChange = (type: string) => {
+    setConditionType(type);
+    // Reset value when type changes
+    setConditionValue("");
   };
 
   // Get condition type label
@@ -178,6 +222,16 @@ export function FilterDialogs({
     
     return value;
   };
+
+  // Log current state for debugging
+  console.log("Dialog state:", {
+    filterName,
+    filterColor,
+    filterConditions,
+    conditionType,
+    conditionValue,
+    conditionOperator
+  });
 
   return (
     <>
@@ -271,120 +325,99 @@ export function FilterDialogs({
                 
                 <div className="border-t pt-4">
                   <Label>Add New Condition</Label>
-                  <Form {...form}>
-                    <div className="grid gap-4 py-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Condition Type</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="due">Due Date</SelectItem>
-                                  <SelectItem value="priority">Priority</SelectItem>
-                                  <SelectItem value="project">Project</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="operator"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Operator</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select operator" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="equals">is</SelectItem>
-                                  <SelectItem value="not_equals">is not</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
+                  <div className="grid gap-4 py-2">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="condition-type">Condition Type</Label>
+                        <Select
+                          value={conditionType}
+                          onValueChange={handleConditionTypeChange}
+                        >
+                          <SelectTrigger id="condition-type">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="due">Due Date</SelectItem>
+                            <SelectItem value="priority">Priority</SelectItem>
+                            <SelectItem value="project">Project</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="value"
-                        render={({ field }) => {
-                          const type = form.watch("type");
-                          return (
-                            <FormItem>
-                              <FormLabel>Condition Value</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select value" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {type === "due" && (
-                                    <>
-                                      <SelectItem value="today">Today</SelectItem>
-                                      <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                                      <SelectItem value="this_week">This Week</SelectItem>
-                                      <SelectItem value="next_week">Next Week</SelectItem>
-                                    </>
-                                  )}
-                                  
-                                  {type === "priority" && (
-                                    <>
-                                      <SelectItem value="1">Priority 1</SelectItem>
-                                      <SelectItem value="2">Priority 2</SelectItem>
-                                      <SelectItem value="3">Priority 3</SelectItem>
-                                      <SelectItem value="4">Priority 4</SelectItem>
-                                    </>
-                                  )}
-                                  
-                                  {type === "project" && (
-                                    <>
-                                      <SelectItem value="inbox">Inbox</SelectItem>
-                                      <SelectItem value="work">Work</SelectItem>
-                                      <SelectItem value="personal">Personal</SelectItem>
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                      
-                      <Button 
-                        type="button" 
-                        onClick={handleAddCondition}
-                        className="w-full mt-2"
-                        variant="outline"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Condition
-                      </Button>
+                      <div className="grid gap-2">
+                        <Label htmlFor="condition-operator">Operator</Label>
+                        <Select
+                          value={conditionOperator}
+                          onValueChange={setConditionOperator}
+                        >
+                          <SelectTrigger id="condition-operator">
+                            <SelectValue placeholder="Select operator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="equals">is</SelectItem>
+                            <SelectItem value="not_equals">is not</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </Form>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="condition-value">Value</Label>
+                      {conditionType === "due" ? (
+                        <Select value={conditionValue} onValueChange={setConditionValue}>
+                          <SelectTrigger id="condition-value-select">
+                            <SelectValue placeholder="Select value" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="today">Today</SelectItem>
+                            <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                            <SelectItem value="this_week">This Week</SelectItem>
+                            <SelectItem value="next_week">Next Week</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : conditionType === "priority" ? (
+                        <Select value={conditionValue} onValueChange={setConditionValue}>
+                          <SelectTrigger id="condition-value-select">
+                            <SelectValue placeholder="Select value" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Priority 1</SelectItem>
+                            <SelectItem value="2">Priority 2</SelectItem>
+                            <SelectItem value="3">Priority 3</SelectItem>
+                            <SelectItem value="4">Priority 4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : conditionType === "project" ? (
+                        <Select value={conditionValue} onValueChange={setConditionValue}>
+                          <SelectTrigger id="condition-value-select">
+                            <SelectValue placeholder="Select value" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inbox">Inbox</SelectItem>
+                            <SelectItem value="work">Work</SelectItem>
+                            <SelectItem value="personal">Personal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id="condition-value-input"
+                          value={conditionValue}
+                          onChange={(e) => setConditionValue(e.target.value)}
+                          placeholder="Enter value"
+                        />
+                      )}
+                    </div>
+                    
+                    <Button 
+                      type="button" 
+                      onClick={handleAddCondition}
+                      className="w-full mt-2"
+                      variant="outline"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Condition
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -394,7 +427,9 @@ export function FilterDialogs({
             <Button variant="outline" onClick={() => onEditDialogChange(false)}>
               Cancel
             </Button>
-            <Button onClick={onRename}>{isUpdating ? "Updating..." : "Save"}</Button>
+            <Button onClick={onRename} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
