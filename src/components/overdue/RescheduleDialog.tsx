@@ -1,6 +1,6 @@
+
 import { useState } from "react"
-import { format, addDays, startOfWeek, endOfWeek, addWeeks } from "date-fns"
-import { CalendarRange } from "lucide-react"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -13,13 +13,6 @@ import {
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { Task } from "@/components/tasks/TaskItem"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 interface RescheduleDialogProps {
   open: boolean
@@ -31,35 +24,6 @@ interface RescheduleDialogProps {
 export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: RescheduleDialogProps) {
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined)
   const [isRescheduling, setIsRescheduling] = useState(false)
-  const [quickOption, setQuickOption] = useState<string>("")
-
-  const today = new Date()
-  const tomorrow = addDays(today, 1)
-  const thisWeekendStart = startOfWeek(addDays(today, 5), { weekStartsOn: 6 }) // Saturday
-  const thisWeekendEnd = endOfWeek(thisWeekendStart, { weekStartsOn: 6 }) // Sunday
-  const nextWeekStart = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1) // Next Monday
-
-  const handleQuickOptionChange = (value: string) => {
-    setQuickOption(value)
-    
-    switch (value) {
-      case "today":
-        setRescheduleDate(today)
-        break
-      case "tomorrow":
-        setRescheduleDate(tomorrow)
-        break
-      case "thisWeekend":
-        setRescheduleDate(thisWeekendStart)
-        break
-      case "nextWeek":
-        setRescheduleDate(nextWeekStart)
-        break
-      default:
-        // Keep current custom date if any
-        break
-    }
-  }
 
   const handleReschedule = async () => {
     if (!rescheduleDate) {
@@ -89,7 +53,6 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
       toast.success(`Rescheduled ${taskIds.length} tasks to ${format(rescheduleDate, 'PPP')}`)
       onOpenChange(false)
       setRescheduleDate(undefined)
-      setQuickOption("")
       onSuccess()
     } catch (error: any) {
       toast.error("Failed to reschedule tasks", {
@@ -100,11 +63,16 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
     }
   }
 
+  const handleDateSelection = (date: Date | undefined) => {
+    setRescheduleDate(date);
+  };
+
   const handleOpen = (open: boolean) => {
     // If opening the dialog, set a default date (tomorrow)
     if (open && !rescheduleDate) {
-      setRescheduleDate(tomorrow)
-      setQuickOption("tomorrow")
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setRescheduleDate(tomorrow);
     }
     onOpenChange(open)
   }
@@ -116,29 +84,15 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
           <DialogTitle>Reschedule All Overdue Tasks</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <Select value={quickOption} onValueChange={handleQuickOptionChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose a date option" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="tomorrow">Tomorrow</SelectItem>
-              <SelectItem value="thisWeekend">This Weekend</SelectItem>
-              <SelectItem value="nextWeek">Next Week</SelectItem>
-              <SelectItem value="custom">Custom Date</SelectItem>
-            </SelectContent>
-          </Select>
-          
           <div className="flex justify-center">
             <Calendar
               mode="single"
               selected={rescheduleDate}
-              onSelect={(date) => {
-                setRescheduleDate(date)
-                setQuickOption("custom")
-              }}
+              onSelect={handleDateSelection}
               disabled={(date) => date < new Date()}
-              className="rounded-md border pointer-events-auto"
+              showQuickOptions={true}
+              onQuickOptionSelect={handleDateSelection}
+              className="rounded-md border"
             />
           </div>
           <p className="text-sm text-muted-foreground text-center">

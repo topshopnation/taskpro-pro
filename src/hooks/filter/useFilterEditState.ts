@@ -13,7 +13,22 @@ export function useFilterEditState(currentFilter: CustomFilter | null) {
     if (currentFilter) {
       setNewFilterName(currentFilter.name);
       setFilterColor(currentFilter.color || "");
-      setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
+      
+      // Handle both condition formats (array or object with items)
+      if (currentFilter.conditions) {
+        if (Array.isArray(currentFilter.conditions)) {
+          setFilterConditions({ items: currentFilter.conditions, logic: "and" });
+        } else if (typeof currentFilter.conditions === 'object') {
+          // Ensure the conditions object has the expected structure
+          const items = currentFilter.conditions.items || [];
+          const logic = currentFilter.conditions.logic || "and";
+          setFilterConditions({ items, logic });
+        } else {
+          setFilterConditions({ items: [], logic: "and" });
+        }
+      } else {
+        setFilterConditions({ items: [], logic: "and" });
+      }
     }
   }, [currentFilter]);
   

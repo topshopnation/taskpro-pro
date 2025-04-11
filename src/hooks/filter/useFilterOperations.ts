@@ -39,11 +39,26 @@ export function useFilterOperations(filterId: string) {
     try {
       setIsLoading(true);
       
+      // Ensure conditions are in the correct format
+      const formattedConditions = conditions;
+      if (typeof formattedConditions !== 'object') {
+        throw new Error("Invalid filter conditions format");
+      }
+      
+      // Make sure conditions has items array and logic property
+      if (!formattedConditions.items) {
+        formattedConditions.items = [];
+      }
+      
+      if (!formattedConditions.logic) {
+        formattedConditions.logic = "and";
+      }
+      
       const { error } = await supabase
         .from('filters')
         .update({ 
           name, 
-          conditions,
+          conditions: formattedConditions,
           color: color || null,
           updated_at: new Date().toISOString()
         })

@@ -1,5 +1,5 @@
 
-import { format, isToday as isDayToday, isTomorrow as isDayTomorrow, nextSaturday, nextMonday, isSameDay } from "date-fns";
+import { format, isToday as isDayToday, isTomorrow as isDayTomorrow, nextSaturday, nextMonday, isSameDay, addDays, startOfWeek, endOfWeek } from "date-fns";
 
 // Get today's date with time set to midnight
 export const getToday = () => {
@@ -18,6 +18,13 @@ export const getTomorrow = () => {
 // Get the date of the next Saturday
 export const getNextSaturday = () => {
   return nextSaturday(getToday());
+};
+
+// Get the date of the next weekend (Saturday)
+export const getNextWeekend = () => {
+  const today = getToday();
+  const daysUntilSaturday = ((6 - today.getDay()) % 7);
+  return addDays(today, daysUntilSaturday);
 };
 
 // Get the date of the next Monday
@@ -71,8 +78,49 @@ export const getDateLabelWithDay = (date: Date | undefined): { label: string; da
   
   if (isToday(date)) return { label: 'Today', day: format(date, 'EEE') };
   if (isTomorrow(date)) return { label: 'Tomorrow', day: format(date, 'EEE') };
-  if (isThisWeekend(date)) return { label: 'This Weekend', day: format(date, 'EEE') };
-  if (isNextWeek(date)) return { label: 'Next Week', day: format(date, 'MMM d') };
+  if (isThisWeekend(date)) return { label: 'This Weekend', day: format(date, 'EEE MMM d') };
+  if (isNextWeek(date)) return { label: 'Next Week', day: format(date, 'EEE MMM d') };
   
   return { label: format(date, 'MMM d'), day: format(date, 'EEE') };
+};
+
+// Get formatted date options for quick selection
+export const getQuickDateOptions = () => {
+  const today = getToday();
+  const tomorrow = getTomorrow();
+  const nextWeekend = getNextWeekend();
+  const nextWeek = getNextMonday();
+
+  return [
+    {
+      label: "Today",
+      day: format(today, "EEE"),
+      date: today,
+      value: "today"
+    },
+    {
+      label: "Tomorrow",
+      day: format(tomorrow, "EEE"),
+      date: tomorrow,
+      value: "tomorrow"
+    },
+    {
+      label: "Next week",
+      day: `${format(nextWeek, "EEE MMM d")}`,
+      date: nextWeek,
+      value: "next-week"
+    },
+    {
+      label: "Next weekend",
+      day: `${format(nextWeekend, "EEE MMM d")}`,
+      date: nextWeekend,
+      value: "weekend"
+    },
+    {
+      label: "No Date",
+      day: "",
+      date: undefined,
+      value: "no-date"
+    }
+  ];
 };

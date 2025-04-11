@@ -1,14 +1,6 @@
 
-import { format, addDays, nextSaturday, nextMonday, isSameDay } from "date-fns"
-import { 
-  CalendarIcon, 
-  Sun, 
-  Sofa, 
-  ArrowRight, 
-  XCircle,
-  CalendarDays,
-  RotateCcw
-} from "lucide-react"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -16,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { getDateLabelWithDay } from "@/utils/dateUtils"
 
 interface TaskFormDueDateProps {
   dueDate?: Date;
@@ -24,13 +17,6 @@ interface TaskFormDueDateProps {
 
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const [timeInput, setTimeInput] = useState<string>(dueDate ? format(dueDate, "HH:mm") : "");
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const tomorrow = addDays(today, 1);
-  const weekend = nextSaturday(today);
-  const nextWeek = nextMonday(today);
   
   // Function to add time to a date
   const addTimeToDate = (date: Date, timeStr: string) => {
@@ -67,6 +53,8 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
       onChange(dateWithTime);
     }
   };
+
+  const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "Pick a date", day: "" };
   
   return (
     <div className="grid gap-2">
@@ -82,122 +70,40 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+            {dueDate ? (
+              <span>
+                {dateLabel.label}{' '}
+                <span className="text-muted-foreground">{dateLabel.day}</span>
+              </span>
+            ) : (
+              <span>Pick a date</span>
+            )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0" align="start">
-          <div className="flex flex-col divide-y">
-            <div className="p-3">
+        <PopoverContent className="w-auto p-2" align="start">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
               <Input
-                type="text"
-                placeholder="Type a date or recurring pattern"
-                className="h-9 text-sm"
+                type="time"
+                placeholder="Add time"
+                value={timeInput}
+                onChange={handleTimeInputChange}
+                className="h-8 py-1"
               />
             </div>
             
-            <DateOptionButton
-              icon={<CalendarDays className="h-4 w-4 text-blue-500" />}
-              label="Today"
-              dayLabel="Today"
-              selected={dueDate && isSameDay(dueDate, today)}
-              onClick={() => handleDateTimeSelection(today)}
+            <Calendar
+              mode="single"
+              selected={dueDate}
+              onSelect={handleDateTimeSelection}
+              initialFocus
+              showQuickOptions={true}
+              onQuickOptionSelect={handleDateTimeSelection}
+              className="rounded-md border shadow-sm bg-background"
             />
-            
-            <DateOptionButton
-              icon={<Sun className="h-4 w-4 text-orange-400" />}
-              label="Tomorrow"
-              dayLabel={format(tomorrow, "EEE")}
-              selected={dueDate && isSameDay(dueDate, tomorrow)}
-              onClick={() => handleDateTimeSelection(tomorrow)}
-            />
-            
-            <DateOptionButton
-              icon={<Sofa className="h-4 w-4 text-purple-500" />}
-              label="This Weekend"
-              dayLabel={format(weekend, "EEE")}
-              selected={dueDate && isSameDay(dueDate, weekend)}
-              onClick={() => handleDateTimeSelection(weekend)}
-            />
-            
-            <DateOptionButton
-              icon={<ArrowRight className="h-4 w-4 text-purple-600" />}
-              label="Next Week"
-              dayLabel={format(nextWeek, "EEE")}
-              selected={dueDate && isSameDay(dueDate, nextWeek)}
-              onClick={() => handleDateTimeSelection(nextWeek)}
-            />
-            
-            <DateOptionButton
-              icon={<RotateCcw className="h-4 w-4 text-blue-400" />}
-              label="Postpone"
-              dayLabel={format(nextWeek, "EEE")}
-              selected={false}
-              onClick={() => handleDateTimeSelection(addDays(today, 7))}
-            />
-            
-            <DateOptionButton
-              icon={<XCircle className="h-4 w-4 text-gray-500" />}
-              label="No Date"
-              selected={!dueDate}
-              onClick={() => onChange(undefined)}
-            />
-            
-            <div className="p-3">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="time"
-                    placeholder="Add time"
-                    value={timeInput}
-                    onChange={handleTimeInputChange}
-                    className="h-8 py-1"
-                  />
-                </div>
-                
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={handleDateTimeSelection}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto rounded border shadow-sm")}
-                />
-              </div>
-            </div>
           </div>
         </PopoverContent>
       </Popover>
-    </div>
-  );
-}
-
-function DateOptionButton({ 
-  icon, 
-  label, 
-  dayLabel, 
-  selected, 
-  onClick 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  dayLabel?: string; 
-  selected: boolean; 
-  onClick: () => void; 
-}) {
-  return (
-    <div 
-      className={cn(
-        "flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50",
-        selected && "bg-primary/10"
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-3">
-        {icon}
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-      {dayLabel && (
-        <span className="text-sm text-muted-foreground">{dayLabel}</span>
-      )}
     </div>
   );
 }
