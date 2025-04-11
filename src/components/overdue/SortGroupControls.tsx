@@ -6,7 +6,6 @@ import {
   DropdownMenuTrigger, 
   DropdownMenuContent, 
   DropdownMenuItem,
-
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu"
 
@@ -50,6 +49,13 @@ export function SortGroupControls({
             Sort by Due Date (Latest)
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onSortChange("priority", "asc")}>
+            Sort by Priority (High-Low)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onSortChange("priority", "desc")}>
+            Sort by Priority (Low-High)
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onSortChange("project", "asc")}>
             Sort by Project (A-Z)
           </DropdownMenuItem>
@@ -72,6 +78,9 @@ export function SortGroupControls({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onGroupChange("title")}>
             Group by Name
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onGroupChange("priority")}>
+            Group by Priority
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onGroupChange("project")}>
             Group by Project

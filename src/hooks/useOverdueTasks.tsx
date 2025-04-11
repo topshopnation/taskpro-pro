@@ -47,30 +47,20 @@ export function useOverdueTasks(userId: string | undefined) {
     }
   }, [userId]);
   
-  const { isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['overdue-tasks', userId],
     queryFn: fetchOverdueTasks,
     enabled: !!userId
   });
   
   useEffect(() => {
-    if (!userId) return;
-    
-    fetchOverdueTasks().then(fetchedTasks => {
-      setTasks(fetchedTasks);
-    }).catch(error => {
-      console.error("Error fetching overdue tasks:", error);
-    });
-  }, [userId, fetchOverdueTasks]);
+    if (data) {
+      setTasks(data);
+    }
+  }, [data]);
 
   useTaskRealtime(userId ? { id: userId } : null, () => {
-    fetchOverdueTasks()
-      .then(updatedTasks => {
-        setTasks(updatedTasks);
-      })
-      .catch(error => {
-        console.error("Error in real-time update:", error);
-      });
+    refetch();
   });
 
   return {

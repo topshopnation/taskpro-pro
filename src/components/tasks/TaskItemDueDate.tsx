@@ -1,6 +1,6 @@
 
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -97,6 +97,16 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     }
   };
 
+  // Clear time input and reset date to midnight
+  const handleClearTime = () => {
+    setTimeInput("");
+    if (dueDate) {
+      const dateWithoutTime = new Date(dueDate);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onDateChange(dateWithoutTime);
+    }
+  };
+
   const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "No due date", day: "" };
   
   // Format time string for display, only if hours or minutes are not zero
@@ -155,6 +165,17 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               onFocus={handleTimeInputFocus}
               className="h-7 py-1"
             />
+            {timeInput && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 p-0" 
+                onClick={handleClearTime}
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="sr-only">Clear time</span>
+              </Button>
+            )}
           </div>
           
           <Calendar

@@ -16,12 +16,17 @@ export function sortTasks(tasks: Task[], sortBy: string, sortDirection: "asc" | 
       return sortDirection === "asc" 
         ? a.dueDate.getTime() - b.dueDate.getTime()
         : b.dueDate.getTime() - a.dueDate.getTime()
-    } else if (sortBy === "project") {
-      const projectA = a.projectId || "none"
-      const projectB = b.projectId || "none"
+    } else if (sortBy === "priority") {
+      // For priority, lower number means higher priority (1 is highest)
       return sortDirection === "asc" 
-        ? projectA.localeCompare(projectB)
-        : projectB.localeCompare(projectA)
+        ? a.priority - b.priority  // High to low (1 first)
+        : b.priority - a.priority  // Low to high (4 first)
+    } else if (sortBy === "project") {
+      const projectNameA = a.projectName || "No Project"
+      const projectNameB = b.projectName || "No Project"
+      return sortDirection === "asc" 
+        ? projectNameA.localeCompare(projectNameB)
+        : projectNameB.localeCompare(projectNameA)
     }
     return 0
   })
@@ -36,13 +41,21 @@ export function groupTasks(tasks: Task[], groupBy: string | null, sortBy: string
     let groupKey = ""
     
     if (groupBy === "project") {
-      groupKey = task.projectId || "No Project"
+      groupKey = task.projectName || "No Project"
     } else if (groupBy === "dueDate") {
       groupKey = task.dueDate 
         ? format(task.dueDate, 'PPP') 
         : "No Due Date"
     } else if (groupBy === "title") {
       groupKey = task.title.charAt(0).toUpperCase()
+    } else if (groupBy === "priority") {
+      const priorityLabels: Record<number, string> = {
+        1: "Priority 1 (Highest)",
+        2: "Priority 2",
+        3: "Priority 3",
+        4: "Priority 4 (Lowest)"
+      }
+      groupKey = priorityLabels[task.priority] || "No Priority"
     }
     
     if (!grouped[groupKey]) {
@@ -68,7 +81,7 @@ export function getStartOfToday(): Date {
   return startOfDay(new Date())
 }
 
-// New function to get the end of yesterday
+// Function to get the end of yesterday
 export function getEndOfYesterday(): Date {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);

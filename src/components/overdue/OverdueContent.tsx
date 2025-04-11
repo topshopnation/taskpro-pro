@@ -40,6 +40,10 @@ export function OverdueContent({
     setGroupBy(newGroupBy);
   };
 
+  const handleRescheduleClick = () => {
+    setIsRescheduleOpen(true);
+  };
+
   const groupedTasks = groupTasks(tasks, groupBy, sortBy, sortDirection);
 
   return (
@@ -86,7 +90,7 @@ export function OverdueContent({
       {/* Button to open reschedule dialog */}
       <div className="fixed bottom-6 right-6 md:hidden">
         <button
-          onClick={() => setIsRescheduleOpen(true)}
+          onClick={handleRescheduleClick}
           className="bg-primary text-white p-3 rounded-full shadow-lg"
           disabled={tasks.length === 0}
         >

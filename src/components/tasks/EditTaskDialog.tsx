@@ -59,11 +59,21 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
 
     // Initialize form values when task changes
     if (task) {
+      // Extract time from the date object
+      let dueTime = "";
+      if (task.dueDate) {
+        const hours = task.dueDate.getHours();
+        const minutes = task.dueDate.getMinutes();
+        if (hours !== 0 || minutes !== 0) {
+          dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+      }
+      
       setFormValues({
         title: task.title,
         notes: task.notes || "",
         dueDate: task.dueDate,
-        dueTime: task.dueTime || "",
+        dueTime: dueTime,
         priority: task.priority.toString(),
         project: task.projectId || "inbox",
         tags: []  // Will be set by fetchTaskTags
@@ -94,7 +104,6 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           title: formValues.title,
           notes: formValues.notes,
           due_date: formValues.dueDate ? formValues.dueDate.toISOString() : null,
-          due_time: formValues.dueTime || null,
           priority: parseInt(formValues.priority),
           project_id: formValues.project === "inbox" ? null : formValues.project
         })
