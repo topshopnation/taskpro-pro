@@ -11,6 +11,8 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)

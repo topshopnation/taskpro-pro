@@ -11,6 +11,7 @@ import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { groupTasks } from "@/utils/taskSortUtils";
 import { FilterConditionsDisplay } from "@/components/filters/FilterConditionsDisplay";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { Button } from "@/components/ui/button";
 
 export default function FilterView() {
   const navigate = useNavigate();
