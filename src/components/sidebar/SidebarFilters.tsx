@@ -86,6 +86,7 @@ export function SidebarFilters({
                         }`
                       }
                       onClick={onMobileMenuClose}
+                      end
                     >
                       <Filter 
                         className="h-4 w-4" 

@@ -63,6 +63,7 @@ export function FiltersList({ filters }: FiltersListProps) {
   ];
 
   const handleFilterClick = (filterId: string) => {
+    // Prevent default behavior and use programmatic navigation
     navigate(`/filters/${filterId}`);
   };
 
@@ -175,7 +176,10 @@ export function FiltersList({ filters }: FiltersListProps) {
           <Card 
             key={filter.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleFilterClick(filter.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              handleFilterClick(filter.id);
+            }}
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">

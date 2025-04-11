@@ -39,12 +39,12 @@ export function useTaskOperations() {
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
       
       // Generate a unique toast ID to prevent duplicates
-      const toastId = `task-complete-${taskId}-${Date.now()}`;
+      const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
       // Add undo action to toast
       const status = completed ? "Task completed" : "Task marked incomplete";
       toast(status, {
-        id: toastId,
+        id: uniqueId,
         action: {
           label: "Undo",
           onClick: async () => {
@@ -65,12 +65,12 @@ export function useTaskOperations() {
               queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
               
               // Show success message with unique ID
-              toast.success(!completed ? "Task completed" : "Task marked incomplete", {
-                id: `task-complete-undo-${taskId}-${Date.now()}`
+              toast.success(!completed ? "Task marked complete" : "Task marked incomplete", {
+                id: `task-undo-${taskId}-${Date.now()}`
               });
             } catch (undoError) {
               toast.error("Failed to undo", {
-                id: `task-complete-error-${taskId}-${Date.now()}`
+                id: `task-undo-error-${taskId}-${Date.now()}`
               });
             }
           }
@@ -120,11 +120,11 @@ export function useTaskOperations() {
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
       
       // Generate a unique toast ID to prevent duplicates
-      const toastId = `task-delete-${taskId}-${Date.now()}`;
+      const uniqueId = `task-delete-${taskId}-${Date.now()}`;
       
       // Add toast with undo option
       toast("Task deleted", {
-        id: toastId,
+        id: uniqueId,
         action: {
           label: "Undo",
           onClick: async () => {
