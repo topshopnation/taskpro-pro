@@ -189,7 +189,7 @@ const Index = () => {
       <section className="py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Loved by Professionals</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Loved by Many</h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Hear what our users have to say about their experience with TaskPro.
             </p>
@@ -248,9 +248,7 @@ const Index = () => {
                     "Unlimited tasks and projects",
                     "Custom filters and favorites",
                     "Priority task management",
-                    "Advanced analytics and reports",
-                    "Collaboration tools",
-                    "Premium support"
+                    "Analytics and reports"
                   ].map((feature, index) => (
                     <li key={index} className="flex items-center">
                       <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
@@ -273,7 +271,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Boost Your Productivity?</h2>
           <p className="text-xl max-w-3xl mx-auto mb-8 text-white/90">
-            Join thousands of professionals who trust TaskPro for their task management needs.
+            Trust TaskPro for your task management needs.
           </p>
           {user ? (
             <Button
