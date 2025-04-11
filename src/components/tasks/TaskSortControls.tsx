@@ -1,6 +1,7 @@
 
+import { SortGroupControls, SortOption, GroupOption } from "@/components/shared/SortGroupControls";
 import { Button } from "@/components/ui/button";
-import { SortControls } from "@/components/ui/sort-controls";
+import { Plus } from "lucide-react";
 
 interface TaskSortControlsProps {
   sortBy: string;
@@ -25,31 +26,47 @@ export function TaskSortControls({
   showProjectSort = false,
   hideAddTaskButton = false
 }: TaskSortControlsProps) {
-  const sortOptions = [
+  const handleSortChange = (newSortBy: string, newDirection: "asc" | "desc") => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
+  };
+
+  const sortOptions: SortOption[] = [
     { value: "title", label: "Title" },
     { value: "dueDate", label: "Due Date" },
     { value: "priority", label: "Priority" },
     ...(showProjectSort ? [{ value: "project", label: "Project" }] : []),
   ];
 
-  const groupOptions = [
-    { value: "none", label: "None" },
-    { value: "priority", label: "Priority" },
-    { value: "dueDate", label: "Due Date" },
-    ...(showProjectSort ? [{ value: "project", label: "Project" }] : []),
+  const groupOptions: GroupOption[] = [
+    { value: null, label: "No Grouping" },
+    { value: "title", label: "By Title" },
+    { value: "priority", label: "By Priority" },
+    { value: "dueDate", label: "By Due Date" },
+    ...(showProjectSort ? [{ value: "project", label: "By Project" }] : []),
   ];
 
   return (
     <div className="flex items-center gap-2">
-      <SortControls
+      {!hideAddTaskButton && onAddTask && (
+        <Button 
+          size="sm" 
+          onClick={onAddTask}
+          className="flex items-center gap-1 h-8"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Task</span>
+        </Button>
+      )}
+      
+      <SortGroupControls
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        groupBy={groupBy}
+        onSortChange={handleSortChange}
+        onGroupChange={setGroupBy}
         sortOptions={sortOptions}
         groupOptions={groupOptions}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-        groupBy={groupBy}
-        setGroupBy={setGroupBy}
       />
     </div>
   );

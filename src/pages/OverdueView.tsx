@@ -7,6 +7,7 @@ import { OverdueHeader } from "@/components/overdue/OverdueHeader";
 import { OverdueContent } from "@/components/overdue/OverdueContent";
 import { useOverdueTasks } from "@/hooks/useOverdueTasks";
 import { useOverdueTaskOperations } from "@/hooks/useOverdueTaskOperations";
+import { RescheduleDialog } from "@/components/overdue/RescheduleDialog";
 
 export default function OverdueView() {
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
@@ -34,9 +35,19 @@ export default function OverdueView() {
             onDelete={handleDelete}
             onFavoriteToggle={handleFavoriteToggle}
             onReschedule={refetch}
+            isRescheduleOpen={isRescheduleOpen}
+            setIsRescheduleOpen={setIsRescheduleOpen}
           />
         </div>
       </TooltipProvider>
+      
+      {/* Add RescheduleDialog at the page level */}
+      <RescheduleDialog
+        open={isRescheduleOpen}
+        onOpenChange={setIsRescheduleOpen}
+        tasks={tasks || []}
+        onSuccess={refetch}
+      />
     </AppLayout>
   );
 }

@@ -1,5 +1,5 @@
 
-import { SortGroupControls } from "@/components/overdue/SortGroupControls";
+import { SortGroupControls, SortOption, GroupOption } from "@/components/shared/SortGroupControls";
 
 interface OverdueSortControlsProps {
   sortBy: string;
@@ -16,15 +16,30 @@ export function OverdueSortControls({
   onSortChange,
   onGroupChange
 }: OverdueSortControlsProps) {
+  const sortOptions: SortOption[] = [
+    { value: "title", label: "Title" },
+    { value: "dueDate", label: "Due Date" },
+    { value: "priority", label: "Priority" },
+    { value: "project", label: "Project" }
+  ];
+
+  const groupOptions: GroupOption[] = [
+    { value: null, label: "No Grouping" },
+    { value: "title", label: "By Title" },
+    { value: "priority", label: "By Priority" },
+    { value: "project", label: "By Project" },
+    { value: "dueDate", label: "By Due Date" }
+  ];
+
   return (
-    <div className="flex items-center justify-end space-x-2">
-      <SortGroupControls
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        groupBy={groupBy}
-        onSortChange={onSortChange}
-        onGroupChange={onGroupChange}
-      />
-    </div>
+    <SortGroupControls
+      sortBy={sortBy}
+      sortDirection={sortDirection}
+      groupBy={groupBy}
+      onSortChange={onSortChange}
+      onGroupChange={onGroupChange}
+      sortOptions={sortOptions}
+      groupOptions={groupOptions}
+    />
   );
 }

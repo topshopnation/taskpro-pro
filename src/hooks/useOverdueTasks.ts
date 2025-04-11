@@ -15,7 +15,7 @@ export function useOverdueTasks(userId: string | undefined) {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, projects(name, color)')
         .eq('user_id', userId)
         .eq('completed', false)
         .lt('due_date', startOfToday.toISOString())
@@ -30,6 +30,8 @@ export function useOverdueTasks(userId: string | undefined) {
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
+        projectName: task.projects?.name || 'No Project',
+        projectColor: task.projects?.color,
         section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false

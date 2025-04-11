@@ -20,11 +20,16 @@ export const sortTasks = (tasksToSort: Task[], sortBy: string, sortDirection: So
         ? a.dueDate.getTime() - b.dueDate.getTime()
         : b.dueDate.getTime() - a.dueDate.getTime()
     } else if (sortBy === "project") {
-      const projectA = a.projectId || "none"
-      const projectB = b.projectId || "none"
+      const projectNameA = a.projectName || "No Project"
+      const projectNameB = b.projectName || "No Project"
       return sortDirection === "asc" 
-        ? projectA.localeCompare(projectB)
-        : projectB.localeCompare(projectA)
+        ? projectNameA.localeCompare(projectNameB)
+        : projectNameB.localeCompare(projectNameA)
+    } else if (sortBy === "priority") {
+      // For priority, lower number means higher priority (1 is highest)
+      return sortDirection === "asc" 
+        ? a.priority - b.priority  // High to low (1 first)
+        : b.priority - a.priority  // Low to high (4 first)
     }
     return 0
   })
@@ -46,7 +51,15 @@ export const groupTasks = (tasksToGroup: Task[], groupBy: string | null, sortBy:
         ? format(task.dueDate, 'PPP') 
         : "No Due Date"
     } else if (groupBy === "project") {
-      groupKey = task.projectId || "No Project"
+      groupKey = task.projectName || "No Project"
+    } else if (groupBy === "priority") {
+      const priorityLabels: Record<number, string> = {
+        1: "Priority 1 (Highest)",
+        2: "Priority 2",
+        3: "Priority 3",
+        4: "Priority 4 (Lowest)"
+      }
+      groupKey = priorityLabels[task.priority] || "No Priority"
     }
     
     if (!grouped[groupKey]) {
