@@ -8,10 +8,14 @@ export const isStandardFilter = (filterId: string | undefined): boolean => {
 };
 
 export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] => {
-  if (!filter || !filter.conditions) return tasks;
+  if (!filter) return tasks;
   
-  // Make sure conditions is an array before mapping
-  const conditions = Array.isArray(filter.conditions) ? filter.conditions : [];
+  // Handle case where conditions could be an array or an object with items property
+  const conditions = Array.isArray(filter.conditions) 
+    ? filter.conditions 
+    : filter.conditions?.items || [];
+  
+  if (conditions.length === 0) return tasks;
   
   return tasks.filter(task => {
     const results = conditions.map((condition: any) => {
@@ -43,7 +47,12 @@ export const filterTasks = (tasks: Task[], filter: CustomFilter | null): Task[] 
       return false;
     });
     
-    if (filter.logic === "and") {
+    // Use the filter's logic if available, otherwise default to "and"
+    const logic = Array.isArray(filter.conditions) 
+      ? filter.logic 
+      : filter.conditions?.logic || "and";
+    
+    if (logic === "and") {
       return results.every(Boolean);
     } else {
       return results.some(Boolean);

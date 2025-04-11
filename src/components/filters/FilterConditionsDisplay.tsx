@@ -9,7 +9,7 @@ interface FilterCondition {
 }
 
 interface FilterConditionsDisplayProps {
-  conditions: FilterCondition[];
+  conditions: FilterCondition[] | { items: FilterCondition[], logic?: string };
   logic?: string;
 }
 
@@ -17,7 +17,21 @@ export function FilterConditionsDisplay({
   conditions = [],
   logic = "and"
 }: FilterConditionsDisplayProps) {
-  if (!conditions || conditions.length === 0) {
+  // Handle empty conditions
+  if (!conditions) {
+    return <div className="text-muted-foreground text-sm">No conditions</div>;
+  }
+  
+  // Normalize conditions to always be an array
+  const conditionsArray = Array.isArray(conditions) 
+    ? conditions 
+    : conditions.items || [];
+  
+  // Get the logic from either the conditions object or the prop
+  const conditionLogic = Array.isArray(conditions) ? logic : (conditions.logic || logic);
+  
+  // Handle empty array
+  if (conditionsArray.length === 0) {
     return <div className="text-muted-foreground text-sm">No conditions</div>;
   }
 
@@ -43,16 +57,16 @@ export function FilterConditionsDisplay({
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {conditions.map((condition, index) => {
+      {conditionsArray.map((condition, index) => {
         const { icon, label } = getConditionLabel(condition);
         
         return (
           <Badge key={index} variant="outline" className="flex items-center text-xs">
             {icon}
             <span>{label}</span>
-            {index < conditions.length - 1 && logic && (
+            {index < conditionsArray.length - 1 && conditionLogic && (
               <span className="ml-1 text-muted-foreground font-medium">
-                {logic}
+                {conditionLogic}
               </span>
             )}
           </Badge>
