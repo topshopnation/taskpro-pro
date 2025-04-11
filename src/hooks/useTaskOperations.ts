@@ -25,24 +25,27 @@ export function useTaskOperations() {
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
       
       // Add undo action to toast
-      toast.success(completed ? "Task completed" : "Task marked incomplete", {
-        duration: 2000, // Force 2 seconds duration
+      toast(completed ? "Task completed" : "Task marked incomplete", {
         action: {
           label: "Undo",
           onClick: async () => {
-            await supabase
-              .from('tasks')
-              .update({ completed: !completed })
-              .eq('id', taskId);
-            
-            // Re-invalidate queries after undoing
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-            
-            toast.success(!completed ? "Task completed" : "Task marked incomplete");
+            try {
+              await supabase
+                .from('tasks')
+                .update({ completed: !completed })
+                .eq('id', taskId);
+              
+              // Re-invalidate queries after undoing
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+              
+              toast.success(!completed ? "Task completed" : "Task marked incomplete");
+            } catch (undoError) {
+              toast.error("Failed to undo");
+            }
           }
         }
       });
@@ -50,8 +53,7 @@ export function useTaskOperations() {
       return true;
     } catch (error: any) {
       toast.error("Failed to update task", {
-        description: error.message,
-        duration: 2000 // Force 2 seconds duration
+        description: error.message
       });
       return false;
     } finally {
@@ -90,27 +92,30 @@ export function useTaskOperations() {
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
       
       // Add toast with undo option
-      toast.success("Task deleted", {
-        duration: 2000, // Force 2 seconds duration
+      toast("Task deleted", {
         action: {
           label: "Undo",
           onClick: async () => {
             if (taskData) {
-              const { id, created_at, ...restData } = taskData;
-              
-              // Restore the task with its original data
-              await supabase
-                .from('tasks')
-                .insert({ id, ...restData });
-              
-              // Re-invalidate queries after restoring
-              queryClient.invalidateQueries({ queryKey: ['tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-              
-              toast.success("Task restored");
+              try {
+                const { id, created_at, ...restData } = taskData;
+                
+                // Restore the task with its original data
+                await supabase
+                  .from('tasks')
+                  .insert({ id, ...restData });
+                
+                // Re-invalidate queries after restoring
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+                
+                toast.success("Task restored");
+              } catch (undoError) {
+                toast.error("Failed to restore task");
+              }
             }
           }
         }
@@ -119,8 +124,7 @@ export function useTaskOperations() {
       return true;
     } catch (error: any) {
       toast.error("Failed to delete task", {
-        description: error.message,
-        duration: 2000 // Force 2 seconds duration
+        description: error.message
       });
       return false;
     } finally {

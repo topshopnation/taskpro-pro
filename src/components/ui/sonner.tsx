@@ -11,9 +11,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
-      duration={2000} // Set default duration to 2 seconds
+      duration={3000}
+      richColors
+      closeButton
+      position="bottom-right"
       toastOptions={{
-        duration: 2000, // Ensure all toasts default to 2 seconds
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
