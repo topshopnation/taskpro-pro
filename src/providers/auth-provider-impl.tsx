@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
@@ -15,14 +14,12 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
         if (newSession?.user) {
           setSession(newSession);
-          // Use setTimeout to prevent potential deadlocks with Supabase auth
           setTimeout(async () => {
             try {
               const profile = await fetchUserProfile(newSession.user.id);
@@ -57,7 +54,6 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       console.log("Initial session check:", existingSession ? "session exists" : "no session");
       
@@ -90,7 +86,7 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
     };
   }, [navigate]);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string): Promise<void> => {
     try {
       const { error } = await supabase.auth.signUp({ 
         email, 
@@ -103,24 +99,22 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       toast.success("Check your email for the confirmation link");
-      return { error: null };
     } catch (error: any) {
       toast.error("Sign up failed", { description: error.message });
-      return { error };
+      throw error;
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) throw error;
       
       toast.success("Signed in successfully");
-      return { error: null };
     } catch (error: any) {
       toast.error("Sign in failed", { description: error.message });
-      return { error };
+      throw error;
     }
   };
   
@@ -157,7 +151,6 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
         
       if (error) throw error;
       
-      // Update local user state
       setUser(prev => {
         if (!prev) return prev;
         return {
