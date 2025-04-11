@@ -41,7 +41,7 @@ export function useTaskOperations() {
       // Generate a unique toast ID to prevent duplicates
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
-      // Only show toast with undo action - we don't need separate "task completed" toast
+      // Only show toast with undo action - removing separate "task completed" notification
       toast(completed ? "Task completed" : "Task marked incomplete", {
         id: uniqueId,
         duration: 3000, // Ensure toast stays for 3 seconds
@@ -63,12 +63,6 @@ export function useTaskOperations() {
               queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
               queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
               queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-              
-              // Show success message with unique ID, but only a brief notification
-              toast.success(!completed ? "Task marked complete" : "Task marked incomplete", {
-                id: `task-undo-${taskId}-${Date.now()}`,
-                duration: 1500
-              });
             } catch (undoError) {
               toast.error("Failed to undo", {
                 id: `task-undo-error-${taskId}-${Date.now()}`
@@ -147,11 +141,6 @@ export function useTaskOperations() {
                 queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-                
-                toast.success("Task restored", {
-                  id: `task-restore-${taskId}-${Date.now()}`,
-                  duration: 1500
-                });
               } catch (undoError) {
                 toast.error("Failed to restore task", {
                   id: `task-restore-error-${taskId}-${Date.now()}`

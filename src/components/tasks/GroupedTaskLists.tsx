@@ -30,6 +30,20 @@ export function GroupedTaskLists({
   onPriorityChange,
   onDateChange
 }: GroupedTaskListsProps) {
+  // Function to get priority group title
+  const getPriorityGroupTitle = (group: string): string => {
+    if (groupBy === "priority") {
+      switch (group) {
+        case "1": return "Priority 1 (Highest)";
+        case "2": return "Priority 2 (High)";
+        case "3": return "Priority 3 (Medium)";
+        case "4": return "Priority 4 (Low)";
+        default: return group;
+      }
+    }
+    return groupBy ? group : "Project Tasks";
+  };
+
   if (Object.keys(groupedTasks).length === 0) {
     return (
       <div className="bg-muted/30 rounded-lg p-6 text-center">
@@ -45,7 +59,7 @@ export function GroupedTaskLists({
       {Object.entries(groupedTasks).map(([group, groupTasks]) => (
         <TaskList
           key={group}
-          title={hideTitle ? "" : (groupBy ? group : "Project Tasks")}
+          title={hideTitle ? "" : getPriorityGroupTitle(group)}
           tasks={groupTasks}
           isLoading={isLoadingTasks}
           emptyMessage="No tasks in this group"

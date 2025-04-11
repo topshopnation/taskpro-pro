@@ -23,6 +23,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     title: "",
     notes: "",
     dueDate: undefined,
+    dueTime: "",
     priority: "4",
     project: "inbox",
     tags: []
@@ -62,6 +63,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         title: task.title,
         notes: task.notes || "",
         dueDate: task.dueDate,
+        dueTime: task.dueTime || "",
         priority: task.priority.toString(),
         project: task.projectId || "inbox",
         tags: []  // Will be set by fetchTaskTags
@@ -92,6 +94,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           title: formValues.title,
           notes: formValues.notes,
           due_date: formValues.dueDate ? formValues.dueDate.toISOString() : null,
+          due_time: formValues.dueTime || null,
           priority: parseInt(formValues.priority),
           project_id: formValues.project === "inbox" ? null : formValues.project
         })

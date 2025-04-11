@@ -1,31 +1,24 @@
 
-export interface TaskFormValues {
-  title: string;
-  notes: string;
-  dueDate?: Date;
-  project: string;
-  priority: string;
-  tags: string[];
-}
-
-export interface ProjectOption {
-  id: string;
-  name: string;
-  color?: string;
-}
-
 export interface Tag {
   id: string;
   name: string;
   color?: string;
-  user_id: string;
 }
 
 export interface TaskTagRelation {
-  id: string;
   task_id: string;
   tag_id: string;
+  user_id: string;
 }
 
-// Ensure priority is properly typed
 export type TaskPriority = 1 | 2 | 3 | 4;
+
+export interface TaskFormValues {
+  title: string;
+  notes: string;
+  dueDate?: Date;
+  dueTime?: string;
+  priority: string;
+  project: string;
+  tags: string[];
+}
