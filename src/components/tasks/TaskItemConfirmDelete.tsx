@@ -63,7 +63,7 @@ export function TaskItemConfirmDelete({
     setShowUndo(true);
   };
   
-  // Fix: Ensure handleUndo returns a Promise<void>
+  // Fixed: Ensure handleUndo returns a Promise<void>
   const handleUndo = (): Promise<void> => {
     setShowUndo(false);
     onOpenChange(false);
