@@ -23,6 +23,8 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
+import { Label } from "@/components/ui/label"
+import { IconPicker } from "@/components/ui/color-picker"
 
 interface ProjectDialogsProps {
   projectId?: string
@@ -61,7 +63,7 @@ export function ProjectDialogs({
   setNewProjectName,
   projectColor,
   setProjectColor,
-  projectColors,
+  projectColors = [],
   handleProjectRename,
   handleProjectDelete
 }: ProjectDialogsProps) {
@@ -111,10 +113,11 @@ export function ProjectDialogs({
       <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Rename Project</DialogTitle>
+            <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+              <Label htmlFor="project-name">Project Name</Label>
               <Input
                 id="project-name"
                 value={newProjectName}
@@ -123,6 +126,17 @@ export function ProjectDialogs({
                 autoFocus
               />
             </div>
+            
+            {projectColors && projectColors.length > 0 && (
+              <div className="grid gap-2">
+                <Label>Project Color</Label>
+                <IconPicker
+                  colors={projectColors}
+                  selectedColor={projectColor}
+                  onChange={setProjectColor}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditProjectOpen(false)}>
