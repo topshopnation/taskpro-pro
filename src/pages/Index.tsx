@@ -280,7 +280,7 @@ const Index = () => {
               className="text-lg h-12 px-8 hover:bg-white hover:text-primary"
               onClick={() => navigate("/dashboard")}
             >
-              Go to Dashboard
+              Go to App
             </Button>
           ) : (
             <Button
