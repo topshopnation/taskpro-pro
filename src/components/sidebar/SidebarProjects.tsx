@@ -44,6 +44,7 @@ export function SidebarProjects({
 
   const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("Navigating to project:", projectId);
     navigate(`/projects/${projectId}`);
     onMobileMenuClose();
   };
@@ -89,10 +90,9 @@ export function SidebarProjects({
               {topProjects.map((project) => (
                 <SidebarMenuItem key={project.id}>
                   <SidebarMenuButton asChild>
-                    <a
-                      href={`/projects/${project.id}`}
+                    <button
                       className={cn(
-                        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
                         location.pathname === `/projects/${project.id}` 
                           ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                           : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -105,7 +105,7 @@ export function SidebarProjects({
                       />
                       <span className="truncate">{project.name}</span>
                       <ChevronRight className="h-4 w-4 ml-auto" />
-                    </a>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

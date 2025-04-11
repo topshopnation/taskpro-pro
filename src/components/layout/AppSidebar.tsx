@@ -65,6 +65,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
         if (error) throw error;
 
+        console.log("AppSidebar - Fetched projects:", data);
         setProjects(data || []);
       } catch (error: any) {
         console.error('Error fetching projects:', error);
@@ -85,6 +86,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
         if (error) throw error;
 
+        console.log("AppSidebar - Fetched filters:", data);
         // Map the database filters to the FilterItem format
         const mappedFilters: FilterItem[] = (data || []).map((filter: DatabaseFilter) => ({
           id: filter.id,
@@ -110,7 +112,10 @@ export function AppSidebar({ className }: AppSidebarProps) {
       .channel('projects-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'projects', filter: `user_id=eq.${user.id}` },
-        () => fetchProjects()
+        (payload) => {
+          console.log("Projects change detected:", payload);
+          fetchProjects();
+        }
       )
       .subscribe();
 
@@ -118,7 +123,10 @@ export function AppSidebar({ className }: AppSidebarProps) {
       .channel('filters-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'filters', filter: `user_id=eq.${user.id}` },
-        () => fetchFilters()
+        (payload) => {
+          console.log("Filters change detected:", payload);
+          fetchFilters();
+        }
       )
       .subscribe();
 
@@ -144,13 +152,10 @@ export function AppSidebar({ className }: AppSidebarProps) {
         type: 'filter' as const
       }));
 
-    setFavoriteItems([...favProjects, ...favFilters]);
+    const updatedFavorites = [...favProjects, ...favFilters];
+    console.log("AppSidebar - Updated favorites:", updatedFavorites);
+    setFavoriteItems(updatedFavorites);
   }, [projects, filters]);
-
-  // Debug navigation issues
-  console.log('Current projects:', projects);
-  console.log('Current filters:', filters);
-  console.log('Current favorites:', favoriteItems);
 
   return (
     <Sidebar className={className}>

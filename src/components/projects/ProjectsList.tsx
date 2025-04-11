@@ -61,6 +61,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
 
   const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("ProjectsList - Navigating to project:", projectId);
     navigate(`/projects/${projectId}`);
   };
 

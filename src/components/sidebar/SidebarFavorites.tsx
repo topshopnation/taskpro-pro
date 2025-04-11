@@ -1,7 +1,6 @@
 
-import { Star, Loader2, Filter, ListTodo } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Star, Filter, ListTodo } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,7 +9,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 
 interface FavoriteItem {
   id: string;
@@ -36,6 +34,7 @@ export function SidebarFavorites({
 
   const handleFavoriteClick = (item: FavoriteItem, e: React.MouseEvent) => {
     e.preventDefault();
+    console.log(`Navigating to ${item.type}:`, item.id);
     const path = item.type === 'project' ? `/projects/${item.id}` : `/filters/${item.id}`;
     navigate(path);
     onMobileMenuClose();
@@ -49,9 +48,8 @@ export function SidebarFavorites({
           {favoriteItems.map((item) => (
             <SidebarMenuItem key={item.id}>
               <SidebarMenuButton asChild>
-                <a
-                  href={item.type === 'project' ? `/projects/${item.id}` : `/filters/${item.id}`}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   onClick={(e) => handleFavoriteClick(item, e)}
                 >
                   {item.type === 'project' ? (
@@ -67,7 +65,7 @@ export function SidebarFavorites({
                   )}
                   <span className="truncate">{item.name}</span>
                   <Star className="h-4 w-4 ml-auto fill-yellow-400 text-yellow-400" />
-                </a>
+                </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

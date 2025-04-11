@@ -1,12 +1,19 @@
 
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { SidebarProvider } from "@/components/ui/sidebar/sidebar-context";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect } from "react";
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const location = useLocation();
+  
+  // Log navigation for debugging
+  useEffect(() => {
+    console.log("AppLayout rendering at path:", location.pathname);
+  }, [location.pathname]);
 
   return (
     <SidebarProvider>
