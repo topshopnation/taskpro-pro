@@ -24,8 +24,11 @@ export function TaskItemDetails({
   tags = [],
   projectName
 }: TaskItemDetailsProps) {
-  // Check if time should be shown - hide if empty or 12:00 AM (midnight)
-  const shouldShowTime = dueTime && dueTime !== "" && dueTime !== "00:00";
+  // Check if time should be shown - hide if empty or 00:00 (midnight)
+  const shouldShowTime = dueDate && 
+    (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0);
+  
+  const timeString = shouldShowTime ? format(dueDate, "HH:mm") : "";
   
   return (
     <div className="flex-1 min-w-0">
@@ -47,7 +50,7 @@ export function TaskItemDetails({
               {shouldShowTime && (
                 <span className="flex items-center">
                   <Clock className="h-3 w-3 mx-1" />
-                  {dueTime}
+                  {timeString}
                 </span>
               )}
             </span>

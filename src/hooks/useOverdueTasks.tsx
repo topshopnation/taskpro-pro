@@ -1,20 +1,16 @@
 
-import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/components/tasks/TaskItem";
-import { useTaskRealtime } from "@/hooks/useTaskRealtime";
-import { getEndOfYesterday } from "@/utils/overdueTaskUtils";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
+import { Task } from "@/components/tasks/TaskItem"
+import { startOfDay } from "date-fns"
 
 export function useOverdueTasks(userId: string | undefined) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  const fetchOverdueTasks = useCallback(async () => {
-    if (!userId) return [];
+  const fetchOverdueTasks = async () => {
+    if (!userId) return []
     
-    // Use end of yesterday as the cutoff point to exclude today's tasks
-    const endOfYesterday = getEndOfYesterday();
+    // Using start of today as the cutoff point to exclude today's tasks
+    const startOfToday = startOfDay(new Date())
     
     try {
       const { data, error } = await supabase
@@ -22,9 +18,10 @@ export function useOverdueTasks(userId: string | undefined) {
         .select('*, projects(name, color)')
         .eq('user_id', userId)
         .eq('completed', false)
-        .lt('due_date', endOfYesterday.toISOString())
+        .lt('due_date', startOfToday.toISOString())
+        .not('due_date', 'is', null)
         
-      if (error) throw error;
+      if (error) throw error
       
       return data.map((task: any) => ({
         id: task.id,
@@ -38,34 +35,18 @@ export function useOverdueTasks(userId: string | undefined) {
         section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
-      }));
+      }))
     } catch (error: any) {
       toast.error("Failed to fetch overdue tasks", {
         description: error.message
-      });
-      return [];
+      })
+      return []
     }
-  }, [userId]);
+  }
   
-  const { data, isLoading, refetch } = useQuery({
+  return useQuery({
     queryKey: ['overdue-tasks', userId],
     queryFn: fetchOverdueTasks,
     enabled: !!userId
-  });
-  
-  useEffect(() => {
-    if (data) {
-      setTasks(data);
-    }
-  }, [data]);
-
-  useTaskRealtime(userId ? { id: userId } : null, () => {
-    refetch();
-  });
-
-  return {
-    tasks,
-    isLoading,
-    refetch
-  };
+  })
 }
