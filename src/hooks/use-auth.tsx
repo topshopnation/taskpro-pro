@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Provider } from "@/contexts/auth-context";
 
 interface UserDetails {
   id: string;
@@ -17,8 +18,12 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  signInWithProvider: (provider: Provider) => Promise<void>;
+  updateProfile: (data: { firstName?: string; lastName?: string; avatarUrl?: string }) => Promise<void>;
   user: UserDetails | null;
+  session: any | null;
   isLoading: boolean;
+  loading: boolean; // Alias for isLoading for compatibility
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,6 +40,7 @@ export function useAuth() {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -43,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
+        setSession(session);
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -73,6 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
+          setSession(session);
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -95,11 +103,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
           }
           
-          // Removed the login success notification
-          
           navigate('/today');
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          setSession(null);
           navigate('/auth');
         }
       }
@@ -127,15 +134,74 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error };
     }
   };
+  
+  const signInWithProvider = async (provider: Provider) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+  
+  const updateProfile = async (data: { firstName?: string; lastName?: string; avatarUrl?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          avatar_url: data.avatarUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user?.id);
+        
+      if (error) throw error;
+      
+      // Update local user state
+      setUser(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          firstName: data.firstName || prev.firstName,
+          lastName: data.lastName || prev.lastName,
+          avatarUrl: data.avatarUrl || prev.avatarUrl
+        };
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return Promise.reject(error);
+    }
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
     toast.success("Signed out successfully");
   };
 
   return (
-    <AuthContext.Provider value={{ user, signUp, signIn, signOut, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      signUp, 
+      signIn, 
+      signOut, 
+      signInWithProvider, 
+      updateProfile,
+      isLoading,
+      loading: isLoading // Alias for backward compatibility
+    }}>
       {children}
     </AuthContext.Provider>
   );
