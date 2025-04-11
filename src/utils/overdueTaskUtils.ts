@@ -1,6 +1,6 @@
 
 import { Task } from "@/components/tasks/TaskItem"
-import { format, startOfDay } from "date-fns"
+import { format, startOfDay, endOfDay } from "date-fns"
 
 export function sortTasks(tasks: Task[], sortBy: string, sortDirection: "asc" | "desc"): Task[] {
   return [...tasks].sort((a, b) => {
@@ -63,7 +63,14 @@ export function getTodayDate(): string {
   return format(today, 'yyyy-MM-dd')
 }
 
-// New function to get the start of today for comparison
+// Updated function to get the start of today for comparison
 export function getStartOfToday(): Date {
   return startOfDay(new Date())
+}
+
+// New function to get the end of yesterday
+export function getEndOfYesterday(): Date {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return endOfDay(yesterday);
 }
