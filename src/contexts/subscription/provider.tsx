@@ -34,7 +34,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
           trial_start_date: trialStartDate,
           trial_end_date: trialEndDate,
           current_period_start: currentPeriodStart,
-          current_period_end: currentPeriodEnd
+          current_period_end: currentPeriodEnd,
+          updated_at: new Date().toISOString()
         })
         .eq("user_id", user.id);
       
@@ -77,10 +78,30 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         };
         setSubscription(typedData);
         
-        const status = updateSubscriptionStatus(typedData);
-        setIsActive(status.isActive);
-        setIsTrialActive(status.isTrialActive);
-        setDaysRemaining(status.daysRemaining);
+        // Check if subscription has expired but hasn't been updated in the database
+        const now = new Date();
+        const periodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
+        
+        if (data.status === 'active' && periodEnd && periodEnd < now) {
+          // Subscription has expired, update in database
+          await updateSubscription({
+            status: 'expired',
+          });
+          
+          const status = updateSubscriptionStatus({
+            ...typedData,
+            status: 'expired'
+          });
+          
+          setIsActive(status.isActive);
+          setIsTrialActive(status.isTrialActive);
+          setDaysRemaining(status.daysRemaining);
+        } else {
+          const status = updateSubscriptionStatus(typedData);
+          setIsActive(status.isActive);
+          setIsTrialActive(status.isTrialActive);
+          setDaysRemaining(status.daysRemaining);
+        }
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
@@ -89,6 +110,32 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
     }
   };
+
+  // Check subscription expiration periodically
+  useEffect(() => {
+    if (!user || !subscription) return;
+    
+    // Set up interval to check subscription status every hour
+    const checkInterval = setInterval(() => {
+      const status = updateSubscriptionStatus(subscription);
+      
+      // If status has changed, update state and potentially database
+      if (status.isActive !== isActive || status.isTrialActive !== isTrialActive) {
+        setIsActive(status.isActive);
+        setIsTrialActive(status.isTrialActive);
+        setDaysRemaining(status.daysRemaining);
+        
+        // If subscription has expired, update it in the database
+        if (!status.isActive && !status.isTrialActive && subscription.status === 'active') {
+          updateSubscription({
+            status: 'expired'
+          });
+        }
+      }
+    }, 60 * 60 * 1000); // Check every hour
+    
+    return () => clearInterval(checkInterval);
+  }, [user, subscription, isActive, isTrialActive]);
 
   // Setup realtime subscription updates
   useEffect(() => {

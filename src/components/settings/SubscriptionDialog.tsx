@@ -1,3 +1,4 @@
+
 import { useSubscription } from "@/contexts/subscription";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,6 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Check, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -15,22 +18,31 @@ interface SubscriptionDialogProps {
 
 export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionDialogProps) {
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "venmo">("paypal");
   const { updateSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
+  const location = useLocation();
   
-  const handleUpgrade = async () => {
+  // PayPal return handling
+  useEffect(() => {
+    // Check for PayPal success parameters in URL
+    const urlParams = new URLSearchParams(location.search);
+    const paymentSuccess = urlParams.get('payment_success');
+    const paymentType = urlParams.get('plan_type');
+    
+    if (paymentSuccess === 'true' && (paymentType === 'monthly' || paymentType === 'yearly')) {
+      handleSuccessfulPayment(paymentType);
+    }
+  }, [location]);
+  
+  const handleSuccessfulPayment = async (paymentType: 'monthly' | 'yearly') => {
     setIsProcessing(true);
     
     try {
-      // In a production app, here you would handle the payment processing
-      // For now we'll just simulate a successful payment
-      
       // Calculate the new period end date based on plan type
       const currentDate = new Date();
       const periodEnd = new Date(currentDate);
       
-      if (planType === "monthly") {
+      if (paymentType === "monthly") {
         periodEnd.setMonth(periodEnd.getMonth() + 1);
       } else {
         periodEnd.setFullYear(periodEnd.getFullYear() + 1);
@@ -39,36 +51,42 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       // Update the subscription in the database
       await updateSubscription({
         status: "active",
-        planType,
+        planType: paymentType,
         currentPeriodStart: currentDate.toISOString(),
         currentPeriodEnd: periodEnd.toISOString()
       });
       
-      toast.success(`Successfully upgraded to ${planType} plan`);
-      onOpenChange(false);
+      toast.success(`Successfully upgraded to ${paymentType} plan`);
     } catch (error) {
-      console.error("Error upgrading subscription:", error);
-      toast.error("Failed to process payment. Please try again.");
+      console.error("Error processing payment confirmation:", error);
+      toast.error("Failed to activate subscription. Please contact support.");
     } finally {
       setIsProcessing(false);
+      
+      // Clean up URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_success');
+      url.searchParams.delete('plan_type');
+      window.history.replaceState({}, document.title, url.toString());
     }
   };
   
   const openPaymentLink = () => {
     let paymentUrl = "";
     
-    if (paymentMethod === "paypal") {
-      const amount = planType === "monthly" ? "3.00" : "30.00";
-      const description = `TaskPro ${planType} subscription`;
-      paymentUrl = `https://www.paypal.com/paypalme/payments@taskpro.pro/${amount}?description=${encodeURIComponent(description)}`;
-    } else if (paymentMethod === "venmo") {
-      paymentUrl = "https://venmo.com/taskpro-app";
+    if (planType === "monthly") {
+      paymentUrl = "https://www.paypal.com/ncp/payment/CGBFJLX2VMHCA";
+    } else if (planType === "yearly") {
+      paymentUrl = "https://www.paypal.com/ncp/payment/G226AU9Q5AW2S";
     }
+    
+    // Append return parameters to track payment type
+    paymentUrl += `?return=${encodeURIComponent(window.location.origin + window.location.pathname + "?payment_success=true&plan_type=" + planType)}`;
     
     // Open payment link in a new window
     if (paymentUrl) {
       window.open(paymentUrl, "_blank");
-      toast.info("After completing payment, return here to activate your subscription");
+      toast.info("After completing payment, return to this page to activate your subscription");
     }
   };
   
@@ -142,35 +160,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             </RadioGroup>
           </div>
           
-          <div>
-            <Label className="text-base">Payment method</Label>
-            <RadioGroup 
-              value={paymentMethod} 
-              onValueChange={(value) => setPaymentMethod(value as "paypal" | "venmo")}
-              className="grid gap-2 mt-2"
-            >
-              <div className={`flex items-center p-3 border rounded-lg ${paymentMethod === "paypal" ? "border-primary" : ""}`}>
-                <RadioGroupItem value="paypal" id="paypal" />
-                <Label htmlFor="paypal" className="flex items-center pl-2 cursor-pointer">
-                  <div className="w-8 h-8 mr-2 flex items-center justify-center">
-                    <img src="https://cdn.cdnlogo.com/logos/p/42/paypal.svg" alt="PayPal" className="h-6" />
-                  </div>
-                  <span>PayPal</span>
-                </Label>
-              </div>
-              
-              <div className={`flex items-center p-3 border rounded-lg ${paymentMethod === "venmo" ? "border-primary" : ""}`}>
-                <RadioGroupItem value="venmo" id="venmo" />
-                <Label htmlFor="venmo" className="flex items-center pl-2 cursor-pointer">
-                  <div className="w-8 h-8 mr-2 flex items-center justify-center">
-                    <img src="https://cdn.cdnlogo.com/logos/v/81/venmo.svg" alt="Venmo" className="h-6" />
-                  </div>
-                  <span>Venmo</span>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
           <div className="bg-muted/50 p-4 rounded-lg">
             <div className="flex justify-between items-start">
               <div>
@@ -190,7 +179,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             Cancel
           </Button>
           <Button onClick={openPaymentLink} disabled={isProcessing}>
-            {isProcessing ? "Processing..." : `Pay with ${paymentMethod === "paypal" ? "PayPal" : "Venmo"}`}
+            {isProcessing ? "Processing..." : `Continue to PayPal`}
           </Button>
         </DialogFooter>
       </DialogContent>
