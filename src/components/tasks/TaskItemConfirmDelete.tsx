@@ -63,7 +63,7 @@ export function TaskItemConfirmDelete({
     setShowUndo(true);
   };
   
-  // Fix: Modified to properly return a Promise<void>
+  // Properly implement handleUndo to return Promise<void>
   const handleUndo = (): Promise<void> => {
     setShowUndo(false);
     onOpenChange(false);
@@ -102,7 +102,7 @@ export function TaskItemConfirmDelete({
               <Progress value={progress} className="h-2" />
             </div>
             <AlertDialogFooter>
-              <Button onClick={handleUndo} disabled={isUpdating}>
+              <Button onClick={() => handleUndo()} disabled={isUpdating}>
                 Undo
               </Button>
             </AlertDialogFooter>
