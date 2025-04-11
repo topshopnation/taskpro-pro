@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/contexts/subscription-context";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface SubscriptionCardProps {
   onUpgrade: () => void;
@@ -17,9 +18,17 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     subscription, 
     loading, 
     isActive, 
-    isTrialActive, 
-    formattedExpiryDate 
+    isTrialActive,
+    daysRemaining
   } = useSubscription();
+  
+  const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (subscription?.current_period_end) {
+      setFormattedExpiryDate(format(new Date(subscription.current_period_end), 'MMMM d, yyyy'));
+    }
+  }, [subscription]);
 
   if (loading) {
     return (
@@ -73,13 +82,13 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isTrialActive && subscription?.daysRemaining !== null && (
+        {isTrialActive && daysRemaining !== null && (
           <div className="mb-6">
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Trial Period</span>
-              <span className="text-sm text-muted-foreground">{subscription.daysRemaining} days left</span>
+              <span className="text-sm text-muted-foreground">{daysRemaining} days left</span>
             </div>
-            <Progress value={(subscription.daysRemaining / 14) * 100} className="h-2" />
+            <Progress value={(daysRemaining / 14) * 100} className="h-2" />
           </div>
         )}
 
@@ -88,7 +97,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             <div>
               <h4 className="font-medium">Current Plan</h4>
               <p className="text-sm text-muted-foreground">
-                TaskPro Pro ({subscription.planType === 'monthly' ? 'Monthly' : 'Yearly'})
+                TaskPro Pro ({subscription.plan_type === 'monthly' ? 'Monthly' : 'Yearly'})
               </p>
               {formattedExpiryDate && (
                 <p className="text-xs text-muted-foreground mt-1">

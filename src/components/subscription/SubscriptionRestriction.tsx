@@ -10,7 +10,7 @@ interface SubscriptionRestrictionProps {
 }
 
 export function SubscriptionRestriction({ children }: SubscriptionRestrictionProps) {
-  const { isActive, subscription, loading } = useSubscription();
+  const { isActive, subscription, loading, daysRemaining } = useSubscription();
   const navigate = useNavigate();
 
   if (loading) {
@@ -39,14 +39,14 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
           <AlertTriangle className="h-5 w-5" />
           <AlertTitle className="text-xl">Subscription Required</AlertTitle>
           <AlertDescription className="mt-2">
-            {subscription?.status === 'trial' && subscription.daysRemaining !== null && subscription.daysRemaining <= 0 ? (
-              <span>Your free trial has expired. Upgrade now to continue using TaskPro.</span>
+            {subscription?.status === 'trial' && daysRemaining <= 0 ? (
+              <span>Your free trial has expired. Upgrade now to continue using TaskPro for only $3/month.</span>
             ) : subscription?.status === 'expired' ? (
-              <span>Your subscription has expired. Please renew to continue using TaskPro.</span>
+              <span>Your subscription has expired. Please renew for only $3/month to continue using TaskPro.</span>
             ) : subscription?.status === 'canceled' ? (
-              <span>Your subscription has been canceled. Reactivate your subscription to continue using TaskPro.</span>
+              <span>Your subscription has been canceled. Reactivate your subscription for $3/month to continue using TaskPro.</span>
             ) : (
-              <span>A subscription is required to use this feature.</span>
+              <span>A subscription is required to use this feature. Subscribe for just $3/month.</span>
             )}
             <div className="mt-4">
               <Button 

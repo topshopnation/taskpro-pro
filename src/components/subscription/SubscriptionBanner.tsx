@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export function SubscriptionBanner() {
-  const { subscription, isActive, isTrialActive } = useSubscription();
+  const { subscription, isActive, isTrialActive, daysRemaining } = useSubscription();
   const [dismissed, setDismissed] = useState(false);
   const navigate = useNavigate();
   
@@ -15,15 +15,15 @@ export function SubscriptionBanner() {
   if (isActive || dismissed) return null;
   
   // Trial with less than 3 days remaining - show warning
-  if (isTrialActive && subscription?.daysRemaining !== null && subscription.daysRemaining <= 3) {
+  if (isTrialActive && daysRemaining <= 3) {
     return (
       <Alert className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Clock className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
-              Your free trial ends in {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''}. 
-              Upgrade now to keep access to all features.
+              Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. 
+              Upgrade now to keep access to all features for only $3/month.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export function SubscriptionBanner() {
           <div className="flex items-center">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
-              Your subscription has expired. Renew now to regain full access to TaskPro.
+              Your subscription has expired. Renew now for only $3/month to regain full access to TaskPro.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function SubscriptionStatus() {
-  const { isActive, isTrialActive, subscription, loading } = useSubscription();
+  const { isActive, isTrialActive, subscription, loading, daysRemaining } = useSubscription();
   const navigate = useNavigate();
   
   if (loading) return null;
@@ -26,7 +26,7 @@ export function SubscriptionStatus() {
           >
             <Clock className="h-3 w-3" />
             {isTrialActive ? (
-              <span>Trial: {subscription.daysRemaining} days left</span>
+              <span>Trial: {daysRemaining} days left</span>
             ) : (
               <span>Subscription Expired</span>
             )}
@@ -34,8 +34,8 @@ export function SubscriptionStatus() {
         </TooltipTrigger>
         <TooltipContent>
           {isTrialActive 
-            ? "Your free trial is active. Click to upgrade." 
-            : "Your subscription has expired. Click to renew."}
+            ? "Your free trial is active. Click to upgrade for $3/month." 
+            : "Your subscription has expired. Click to renew for $3/month."}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

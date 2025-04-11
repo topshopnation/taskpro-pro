@@ -16,7 +16,7 @@ interface SubscriptionDialogProps {
 
 export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionDialogProps) {
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "venmo" | "applepay">("paypal");
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "venmo">("paypal");
   const { updateSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -59,16 +59,11 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     let paymentUrl = "";
     
     if (paymentMethod === "paypal") {
-      const amount = planType === "monthly" ? "9.99" : "99.99";
+      const amount = planType === "monthly" ? "3.00" : "30.00";
       const description = `TaskPro ${planType} subscription`;
       paymentUrl = `https://www.paypal.com/paypalme/payments@taskpro.pro/${amount}?description=${encodeURIComponent(description)}`;
     } else if (paymentMethod === "venmo") {
       paymentUrl = "https://venmo.com/taskpro-app";
-    } else if (paymentMethod === "applepay") {
-      // In a real implementation, Apple Pay would be handled differently
-      // This is just a placeholder for now
-      toast.info("Apple Pay is not yet implemented");
-      return;
     }
     
     // Open payment link in a new window
@@ -82,7 +77,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     if (planType === "monthly") {
       return (
         <div className="flex flex-col">
-          <span className="text-2xl font-bold">$9.99<span className="text-sm font-normal">/month</span></span>
+          <span className="text-2xl font-bold">$3.00<span className="text-sm font-normal">/month</span></span>
           <Badge variant="outline" className="mt-2 w-fit">
             Billed monthly
           </Badge>
@@ -91,7 +86,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     } else {
       return (
         <div className="flex flex-col">
-          <span className="text-2xl font-bold">$99.99<span className="text-sm font-normal">/year</span></span>
+          <span className="text-2xl font-bold">$30.00<span className="text-sm font-normal">/year</span></span>
           <Badge variant="secondary" className="mt-2 w-fit">
             Save 16%
           </Badge>
@@ -128,7 +123,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                   {planType === "monthly" && <Check className="h-5 w-5 text-primary" />}
                 </Label>
                 <div className="mt-auto pt-4">
-                  <p className="text-xl font-bold">$9.99<span className="text-sm font-normal">/mo</span></p>
+                  <p className="text-xl font-bold">$3.00<span className="text-sm font-normal">/mo</span></p>
                 </div>
               </div>
               
@@ -142,7 +137,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                   {planType === "yearly" && <Check className="h-5 w-5 text-primary" />}
                 </Label>
                 <div className="mt-auto pt-4">
-                  <p className="text-xl font-bold">$99.99<span className="text-sm font-normal">/yr</span></p>
+                  <p className="text-xl font-bold">$30.00<span className="text-sm font-normal">/yr</span></p>
                 </div>
               </div>
             </RadioGroup>
@@ -152,7 +147,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             <Label className="text-base">Payment method</Label>
             <RadioGroup 
               value={paymentMethod} 
-              onValueChange={(value) => setPaymentMethod(value as "paypal" | "venmo" | "applepay")}
+              onValueChange={(value) => setPaymentMethod(value as "paypal" | "venmo")}
               className="grid gap-2 mt-2"
             >
               <div className={`flex items-center p-3 border rounded-lg ${paymentMethod === "paypal" ? "border-primary" : ""}`}>
@@ -172,16 +167,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                     <img src="https://cdn.cdnlogo.com/logos/v/81/venmo.svg" alt="Venmo" className="h-6" />
                   </div>
                   <span>Venmo</span>
-                </Label>
-              </div>
-              
-              <div className={`flex items-center p-3 border rounded-lg ${paymentMethod === "applepay" ? "border-primary" : ""}`}>
-                <RadioGroupItem value="applepay" id="applepay" />
-                <Label htmlFor="applepay" className="flex items-center pl-2 cursor-pointer">
-                  <div className="w-8 h-8 mr-2 flex items-center justify-center">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <span>Apple Pay</span>
                 </Label>
               </div>
             </RadioGroup>
@@ -206,7 +191,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             Cancel
           </Button>
           <Button onClick={openPaymentLink} disabled={isProcessing}>
-            {isProcessing ? "Processing..." : `Pay with ${paymentMethod === "paypal" ? "PayPal" : paymentMethod === "venmo" ? "Venmo" : "Apple Pay"}`}
+            {isProcessing ? "Processing..." : `Pay with ${paymentMethod === "paypal" ? "PayPal" : "Venmo"}`}
           </Button>
         </DialogFooter>
       </DialogContent>

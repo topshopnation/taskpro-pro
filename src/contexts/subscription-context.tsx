@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 // Types for subscription status
 type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'canceled';
@@ -147,9 +149,15 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         } else {
           throw error;
         }
-      } else {
-        setSubscription(data);
-        updateSubscriptionStatus(data);
+      } else if (data) {
+        // Convert string status to proper SubscriptionStatus type
+        const typedData: Subscription = {
+          ...data,
+          status: data.status as SubscriptionStatus,
+          plan_type: data.plan_type as SubscriptionPlanType
+        };
+        setSubscription(typedData);
+        updateSubscriptionStatus(typedData);
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -171,8 +179,14 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         table: 'subscriptions',
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
-        setSubscription(payload.new as Subscription);
-        updateSubscriptionStatus(payload.new as Subscription);
+        const newData = payload.new as any;
+        const typedData: Subscription = {
+          ...newData,
+          status: newData.status as SubscriptionStatus,
+          plan_type: newData.plan_type as SubscriptionPlanType
+        };
+        setSubscription(typedData);
+        updateSubscriptionStatus(typedData);
       })
       .subscribe();
     
