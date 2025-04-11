@@ -37,15 +37,15 @@ function StatCard({ title, value, route, onClick }: StatCardProps) {
 
 interface StatCardsProps {
   todayCount: number;
-  favoritesCount?: number;
+  overdueCount: number;
   highPriorityCount: number;
 }
 
-export function StatCards({ todayCount, favoritesCount = 0, highPriorityCount }: StatCardsProps) {
+export function StatCards({ todayCount, overdueCount, highPriorityCount }: StatCardsProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <StatCard title="Tasks Due Today" value={todayCount} route="/today" />
-      <StatCard title="Favorite Tasks" value={favoritesCount} />
+      <StatCard title="Overdue Tasks" value={overdueCount} route="/overdue" />
       <StatCard title="High Priority Tasks" value={highPriorityCount} />
     </div>
   );

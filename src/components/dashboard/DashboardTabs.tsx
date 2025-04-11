@@ -3,11 +3,9 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Task } from "@/components/tasks/TaskItem";
 import { DashboardCharts } from "./DashboardCharts";
-import { CompletedTasksStats } from "./CompletedTasksStats";
 
 interface DashboardTabsProps {
   todayTasks: Task[];
-  favoriteTasks: Task[];
   highPriorityTasks: Task[];
   allTasks: Task[];
   onComplete: (taskId: string, completed: boolean) => void;
@@ -17,7 +15,6 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({
   todayTasks,
-  favoriteTasks,
   highPriorityTasks,
   allTasks,
   onComplete,
@@ -28,25 +25,14 @@ export function DashboardTabs({
     <Tabs defaultValue="today" className="space-y-4">
       <TabsList>
         <TabsTrigger value="today">Today</TabsTrigger>
-        <TabsTrigger value="favorites">Favorites</TabsTrigger>
         <TabsTrigger value="highPriority">High Priority</TabsTrigger>
         <TabsTrigger value="stats">Statistics</TabsTrigger>
-        <TabsTrigger value="completed">Completed</TabsTrigger>
       </TabsList>
       <TabsContent value="today">
         <TaskList
           title="Tasks Due Today"
           tasks={todayTasks}
           emptyMessage="No tasks due today"
-          onComplete={onComplete}
-          onDelete={onDelete}
-        />
-      </TabsContent>
-      <TabsContent value="favorites">
-        <TaskList
-          title="Favorite Tasks"
-          tasks={favoriteTasks}
-          emptyMessage="No favorite tasks"
           onComplete={onComplete}
           onDelete={onDelete}
         />
@@ -62,9 +48,6 @@ export function DashboardTabs({
       </TabsContent>
       <TabsContent value="stats">
         <DashboardCharts tasks={allTasks} />
-      </TabsContent>
-      <TabsContent value="completed">
-        <CompletedTasksStats />
       </TabsContent>
     </Tabs>
   );
