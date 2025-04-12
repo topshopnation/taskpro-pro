@@ -11,8 +11,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("PayPal webhook received - starting processing");
-  console.log("==== TIMESTAMP ====", new Date().toISOString());
+  console.log("==================== WEBHOOK REQUEST RECEIVED ====================");
+  console.log("PayPal webhook received at:", new Date().toISOString());
+  console.log("Request method:", req.method);
+  console.log("Request URL:", req.url);
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -23,7 +25,8 @@ serve(async (req) => {
   try {
     // Print all request headers for debugging
     console.log("================ REQUEST HEADERS ================");
-    console.log("All request headers:", Object.fromEntries([...req.headers.entries()]));
+    const headersObj = Object.fromEntries([...req.headers.entries()]);
+    console.log("All request headers:", JSON.stringify(headersObj, null, 2));
     
     // Get the request body as text first to ensure we can see the raw payload
     const bodyText = await req.text();
@@ -65,9 +68,9 @@ serve(async (req) => {
 
     // Log whether this appears to be a simulator request
     const isSimulator = !paypalTransmissionId || 
-                        paypalTransmissionId?.includes("simulator") || 
-                        requestData?.id?.includes("WH-TEST") || 
-                        requestData?.test === true;
+                       paypalTransmissionId?.includes("simulator") || 
+                       requestData?.id?.includes("WH-TEST") || 
+                       requestData?.test === true;
     console.log("Is simulator request:", isSimulator);
 
     // Create a Supabase client
