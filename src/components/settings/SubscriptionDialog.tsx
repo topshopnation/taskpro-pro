@@ -96,13 +96,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     const encodedCustomData = encodeURIComponent(customData);
     
     if (planType === "monthly") {
-      paymentUrl = "https://www.paypal.com/ncp/payment/CGBFJLX2VMHCA";
+      paymentUrl = "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-65H54700W12667836M7423DA";
     } else if (planType === "yearly") {
-      paymentUrl = "https://www.paypal.com/ncp/payment/G226AU9Q5AW2S";
+      paymentUrl = "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-80L22294MH2379142M7422KA";
     }
     
     // Add custom data to the PayPal URL
-    paymentUrl += `?custom_id=${encodedCustomData}`;
+    paymentUrl += `&custom_id=${encodedCustomData}`;
     
     // Append return parameters to track payment type
     paymentUrl += `&return=${encodeURIComponent(window.location.origin + window.location.pathname + "?payment_success=true&plan_type=" + planType)}`;
