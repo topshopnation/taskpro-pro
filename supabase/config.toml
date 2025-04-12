@@ -40,3 +40,4 @@ enable_signup = true
 [functions]
 [functions.paypal-webhook]
 verify_jwt = false
+
