@@ -21,30 +21,10 @@ serve(async (req) => {
   }
 
   try {
-    // Verify that the request is coming from PayPal
-    const paypalWebhookId = Deno.env.get("PAYPAL_WEBHOOK_ID");
-    console.log("PayPal Webhook ID from environment:", paypalWebhookId || "Not set");
-    
-    // Get PayPal headers for verification
-    const paypalTransmissionId = req.headers.get("paypal-transmission-id");
-    const paypalTimestamp = req.headers.get("paypal-transmission-time");
-    const paypalSignature = req.headers.get("paypal-transmission-sig");
-    const paypalCertUrl = req.headers.get("paypal-cert-url");
-    
+    // Print all request headers for debugging
     console.log("================ REQUEST HEADERS ================");
-    // Log all request headers for debugging
     console.log("All request headers:", Object.fromEntries([...req.headers.entries()]));
     
-    // Log PayPal specific headers
-    console.log("================ PAYPAL HEADERS ================");
-    console.log("PayPal Headers:", {
-      paypalTransmissionId,
-      paypalTimestamp,
-      paypalSignature,
-      paypalCertUrl,
-      paypalWebhookId,
-    });
-
     // Get the request body as text first to ensure we can see the raw payload
     const bodyText = await req.text();
     console.log("================ RAW REQUEST BODY ================");
@@ -67,8 +47,23 @@ serve(async (req) => {
       );
     }
 
+    // Get PayPal headers for verification
+    const paypalTransmissionId = req.headers.get("paypal-transmission-id");
+    const paypalTimestamp = req.headers.get("paypal-transmission-time");
+    const paypalSignature = req.headers.get("paypal-transmission-sig");
+    const paypalCertUrl = req.headers.get("paypal-cert-url");
+    const paypalWebhookId = Deno.env.get("PAYPAL_WEBHOOK_ID");
+    
+    console.log("================ PAYPAL HEADERS ================");
+    console.log("PayPal Headers:", {
+      paypalTransmissionId,
+      paypalTimestamp,
+      paypalSignature,
+      paypalCertUrl,
+      paypalWebhookId,
+    });
+
     // Log whether this appears to be a simulator request
-    // PayPal simulator requests can be identified by specific patterns in the IDs or by the source IP
     const isSimulator = !paypalTransmissionId || 
                         paypalTransmissionId?.includes("simulator") || 
                         requestData?.id?.includes("WH-TEST") || 
