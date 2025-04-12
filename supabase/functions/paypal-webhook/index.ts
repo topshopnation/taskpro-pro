@@ -26,7 +26,10 @@ serve(async (req) => {
     const paypalSignature = req.headers.get("paypal-transmission-sig");
     const paypalCertUrl = req.headers.get("paypal-cert-url");
     
-    // For now, we'll log these but implement proper verification later
+    // Log all request headers for debugging
+    console.log("All request headers:", Object.fromEntries([...req.headers.entries()]));
+    
+    // Log PayPal specific headers
     console.log("PayPal Headers:", {
       paypalTransmissionId,
       paypalTimestamp,
@@ -37,7 +40,11 @@ serve(async (req) => {
 
     // Get the webhook event data
     const requestData = await req.json();
-    console.log("PayPal Webhook Event:", JSON.stringify(requestData));
+    console.log("PayPal Webhook Event:", JSON.stringify(requestData, null, 2));
+
+    // Log whether this appears to be a simulator request
+    const isSimulator = !paypalTransmissionId || paypalTransmissionId.includes("simulator");
+    console.log("Is simulator request:", isSimulator);
 
     // Create a Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -49,9 +56,10 @@ serve(async (req) => {
     ) {
       // Extract relevant data from the webhook
       const paymentData = requestData.resource;
+      console.log("Payment data:", JSON.stringify(paymentData, null, 2));
       
       // Check if this is a subscription payment
-      const billingAgreementId = paymentData.billing_agreement_id;
+      const billingAgreementId = paymentData?.billing_agreement_id;
       if (!billingAgreementId) {
         console.log("Not a subscription payment, ignoring");
         return new Response(JSON.stringify({ success: true }), {
@@ -66,7 +74,16 @@ serve(async (req) => {
       // PayPal passes this in the custom_id field or in the custom field
       const customData = paymentData.custom || paymentData.custom_id;
       
-      if (!customData) {
+      // For simulator requests, create mock data if customData is missing
+      let userData;
+      
+      if (!customData && isSimulator) {
+        console.log("Simulator detected with no custom data, creating mock data for testing");
+        userData = {
+          user_id: "test-user-id-from-simulator",
+          plan_type: "monthly"
+        };
+      } else if (!customData) {
         console.log("No custom data found in PayPal webhook");
         return new Response(
           JSON.stringify({ error: "Missing custom data" }),
@@ -75,28 +92,27 @@ serve(async (req) => {
             status: 400,
           }
         );
-      }
-
-      // Parse the custom data
-      // Format should be: {"user_id":"some-uuid","plan_type":"monthly|yearly"}
-      let userData;
-      try {
-        userData = JSON.parse(customData);
-      } catch (e) {
-        console.error("Failed to parse custom data:", customData);
-        return new Response(
-          JSON.stringify({ error: "Invalid custom data format" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
+      } else {
+        // Parse the custom data from real request
+        // Format should be: {"user_id":"some-uuid","plan_type":"monthly|yearly"}
+        try {
+          userData = JSON.parse(customData);
+        } catch (e) {
+          console.error("Failed to parse custom data:", customData, e);
+          return new Response(
+            JSON.stringify({ error: "Invalid custom data format" }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 400,
+            }
+          );
+        }
       }
 
       const { user_id, plan_type } = userData;
       
       if (!user_id || !plan_type) {
-        console.error("Missing user_id or plan_type in custom data:", userData);
+        console.error("Missing user_id or plan_type in parsed data:", userData);
         return new Response(
           JSON.stringify({ error: "Missing user_id or plan_type" }),
           {
@@ -116,7 +132,30 @@ serve(async (req) => {
         periodEnd.setFullYear(periodEnd.getFullYear() + 1);
       }
 
-      // Update the subscription in the database
+      // For simulator requests, skip DB update but log what would happen
+      if (isSimulator && user_id === "test-user-id-from-simulator") {
+        console.log("SIMULATOR TEST: Would update subscription with the following data:", {
+          user_id,
+          plan_type,
+          status: "active",
+          current_period_start: currentDate.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            test_mode: true,
+            message: "Simulator test successful - no database changes made" 
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
+      }
+
+      // Update the subscription in the database for real requests
       const { data, error } = await supabase
         .from("subscriptions")
         .update({
