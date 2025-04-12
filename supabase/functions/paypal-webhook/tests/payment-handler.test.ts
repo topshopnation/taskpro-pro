@@ -6,6 +6,7 @@ import { spy, stub } from "https://deno.land/std@0.177.0/testing/mock.ts";
 // Mock the dependencies
 import * as userData from "../user-data.ts";
 import * as supabaseClient from "../supabase-client.ts";
+import * as subscriptionService from "../subscription-service.ts";
 
 Deno.test("handlePaymentEvent - simulator mode", async () => {
   const testRequestData = {
@@ -47,14 +48,16 @@ Deno.test("handlePaymentEvent - subscription payment", async () => {
     })
   );
   
-  // Mock the Supabase client and its from().update() chain
-  const mockUpdate = spy(() => ({ data: {}, error: null }));
-  const mockEq = spy(() => ({ data: {}, error: null, update: mockUpdate }));
-  const mockFrom = spy(() => ({ eq: mockEq, update: mockUpdate }));
-  
-  stub(supabaseClient, "getSupabaseClient", () => ({
-    from: mockFrom
-  }));
+  // Mock the updateSubscription function
+  const updateSubscriptionMock = stub(subscriptionService, "updateSubscription", () =>
+    Promise.resolve({
+      user_id: "real-user-123",
+      plan_type: "monthly",
+      status: "active",
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date().toISOString(),
+    })
+  );
   
   try {
     const response = await handlePaymentEvent(testRequestData, false);
@@ -63,19 +66,16 @@ Deno.test("handlePaymentEvent - subscription payment", async () => {
     const responseBody = await response.json();
     assertEquals(responseBody.success, true);
     
-    // Verify that the Supabase client was called correctly
-    assertEquals(mockFrom.calls.length, 1);
-    assertEquals(mockFrom.calls[0].args[0], "subscriptions");
-    
-    // Verify the update was called with the right user_id
-    assertEquals(mockEq.calls.length, 1);
-    assertEquals(mockEq.calls[0].args[0], "user_id");
-    assertEquals(mockEq.calls[0].args[1], "real-user-123");
-    
     // Verify that processCustomData was called
     assertEquals(processDataMock.calls.length, 1);
+    
+    // Verify that updateSubscription was called
+    assertEquals(updateSubscriptionMock.calls.length, 1);
+    assertEquals(updateSubscriptionMock.calls[0].args[0].user_id, "real-user-123");
+    assertEquals(updateSubscriptionMock.calls[0].args[0].plan_type, "monthly");
   } finally {
     // Clean up mocks
     processDataMock.restore();
+    updateSubscriptionMock.restore();
   }
 });
