@@ -1,14 +1,15 @@
+
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Check, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+import PlanSelector from "./subscription/PlanSelector";
+import SubscriptionSummary from "./subscription/SubscriptionSummary";
+import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -45,25 +46,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     setIsProcessing(true);
     
     try {
-      // Calculate the new period end date based on plan type
-      const currentDate = new Date();
-      const periodEnd = new Date(currentDate);
-      
-      if (paymentType === "monthly") {
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-      } else {
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-      }
-      
-      // Update the subscription in the database
-      await updateSubscription({
-        status: "active",
-        planType: paymentType,
-        currentPeriodStart: currentDate.toISOString(),
-        currentPeriodEnd: periodEnd.toISOString()
-      });
-      
-      toast.success(`Successfully upgraded to ${paymentType} plan`);
+      await processPaymentConfirmation(paymentType, updateSubscription);
     } catch (error) {
       console.error("Error processing payment confirmation:", error);
       toast.error("Failed to activate subscription. Please contact support.");
@@ -84,57 +67,12 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       return;
     }
     
-    let paymentUrl = "";
-    
-    // Create custom data for PayPal to pass back in webhooks
-    const customData = JSON.stringify({
-      user_id: user.id,
-      plan_type: planType
-    });
-    
-    // Encode the custom data for URL safety
-    const encodedCustomData = encodeURIComponent(customData);
-    
-    if (planType === "monthly") {
-      paymentUrl = "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-65H54700W12667836M7423DA";
-    } else if (planType === "yearly") {
-      paymentUrl = "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-80L22294MH2379142M7422KA";
-    }
-    
-    // Add custom data to the PayPal URL
-    paymentUrl += `&custom_id=${encodedCustomData}`;
-    
-    // Append return parameters to track payment type
-    paymentUrl += `&return=${encodeURIComponent(window.location.origin + window.location.pathname + "?payment_success=true&plan_type=" + planType)}`;
+    const paymentUrl = createPaymentUrl(planType, user.id);
     
     // Open payment link in a new window
     if (paymentUrl) {
       window.open(paymentUrl, "_blank");
       toast.info("After completing payment, return to this page to activate your subscription");
-    }
-  };
-  
-  const getPriceDisplay = () => {
-    if (planType === "monthly") {
-      return (
-        <div className="flex flex-col">
-          <span className="text-2xl font-bold">$3.00<span className="text-sm font-normal">/month</span></span>
-          <Badge variant="outline" className="mt-2 w-fit">
-            Billed monthly
-          </Badge>
-          <span className="text-xs text-muted-foreground mt-1">Auto-renews monthly</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex flex-col">
-          <span className="text-2xl font-bold">$30.00<span className="text-sm font-normal">/year</span></span>
-          <Badge variant="secondary" className="mt-2 w-fit">
-            Save 16%
-          </Badge>
-          <span className="text-xs text-muted-foreground mt-1">Auto-renews yearly</span>
-        </div>
-      );
     }
   };
   
@@ -149,57 +87,12 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
-          <div>
-            <Label className="text-base">Choose a plan</Label>
-            <RadioGroup 
-              value={planType} 
-              onValueChange={(value) => setPlanType(value as "monthly" | "yearly")}
-              className="grid grid-cols-2 gap-4 mt-2"
-            >
-              <div className={`flex flex-col p-4 border rounded-lg cursor-pointer ${planType === "monthly" ? "border-primary" : ""}`}
-                   onClick={() => setPlanType("monthly")}>
-                <RadioGroupItem value="monthly" id="monthly" className="sr-only" />
-                <Label htmlFor="monthly" className="flex justify-between items-start cursor-pointer">
-                  <div>
-                    <h3 className="font-medium">Monthly</h3>
-                    <p className="text-sm text-muted-foreground">Flexible payment</p>
-                  </div>
-                  {planType === "monthly" && <Check className="h-5 w-5 text-primary" />}
-                </Label>
-                <div className="mt-auto pt-4">
-                  <p className="text-xl font-bold">$3.00<span className="text-sm font-normal">/mo</span></p>
-                </div>
-              </div>
-              
-              <div className={`flex flex-col p-4 border rounded-lg cursor-pointer ${planType === "yearly" ? "border-primary" : ""}`}
-                   onClick={() => setPlanType("yearly")}>
-                <RadioGroupItem value="yearly" id="yearly" className="sr-only" />
-                <Label htmlFor="yearly" className="flex justify-between items-start cursor-pointer">
-                  <div>
-                    <h3 className="font-medium">Yearly</h3>
-                    <p className="text-sm text-muted-foreground">Save 16% annually</p>
-                  </div>
-                  {planType === "yearly" && <Check className="h-5 w-5 text-primary" />}
-                </Label>
-                <div className="mt-auto pt-4">
-                  <p className="text-xl font-bold">$30.00<span className="text-sm font-normal">/yr</span></p>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
+          <PlanSelector 
+            planType={planType} 
+            onPlanTypeChange={setPlanType} 
+          />
           
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium">TaskPro {planType === "monthly" ? "Monthly" : "Annual"} Plan</h3>
-                <div className="flex items-center text-sm text-muted-foreground mt-1">
-                  <CalendarDays className="h-4 w-4 mr-1" />
-                  <span>Auto-renews {planType === "monthly" ? "monthly" : "yearly"}</span>
-                </div>
-              </div>
-              {getPriceDisplay()}
-            </div>
-          </div>
+          <SubscriptionSummary planType={planType} />
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
             <p className="flex items-center">
