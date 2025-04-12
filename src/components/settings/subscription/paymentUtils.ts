@@ -7,6 +7,7 @@ export function createPaymentUrl(
   userId: string | undefined
 ): string {
   if (!userId) {
+    toast.error("User ID is missing. Please sign in again.");
     return "";
   }
   

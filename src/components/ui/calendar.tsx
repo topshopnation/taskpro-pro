@@ -25,6 +25,12 @@ function Calendar({
   const currentDate = new Date();
   const currentMonth = `${format(props.month || currentDate, "MMM yyyy")}`;
 
+  const handleQuickOptionClick = (date: Date | undefined) => {
+    if (onQuickOptionSelect) {
+      onQuickOptionSelect(date);
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-1">
       {showQuickOptions && (
@@ -32,7 +38,7 @@ function Calendar({
           {quickOptions.map((option) => (
             <button
               key={option.value}
-              onClick={() => onQuickOptionSelect?.(option.date)}
+              onClick={() => handleQuickOptionClick(option.date)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
                 props.selected && props.selected === option.date && "bg-primary/10"

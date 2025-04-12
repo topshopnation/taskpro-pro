@@ -21,7 +21,7 @@ export const getNextSaturday = () => {
 };
 
 // Get the date of the next weekend (Saturday)
-export const getNextWeekend = () => {
+export const getThisWeekend = () => {
   const today = getToday();
   const daysUntilSaturday = ((6 - today.getDay()) % 7);
   return addDays(today, daysUntilSaturday);
@@ -44,7 +44,7 @@ export const isTomorrow = (date: Date) => {
 
 // Check if a date is the next Saturday (this weekend)
 export const isThisWeekend = (date: Date) => {
-  const nextSat = getNextSaturday();
+  const nextSat = getThisWeekend();
   return isSameDay(date, nextSat);
 };
 
@@ -88,7 +88,7 @@ export const getDateLabelWithDay = (date: Date | undefined): { label: string; da
 export const getQuickDateOptions = () => {
   const today = getToday();
   const tomorrow = getTomorrow();
-  const nextWeekend = getNextWeekend();
+  const thisWeekend = getThisWeekend();
   const nextWeek = getNextMonday();
 
   return [
@@ -105,16 +105,16 @@ export const getQuickDateOptions = () => {
       value: "tomorrow"
     },
     {
-      label: "Next week",
+      label: "This Weekend",
+      day: `${format(thisWeekend, "EEE MMM d")}`,
+      date: thisWeekend,
+      value: "weekend"
+    },
+    {
+      label: "Next Week",
       day: `${format(nextWeek, "EEE MMM d")}`,
       date: nextWeek,
       value: "next-week"
-    },
-    {
-      label: "Next weekend",
-      day: `${format(nextWeekend, "EEE MMM d")}`,
-      date: nextWeekend,
-      value: "weekend"
     },
     {
       label: "No Date",

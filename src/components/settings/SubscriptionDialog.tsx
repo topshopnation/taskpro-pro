@@ -47,6 +47,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     
     try {
       await processPaymentConfirmation(paymentType, updateSubscription);
+      onOpenChange(false); // Close dialog after successful payment
     } catch (error) {
       console.error("Error processing payment confirmation:", error);
       toast.error("Failed to activate subscription. Please contact support.");
@@ -69,7 +70,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     
     const paymentUrl = createPaymentUrl(planType, user.id);
     
-    // Open payment link in a new window
+    // Only open if we got a valid URL (user ID was present)
     if (paymentUrl) {
       window.open(paymentUrl, "_blank");
       toast.info("After completing payment, return to this page to activate your subscription");
