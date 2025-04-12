@@ -1,6 +1,7 @@
 
 import { validateWebhookRequest } from "../validator.ts";
-import { assertEquals } from "https://deno.land/std@0.177.0/testing/asserts.ts";
+import { ValidationError } from "../error-utils.ts";
+import { assertEquals, assertRejects } from "https://deno.land/std@0.177.0/testing/asserts.ts";
 
 Deno.test("validateWebhookRequest - parses JSON correctly", async () => {
   const mockPayload = JSON.stringify({
@@ -33,7 +34,7 @@ Deno.test("validateWebhookRequest - detects simulator requests", async () => {
       "Content-Type": "application/json",
       "paypal-transmission-id": "simulator-12345"
     }),
-    body: JSON.stringify({ event_type: "TEST.EVENT" })
+    body: JSON.stringify({ event_type: "TEST.EVENT", resource: {} })
   });
   
   const result1 = await validateWebhookRequest(mockRequest1);
@@ -47,7 +48,8 @@ Deno.test("validateWebhookRequest - detects simulator requests", async () => {
     }),
     body: JSON.stringify({ 
       id: "WH-TEST-12345",
-      event_type: "TEST.EVENT" 
+      event_type: "TEST.EVENT",
+      resource: {}
     })
   });
   
@@ -62,7 +64,8 @@ Deno.test("validateWebhookRequest - detects simulator requests", async () => {
     }),
     body: JSON.stringify({ 
       test: true,
-      event_type: "TEST.EVENT" 
+      event_type: "TEST.EVENT",
+      resource: {}
     })
   });
   
@@ -79,11 +82,40 @@ Deno.test("validateWebhookRequest - handles invalid JSON", async () => {
     body: "{invalid-json}"
   });
   
-  try {
-    await validateWebhookRequest(mockRequest);
-    // Should not reach here
-    assertEquals(true, false, "Should have thrown an error");
-  } catch (error) {
-    assertEquals(error.message, "Invalid JSON payload");
-  }
+  await assertRejects(
+    async () => await validateWebhookRequest(mockRequest),
+    ValidationError,
+    "Invalid JSON payload"
+  );
+});
+
+Deno.test("validateWebhookRequest - validates required fields", async () => {
+  const mockRequest = new Request("https://example.com/webhook", {
+    method: "POST",
+    headers: new Headers({
+      "Content-Type": "application/json"
+    }),
+    body: JSON.stringify({ foo: "bar" }) // Missing event_type
+  });
+  
+  await assertRejects(
+    async () => await validateWebhookRequest(mockRequest),
+    ValidationError,
+    "Missing event_type in webhook payload"
+  );
+});
+
+Deno.test("validateWebhookRequest - rejects invalid HTTP method", async () => {
+  const mockRequest = new Request("https://example.com/webhook", {
+    method: "GET",
+    headers: new Headers({
+      "Content-Type": "application/json"
+    })
+  });
+  
+  await assertRejects(
+    async () => await validateWebhookRequest(mockRequest),
+    ValidationError,
+    "Invalid HTTP method: GET. Expected POST."
+  );
 });

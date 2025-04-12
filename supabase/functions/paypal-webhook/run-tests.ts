@@ -6,6 +6,7 @@ import "./tests/user-data.test.ts";
 import "./tests/payment-handler.test.ts";
 import "./tests/validator.test.ts";
 import "./tests/response.test.ts";
+import "./tests/error-utils.test.ts";
 
 runTests({
   // Filter which tests to run

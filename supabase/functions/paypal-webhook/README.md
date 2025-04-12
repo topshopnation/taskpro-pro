@@ -9,6 +9,16 @@ This Edge Function processes PayPal webhook events for subscription management.
 - Updates subscription status in the database
 - Processes custom data for user identification
 - Supports testing mode for development
+- Robust error handling and validation
+
+## Error Handling
+
+The webhook handler includes comprehensive error handling:
+
+- **Validation Errors**: Ensures all required fields and formats are valid
+- **Payment Processing Errors**: Handles issues with payment data
+- **Database Errors**: Manages database connection and query issues
+- **General Error Handling**: Catches and reports all other errors
 
 ## Testing
 
@@ -39,6 +49,7 @@ The function handles these PayPal webhook events:
 - `CHECKOUT.ORDER.APPROVED`
 - `BILLING.SUBSCRIPTION.CREATED`
 - `BILLING.SUBSCRIPTION.RENEWED`
+- `BILLING.SUBSCRIPTION.CANCELLED`
 
 ## Configuration
 

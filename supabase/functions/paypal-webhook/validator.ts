@@ -1,6 +1,6 @@
 
 import { logger } from "./logger.ts";
-import { createResponse } from "./response.ts";
+import { ValidationError } from "./error-utils.ts";
 
 /**
  * Validates the incoming webhook request, parsing the body and checking headers
@@ -10,23 +10,46 @@ export async function validateWebhookRequest(req: Request): Promise<{
   headersObj: Record<string, string>; 
   isSimulator: boolean;
 }> {
+  // Validate HTTP method
+  if (req.method !== "POST" && req.method !== "OPTIONS") {
+    throw new ValidationError(`Invalid HTTP method: ${req.method}. Expected POST.`);
+  }
+  
   // Print all request headers for debugging
   logger.section("REQUEST HEADERS");
   const headersObj = Object.fromEntries([...req.headers.entries()]);
   logger.info("All request headers:", JSON.stringify(headersObj, null, 2));
   
   // Get the request body as text first to ensure we can see the raw payload
-  const bodyText = await req.text();
-  logger.section("RAW REQUEST BODY", bodyText);
+  let bodyText: string;
+  try {
+    bodyText = await req.text();
+    if (!bodyText || bodyText.trim() === "") {
+      throw new ValidationError("Empty request body");
+    }
+    logger.section("RAW REQUEST BODY", bodyText);
+  } catch (e) {
+    logger.error("Failed to read request body:", e);
+    throw new ValidationError("Failed to read request body");
+  }
   
   // Parse the JSON
   let requestData;
   try {
     requestData = JSON.parse(bodyText);
     logger.section("WEBHOOK EVENT DATA", requestData);
+    
+    // Validate basic webhook structure
+    if (!requestData.event_type) {
+      throw new ValidationError("Missing event_type in webhook payload");
+    }
+    
+    if (!requestData.resource) {
+      throw new ValidationError("Missing resource data in webhook payload");
+    }
   } catch (e) {
     logger.error("Failed to parse webhook payload as JSON:", e);
-    throw new Error("Invalid JSON payload");
+    throw new ValidationError("Invalid JSON payload");
   }
 
   // Get PayPal headers for verification

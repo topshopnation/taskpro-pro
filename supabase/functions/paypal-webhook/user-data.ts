@@ -1,5 +1,6 @@
 
 import { logger } from "./logger.ts";
+import { ValidationError } from "./error-utils.ts";
 
 export type UserData = {
   user_id: string;
@@ -31,7 +32,13 @@ export async function processCustomData(
   // Parse the custom data from real request
   // Format should be: {"user_id":"some-uuid","plan_type":"monthly|yearly"}
   try {
-    const userData = JSON.parse(customData);
+    let userData: any;
+    try {
+      userData = JSON.parse(customData);
+    } catch (e) {
+      throw new ValidationError(`Invalid JSON format in custom data: ${customData}`);
+    }
+    
     logger.info("Successfully parsed custom data:", userData);
     
     // Validate the parsed data
@@ -39,8 +46,8 @@ export async function processCustomData(
     
     return userData;
   } catch (e) {
-    logger.error("Failed to parse custom data:", customData, e);
-    throw new Error("Invalid custom data format");
+    logger.error("Failed to process custom data:", customData, e);
+    throw e instanceof ValidationError ? e : new ValidationError(`Invalid custom data format: ${e.message}`);
   }
 }
 
@@ -48,13 +55,27 @@ export async function processCustomData(
  * Validates that the user data contains the required fields
  */
 function validateUserData(userData: any): asserts userData is UserData {
-  if (!userData.user_id || !userData.plan_type) {
-    logger.error("Missing user_id or plan_type in parsed data:", userData);
-    throw new Error("Missing user_id or plan_type");
+  if (!userData) {
+    throw new ValidationError("User data is null or undefined");
+  }
+  
+  if (typeof userData !== 'object') {
+    throw new ValidationError(`Expected user data to be an object, got ${typeof userData}`);
+  }
+  
+  if (!userData.user_id) {
+    throw new ValidationError("Missing user_id in custom data");
+  }
+  
+  if (typeof userData.user_id !== 'string') {
+    throw new ValidationError(`Expected user_id to be a string, got ${typeof userData.user_id}`);
+  }
+  
+  if (!userData.plan_type) {
+    throw new ValidationError("Missing plan_type in custom data");
   }
   
   if (userData.plan_type !== "monthly" && userData.plan_type !== "yearly") {
-    logger.error("Invalid plan_type in parsed data:", userData);
-    throw new Error("Invalid plan_type, must be 'monthly' or 'yearly'");
+    throw new ValidationError(`Invalid plan_type: ${userData.plan_type}, must be 'monthly' or 'yearly'`);
   }
 }

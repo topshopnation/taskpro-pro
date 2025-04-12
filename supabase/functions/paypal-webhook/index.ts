@@ -5,6 +5,7 @@ import { handlePaymentEvent } from "./payment-handler.ts";
 import { validateWebhookRequest } from "./validator.ts";
 import { createResponse } from "./response.ts";
 import { logger } from "./logger.ts";
+import { handleError } from "./error-utils.ts";
 
 serve(async (req) => {
   logger.info("==================== WEBHOOK REQUEST RECEIVED ====================");
@@ -27,7 +28,8 @@ serve(async (req) => {
       requestData.event_type === "PAYMENT.SALE.COMPLETED" ||
       requestData.event_type === "CHECKOUT.ORDER.APPROVED" ||
       requestData.event_type === "BILLING.SUBSCRIPTION.CREATED" ||
-      requestData.event_type === "BILLING.SUBSCRIPTION.RENEWED"
+      requestData.event_type === "BILLING.SUBSCRIPTION.RENEWED" ||
+      requestData.event_type === "BILLING.SUBSCRIPTION.CANCELLED"
     ) {
       logger.info("Processing payment/subscription event:", requestData.event_type);
       return await handlePaymentEvent(requestData, isSimulator);
@@ -35,9 +37,12 @@ serve(async (req) => {
 
     // For other event types, just acknowledge receipt
     logger.info("Received non-payment event type:", requestData.event_type);
-    return createResponse({ success: true, message: "Event received" }, 200);
+    return createResponse({ 
+      success: true, 
+      message: "Event received", 
+      event_type: requestData.event_type 
+    }, 200);
   } catch (error) {
-    logger.error("Webhook processing error:", error);
-    return createResponse({ error: error.message }, 500);
+    return handleError(error);
   }
 });

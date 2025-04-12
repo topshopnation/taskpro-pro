@@ -1,6 +1,7 @@
 
 import { processCustomData, UserData } from "../user-data.ts";
-import { assertEquals } from "https://deno.land/std@0.177.0/testing/asserts.ts";
+import { ValidationError } from "../error-utils.ts";
+import { assertEquals, assertRejects } from "https://deno.land/std@0.177.0/testing/asserts.ts";
 
 Deno.test("processCustomData - valid JSON input", async () => {
   const validJson = JSON.stringify({
@@ -15,16 +16,12 @@ Deno.test("processCustomData - valid JSON input", async () => {
 
 Deno.test("processCustomData - invalid JSON input", async () => {
   const invalidJson = "{broken-json}";
-  let error: Error | null = null;
   
-  try {
-    await processCustomData(invalidJson, false);
-  } catch (e) {
-    error = e;
-  }
-  
-  assertEquals(error instanceof Error, true);
-  assertEquals(error?.message, "Invalid custom data format");
+  await assertRejects(
+    async () => await processCustomData(invalidJson, false),
+    ValidationError,
+    "Invalid JSON format in custom data"
+  );
 });
 
 Deno.test("processCustomData - missing required fields", async () => {
@@ -33,16 +30,11 @@ Deno.test("processCustomData - missing required fields", async () => {
     // missing plan_type
   });
   
-  let error: Error | null = null;
-  
-  try {
-    await processCustomData(missingFieldsJson, false);
-  } catch (e) {
-    error = e;
-  }
-  
-  assertEquals(error instanceof Error, true);
-  assertEquals(error?.message, "Missing user_id or plan_type");
+  await assertRejects(
+    async () => await processCustomData(missingFieldsJson, false),
+    ValidationError,
+    "Missing plan_type in custom data"
+  );
 });
 
 Deno.test("processCustomData - invalid plan type", async () => {
@@ -51,16 +43,24 @@ Deno.test("processCustomData - invalid plan type", async () => {
     plan_type: "invalid-plan"
   });
   
-  let error: Error | null = null;
+  await assertRejects(
+    async () => await processCustomData(invalidPlanJson, false),
+    ValidationError,
+    "Invalid plan_type: invalid-plan, must be 'monthly' or 'yearly'"
+  );
+});
+
+Deno.test("processCustomData - non-string user_id", async () => {
+  const invalidUserIdJson = JSON.stringify({
+    user_id: 12345,
+    plan_type: "monthly"
+  });
   
-  try {
-    await processCustomData(invalidPlanJson, false);
-  } catch (e) {
-    error = e;
-  }
-  
-  assertEquals(error instanceof Error, true);
-  assertEquals(error?.message, "Invalid plan_type, must be 'monthly' or 'yearly'");
+  await assertRejects(
+    async () => await processCustomData(invalidUserIdJson, false),
+    ValidationError,
+    "Expected user_id to be a string"
+  );
 });
 
 Deno.test("processCustomData - simulator mode", async () => {
