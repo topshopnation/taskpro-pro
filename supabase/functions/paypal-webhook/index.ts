@@ -12,6 +12,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log("PayPal webhook received - starting processing");
+  console.log("==== TIMESTAMP ====", new Date().toISOString());
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -44,13 +45,34 @@ serve(async (req) => {
       paypalWebhookId,
     });
 
-    // Get the webhook event data
-    const requestData = await req.json();
-    console.log("================ WEBHOOK EVENT DATA ================");
-    console.log("PayPal Webhook Event:", JSON.stringify(requestData, null, 2));
+    // Get the request body as text first to ensure we can see the raw payload
+    const bodyText = await req.text();
+    console.log("================ RAW REQUEST BODY ================");
+    console.log("Raw request body:", bodyText);
+    
+    // Parse the JSON
+    let requestData;
+    try {
+      requestData = JSON.parse(bodyText);
+      console.log("================ WEBHOOK EVENT DATA ================");
+      console.log("PayPal Webhook Event:", JSON.stringify(requestData, null, 2));
+    } catch (e) {
+      console.error("Failed to parse webhook payload as JSON:", e);
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON payload" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
 
     // Log whether this appears to be a simulator request
-    const isSimulator = !paypalTransmissionId || paypalTransmissionId.includes("simulator");
+    // PayPal simulator requests can be identified by specific patterns in the IDs or by the source IP
+    const isSimulator = !paypalTransmissionId || 
+                        paypalTransmissionId?.includes("simulator") || 
+                        requestData?.id?.includes("WH-TEST") || 
+                        requestData?.test === true;
     console.log("Is simulator request:", isSimulator);
 
     // Create a Supabase client
@@ -71,9 +93,11 @@ serve(async (req) => {
     // Check if it's a payment completion event
     if (
       requestData.event_type === "PAYMENT.SALE.COMPLETED" ||
+      requestData.event_type === "CHECKOUT.ORDER.APPROVED" ||
+      requestData.event_type === "BILLING.SUBSCRIPTION.CREATED" ||
       requestData.event_type === "BILLING.SUBSCRIPTION.RENEWED"
     ) {
-      console.log("Processing payment completion event:", requestData.event_type);
+      console.log("Processing payment/subscription event:", requestData.event_type);
       
       // Extract relevant data from the webhook
       const paymentData = requestData.resource;
@@ -81,26 +105,22 @@ serve(async (req) => {
       
       // Check if this is a subscription payment
       const billingAgreementId = paymentData?.billing_agreement_id;
-      if (!billingAgreementId) {
-        console.log("Not a subscription payment, ignoring");
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
+      if (!billingAgreementId && !isSimulator) {
+        console.log("Not a subscription payment, but will process anyway for testing");
+      } else {
+        console.log("Processing subscription with billing agreement:", billingAgreementId || "SIMULATOR_TEST");
       }
-
-      console.log("Processing subscription renewal for billing agreement:", billingAgreementId);
 
       // Extract custom field containing plan type and user ID
       // PayPal passes this in the custom_id field or in the custom field
-      const customData = paymentData.custom || paymentData.custom_id;
+      const customData = paymentData?.custom || paymentData?.custom_id;
       console.log("Custom data from PayPal:", customData);
       
-      // For simulator requests, create mock data if customData is missing
+      // For simulator requests, always create mock data
       let userData;
       
-      if (!customData && isSimulator) {
-        console.log("Simulator detected with no custom data, creating mock data for testing");
+      if (isSimulator) {
+        console.log("Simulator detected, creating mock data for testing");
         userData = {
           user_id: "test-user-id-from-simulator",
           plan_type: "monthly"
@@ -162,9 +182,9 @@ serve(async (req) => {
         plan_type
       });
 
-      // For simulator requests, skip DB update but log what would happen
-      if (isSimulator && user_id === "test-user-id-from-simulator") {
-        console.log("SIMULATOR TEST: Would update subscription with the following data:", {
+      // For simulator requests or test mode, skip DB update but log what would happen
+      if (isSimulator || user_id === "test-user-id-from-simulator") {
+        console.log("SIMULATOR/TEST MODE: Would update subscription with the following data:", {
           user_id,
           plan_type,
           status: "active",
@@ -176,7 +196,7 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             test_mode: true,
-            message: "Simulator test successful - no database changes made" 
+            message: "Test processed successfully - no database changes made" 
           }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
