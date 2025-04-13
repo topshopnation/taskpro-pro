@@ -96,7 +96,7 @@ export function SidebarProjects({
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
                         location.pathname.includes(`/projects/${project.id}`) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                           : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       )}
                       onClick={(e) => handleProjectClick(project, e)}
@@ -117,7 +117,12 @@ export function SidebarProjects({
                   <SidebarMenuButton asChild>
                     <NavLink
                       to="/projects"
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:text-sidebar-accent-foreground"
+                      className={({ isActive }) => cn(
+                        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]"
+                          : "text-muted-foreground hover:text-sidebar-accent-foreground"
+                      )}
                       onClick={onMobileMenuClose}
                     >
                       <span className="truncate">View all projects...</span>

@@ -1,6 +1,6 @@
 
-import { Star, Filter, ListTodo } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Star, ListTodo, Filter } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -9,8 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface FavoriteItem {
   id: string;
@@ -24,77 +23,61 @@ interface SidebarFavoritesProps {
   onMobileMenuClose: () => void;
 }
 
-export function SidebarFavorites({ 
-  favoriteItems, 
-  onMobileMenuClose 
-}: SidebarFavoritesProps) {
+export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFavoritesProps) {
+  const location = useLocation();
   const navigate = useNavigate();
-
+  
+  // Don't show the favorites section if there are no favorites
   if (favoriteItems.length === 0) {
     return null;
   }
 
-  const handleFavoriteClick = (item: FavoriteItem, e: React.MouseEvent) => {
+  const handleClick = (item: FavoriteItem, e: React.MouseEvent) => {
     e.preventDefault();
-    // Use slugified name in URL
     const slugName = item.name.toLowerCase().replace(/\s+/g, '-');
-    console.log(`Navigating to ${item.type}:`, item.id, slugName);
-    const path = item.type === 'project' 
-      ? `/projects/${item.id}/${slugName}` 
-      : `/filters/${item.id}/${slugName}`;
-    navigate(path);
+    
+    if (item.type === 'project') {
+      navigate(`/projects/${item.id}/${slugName}`);
+    } else {
+      navigate(`/filters/${item.id}/${slugName}`);
+    }
+    
     onMobileMenuClose();
   };
-
-  const handleRemoveFavorite = async (item: FavoriteItem, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    try {
-      const { error } = await supabase
-        .from(item.type === 'project' ? 'projects' : 'filters')
-        .update({ favorite: false })
-        .eq('id', item.id);
-        
-      if (error) throw error;
-      
-      toast.success(`Removed from favorites`);
-    } catch (error: any) {
-      console.error('Error removing favorite:', error);
-      toast.error(`Failed to remove from favorites`);
-    }
-  };
-
+  
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="mb-2">Favorites</SidebarGroupLabel>
+      <SidebarGroupLabel className="flex items-center">
+        <Star className="h-4 w-4 mr-2 text-sidebar-foreground" />
+        <span>Favorites</span>
+      </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {favoriteItems.map((item) => (
-            <SidebarMenuItem key={item.id}>
+            <SidebarMenuItem key={`${item.type}-${item.id}`}>
               <SidebarMenuButton asChild>
                 <button
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  onClick={(e) => handleFavoriteClick(item, e)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                    (item.type === 'project' && location.pathname.includes(`/projects/${item.id}`)) ||
+                    (item.type === 'filter' && location.pathname.includes(`/filters/${item.id}`))
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
+                      : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  )}
+                  onClick={(e) => handleClick(item, e)}
                 >
                   {item.type === 'project' ? (
-                    <ListTodo 
-                      className="h-4 w-4" 
-                      style={item.color ? { color: item.color } : undefined} 
+                    <ListTodo
+                      className="h-4 w-4"
+                      style={item.color ? { color: item.color } : undefined}
                     />
                   ) : (
-                    <Filter 
-                      className="h-4 w-4" 
+                    <Filter
+                      className="h-4 w-4"
                       style={item.color ? { color: item.color } : undefined}
                     />
                   )}
                   <span className="truncate">{item.name}</span>
-                  <button 
-                    onClick={(e) => handleRemoveFavorite(item, e)}
-                    className="ml-auto"
-                  >
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  </button>
                 </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
