@@ -10,12 +10,19 @@ import { useOverdueTaskOperations } from "@/hooks/useOverdueTaskOperations";
 import { RescheduleDialog } from "@/components/overdue/RescheduleDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/react-query";
 
 export default function OverdueView() {
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const { user } = useAuth();
   const { data: tasks, isLoading, refetch } = useOverdueTasks(user?.id);
-  const { handleComplete, handleDelete, handleFavoriteToggle } = useOverdueTaskOperations();
+  const { 
+    handleComplete, 
+    handleDelete, 
+    handleFavoriteToggle, 
+    handlePriorityChange, 
+    handleDateChange 
+  } = useOverdueTaskOperations();
 
   const handleRescheduleClick = () => {
     setIsRescheduleOpen(true);
@@ -31,7 +38,7 @@ export default function OverdueView() {
       if (error) throw error;
       
       toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
-      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
       return Promise.resolve();
     } catch (error: any) {
       toast.error(`Error changing project: ${error.message}`);
@@ -58,11 +65,12 @@ export default function OverdueView() {
             isRescheduleOpen={isRescheduleOpen}
             setIsRescheduleOpen={setIsRescheduleOpen}
             onProjectChange={handleProjectChange}
+            onPriorityChange={handlePriorityChange}
+            onDateChange={handleDateChange}
           />
         </div>
       </TooltipProvider>
       
-      {/* Add RescheduleDialog at the page level */}
       <RescheduleDialog
         open={isRescheduleOpen}
         onOpenChange={setIsRescheduleOpen}

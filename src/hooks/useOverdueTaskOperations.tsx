@@ -70,6 +70,8 @@ export function useOverdueTaskOperations() {
         .eq('id', taskId);
         
       if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
       return true;
     } catch (error: any) {
       toast.error("Failed to update task", {
@@ -79,9 +81,52 @@ export function useOverdueTaskOperations() {
     }
   };
 
+  const handlePriorityChange = async (taskId: string, priority: 1 | 2 | 3 | 4) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ priority })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      return true;
+    } catch (error: any) {
+      toast.error("Failed to update task priority", {
+        description: error.message
+      });
+      return false;
+    }
+  };
+
+  const handleDateChange = async (taskId: string, date: Date | undefined) => {
+    try {
+      const formattedDate = date ? date.toISOString() : null;
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ due_date: formattedDate })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      toast.success(date ? "Due date updated" : "Due date removed");
+      return true;
+    } catch (error: any) {
+      toast.error("Failed to update due date", {
+        description: error.message
+      });
+      return false;
+    }
+  };
+
   return {
     handleComplete,
     handleDelete,
-    handleFavoriteToggle
+    handleFavoriteToggle,
+    handlePriorityChange,
+    handleDateChange
   };
 }
