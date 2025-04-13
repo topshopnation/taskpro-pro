@@ -76,6 +76,13 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
     onOpenChange(open)
   }
 
+  // Create a function to properly check if a date is before today (start of day)
+  const isDateBeforeToday = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogContent className="sm:max-w-[425px]">
@@ -88,7 +95,7 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
               mode="single"
               selected={rescheduleDate}
               onSelect={handleDateSelection}
-              disabled={(date) => date < new Date().setHours(0, 0, 0, 0)} // Only disable dates before today
+              disabled={isDateBeforeToday} // Use the function to check if date is before today
               showQuickOptions={true}
               onQuickOptionSelect={handleDateSelection}
               className="rounded-md border"
