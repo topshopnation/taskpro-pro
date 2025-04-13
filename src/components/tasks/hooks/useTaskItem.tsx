@@ -37,7 +37,7 @@ export function useTaskItem({
       
       // Then use completeTask but pass false to suppress the toast
       // since the parent handlers will show their own toast
-      await completeTask(task.id, !task.completed, true); // true means suppress toast
+      await completeTask(task.id, !task.completed, false); // false to NOT suppress toast
     } catch (error: any) {
       // Show error toast only if it fails
       toast.error(`Error updating task: ${error.message}`);

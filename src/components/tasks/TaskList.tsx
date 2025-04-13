@@ -15,6 +15,7 @@ interface TaskListProps {
   onTaskEdit?: (task: Task) => void
   onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void
   onDateChange?: (taskId: string, date: Date | undefined) => void
+  onProjectChange?: (taskId: string, projectId: string | null) => void
 }
 
 export function TaskList({ 
@@ -28,7 +29,8 @@ export function TaskList({
   hideTitle = false,
   onTaskEdit,
   onPriorityChange,
-  onDateChange
+  onDateChange,
+  onProjectChange
 }: TaskListProps) {
   return (
     <Card className="overflow-hidden">
@@ -64,6 +66,7 @@ export function TaskList({
                 onTaskEdit={onTaskEdit}
                 onPriorityChange={onPriorityChange}
                 onDateChange={onDateChange}
+                onProjectChange={onProjectChange}
               />
             ))}
           </div>

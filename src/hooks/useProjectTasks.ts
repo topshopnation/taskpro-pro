@@ -1,84 +1,141 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Task } from "@/components/tasks/TaskItem";
-import { fetchProjectTasks, updateTaskCompletion, deleteTask } from "@/utils/taskOperations";
-import { useTaskRealtime } from "@/hooks/useTaskRealtime";
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { useAuth } from "@/hooks/use-auth-context"
+import { Task } from "@/components/tasks/TaskItem"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
+import { fetchProjectTasks } from "@/utils/taskOperations"
+import { useTaskRealtime } from "@/hooks/useTaskRealtime"
 
 export function useProjectTasks(projectId?: string) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const { user } = useAuth();
-
-  // Create a memoized fetch function for both initial load and realtime updates
-  const fetchTasks = useCallback(async () => {
-    if (!user || !projectId) return [];
-    return await fetchProjectTasks(projectId, user.id);
-  }, [projectId, user]);
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [unsectionedTasks, setUnsectionedTasks] = useState<Task[]>([])
+  const { user } = useAuth()
   
-  // Use React Query to fetch tasks
-  const { data: projectTasks, isLoading: isLoadingTasks } = useQuery({
+  // Fetch tasks using React Query
+  const { data: projectTasks, isLoading, refetch } = useQuery({
     queryKey: ['projectTasks', projectId, user?.id],
-    queryFn: fetchTasks,
-    enabled: !!user && !!projectId
-  });
+    queryFn: async () => {
+      if (!projectId || !user) return []
+      return fetchProjectTasks(projectId, user.id)
+    },
+    enabled: !!projectId && !!user
+  })
   
-  // Update local states when data is fetched
+  // Set up realtime subscription
+  useTaskRealtime(user, async () => {
+    refetch();
+  })
+  
+  // Process tasks when data is fetched
   useEffect(() => {
     if (projectTasks) {
-      setTasks(projectTasks);
+      setTasks(projectTasks)
+      
+      // Filter out completed tasks and organize by section
+      const incompleteTasks = projectTasks.filter(task => !task.completed)
+      setUnsectionedTasks(incompleteTasks)
     }
-  }, [projectTasks]);
+  }, [projectTasks])
   
-  // Set up realtime subscriptions
-  const refetchTasks = useCallback(async () => {
-    const updatedTasks = await fetchTasks();
-    setTasks(updatedTasks);
-  }, [fetchTasks]);
-  
-  // Use the extracted realtime hook
-  useTaskRealtime(user, refetchTasks);
-
-  // Get tasks without sections
-  const unsectionedTasks = tasks.filter(task => !task.completed);
-
+  // Handle marking task as complete/incomplete
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
-      await updateTaskCompletion(taskId, completed);
+      // Find the task to get its title for toast
+      const task = tasks.find(t => t.id === taskId);
+      const taskTitle = task?.title;
       
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, completed } : task
-        )
-      );
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+      
+      if (error) throw error
+      
+      // Optimistic UI update
+      setTasks(tasks.map(task => 
+        task.id === taskId ? { ...task, completed } : task
+      ))
+      
+      setUnsectionedTasks(prevTasks => 
+        completed
+          ? prevTasks.filter(task => task.id !== taskId)
+          : [...prevTasks.filter(task => task.id !== taskId), 
+             { ...tasks.find(t => t.id === taskId)!, completed }]
+      )
+      
+      // Show toast with undo action
+      if (taskTitle) {
+        toast(`"${taskTitle}" ${completed ? 'completed' : 'marked incomplete'}`, {
+          id: `task-complete-${taskId}`,
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                const { error } = await supabase
+                  .from('tasks')
+                  .update({ completed: !completed })
+                  .eq('id', taskId)
+                
+                if (error) throw error
+                
+                // Refetch to update UI
+                refetch()
+              } catch (err) {
+                console.error("Failed to undo task completion", err)
+                toast.error("Failed to undo action")
+              }
+            }
+          }
+        })
+      }
     } catch (error: any) {
       toast.error("Failed to update task", {
         description: error.message
-      });
+      })
     }
-  };
-
+  }
+  
+  // Handle task deletion
   const handleDelete = async (taskId: string) => {
     try {
-      await deleteTask(taskId);
+      // Store deleted task data for potential restore
+      const deletedTask = tasks.find(task => task.id === taskId);
+      const taskTitle = deletedTask?.title;
       
-      // Optimistic update
-      setTasks(tasks.filter((task) => task.id !== taskId));
-      toast.success("Task deleted");
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+      
+      if (error) throw error
+      
+      // Optimistic UI update
+      setTasks(tasks.filter(task => task.id !== taskId))
+      setUnsectionedTasks(prevTasks => prevTasks.filter(task => task.id !== taskId))
+      
+      // Show toast with success message
+      if (taskTitle) {
+        toast(`"${taskTitle}" deleted`, {
+          description: "Task has been permanently deleted."
+        })
+      } else {
+        toast.success("Task deleted")
+      }
     } catch (error: any) {
       toast.error("Failed to delete task", {
         description: error.message
-      });
+      })
     }
-  };
-
+  }
+  
   return {
     tasks,
-    isLoadingTasks,
     unsectionedTasks,
+    isLoadingTasks: isLoading,
     handleComplete,
-    handleDelete
-  };
+    handleDelete,
+    refetch
+  }
 }

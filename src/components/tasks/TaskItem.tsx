@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -8,6 +7,8 @@ import { useTaskData } from "./hooks/useTaskData";
 import { EditTaskDialog } from "./EditTaskDialog";
 import { useTaskItem } from "./hooks/useTaskItem";
 import { TaskItemActionContainer } from "./TaskItemActionContainer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface Task {
   id: string;
@@ -31,6 +32,7 @@ interface TaskItemProps {
   onTaskEdit?: (task: Task) => void;
   onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void;
   onDateChange?: (taskId: string, date: Date | undefined) => void;
+  onProjectChange?: (taskId: string, projectId: string | null) => void;
 }
 
 export function TaskItem({ 
@@ -40,9 +42,11 @@ export function TaskItem({
   onFavoriteToggle,
   onTaskEdit,
   onPriorityChange,
-  onDateChange
+  onDateChange,
+  onProjectChange
 }: TaskItemProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const { taskTags, projectName } = useTaskData(task.id, task.projectId);
   
@@ -51,7 +55,6 @@ export function TaskItem({
     setIsDeleteDialogOpen,
     isEditDialogOpen,
     setIsEditDialogOpen,
-    isUpdating,
     handleCompletionToggle,
     handlePriorityChange,
     handleDateChange,
@@ -79,6 +82,31 @@ export function TaskItem({
       onTaskEdit(task);
     } else {
       setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleProjectChange = async (projectId: string | null): Promise<void> => {
+    try {
+      setIsUpdating(true);
+      
+      // Call the parent component's handler if provided
+      if (onProjectChange) {
+        onProjectChange(task.id, projectId);
+      } else {
+        // Otherwise, perform the update directly
+        const { error } = await supabase
+          .from('tasks')
+          .update({ project_id: projectId })
+          .eq('id', task.id);
+        
+        if (error) throw error;
+        
+        toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
+      }
+    } catch (error: any) {
+      toast.error(`Error changing project: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -116,6 +144,7 @@ export function TaskItem({
           isUpdating={isUpdating}
           onPriorityChange={handlePriorityChange}
           onDateChange={handleDateChange}
+          onProjectChange={handleProjectChange}
           onFavoriteToggle={onFavoriteToggle}
         />
       </div>

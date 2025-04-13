@@ -8,6 +8,8 @@ import { Inbox } from "lucide-react"
 import { TaskSortControls } from "@/components/tasks/TaskSortControls"
 import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 export default function InboxView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -15,10 +17,29 @@ export default function InboxView() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [groupBy, setGroupBy] = useState<string | null>(null)
   const { user } = useAuth()
-  const { tasks, isLoading, handleComplete, handleDelete } = useInboxTasks()
+  const { tasks, isLoading, handleComplete, handleDelete, refetch } = useInboxTasks()
 
   // Group tasks based on the current settings
   const groupedTasks = groupTasks(tasks, groupBy, sortBy, sortDirection)
+
+  // Handle project change
+  const handleProjectChange = async (taskId: string, projectId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ project_id: projectId })
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      // Refetch tasks to update the list
+      refetch();
+      
+      toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
+    } catch (error: any) {
+      toast.error(`Error changing project: ${error.message}`);
+    }
+  };
 
   return (
     <AppLayout>
@@ -49,6 +70,7 @@ export default function InboxView() {
           onDelete={handleDelete}
           onAddTask={() => setIsCreateTaskOpen(true)}
           hideTitle={!groupBy}
+          onProjectChange={handleProjectChange}
         />
 
         <CreateTaskDialog

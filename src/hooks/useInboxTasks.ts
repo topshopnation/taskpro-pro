@@ -68,7 +68,11 @@ export function useInboxTasks() {
   // Handle task operations
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
-      await updateTaskCompletion(taskId, completed)
+      // Get the task title for the toast
+      const task = tasks.find(t => t.id === taskId);
+      const taskTitle = task?.title || '';
+      
+      await updateTaskCompletion(taskId, completed, taskTitle)
       
       // Optimistic update
       setTasks(
@@ -77,7 +81,7 @@ export function useInboxTasks() {
         )
       )
       
-      // Toast with undo option is shown in the utility function
+      // Toast is now handled in the updateTaskCompletion function
     } catch (error) {
       // Error is handled in the taskOperations utility
     }
@@ -85,7 +89,11 @@ export function useInboxTasks() {
 
   const handleDelete = async (taskId: string) => {
     try {
-      await deleteTask(taskId)
+      // Get the task title for the toast
+      const task = tasks.find(t => t.id === taskId);
+      const taskTitle = task?.title || '';
+      
+      await deleteTask(taskId, taskTitle)
       
       // Optimistic update
       setTasks(tasks.filter((task) => task.id !== taskId))
@@ -98,6 +106,7 @@ export function useInboxTasks() {
     tasks,
     isLoading,
     handleComplete,
-    handleDelete
+    handleDelete,
+    refetch
   }
 }

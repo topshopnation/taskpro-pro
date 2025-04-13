@@ -13,6 +13,8 @@ import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -56,7 +58,8 @@ export default function ProjectView() {
     isLoadingTasks,
     unsectionedTasks,
     handleComplete,
-    handleDelete
+    handleDelete,
+    refetch
   } = useProjectTasks(id);
 
   useEffect(() => {
@@ -67,6 +70,25 @@ export default function ProjectView() {
   }, [currentProject, setNewProjectName, setProjectColor]);
 
   const groupedTasks = groupTasks(unsectionedTasks, groupBy, sortBy, sortDirection);
+
+  // Handle project change from task list
+  const handleProjectChange = async (taskId: string, projectId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ project_id: projectId })
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      // Refetch tasks to update the list
+      refetch();
+      
+      toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
+    } catch (error: any) {
+      toast.error(`Error changing project: ${error.message}`);
+    }
+  };
 
   if (isLoadingProject) {
     return <ProjectLoadingState isLoading={true} projectExists={true} />;
@@ -136,6 +158,7 @@ export default function ProjectView() {
           onDelete={handleDelete}
           onAddTask={() => setIsCreateTaskOpen(true)}
           hideTitle={!groupBy}
+          onProjectChange={handleProjectChange}
         />
 
         <CreateTaskDialog

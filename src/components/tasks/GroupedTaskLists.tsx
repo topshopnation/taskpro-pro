@@ -15,6 +15,7 @@ interface GroupedTaskListsProps {
   onTaskEdit?: (task: Task) => void
   onPriorityChange?: (taskId: string, priority: 1 | 2 | 3 | 4) => void
   onDateChange?: (taskId: string, date: Date | undefined) => void
+  onProjectChange?: (taskId: string, projectId: string | null) => void
 }
 
 export function GroupedTaskLists({
@@ -28,7 +29,8 @@ export function GroupedTaskLists({
   onFavoriteToggle,
   onTaskEdit,
   onPriorityChange,
-  onDateChange
+  onDateChange,
+  onProjectChange
 }: GroupedTaskListsProps) {
   // Function to get priority group title
   const getPriorityGroupTitle = (group: string): string => {
@@ -69,6 +71,7 @@ export function GroupedTaskLists({
           onTaskEdit={onTaskEdit}
           onPriorityChange={onPriorityChange}
           onDateChange={onDateChange}
+          onProjectChange={onProjectChange}
         />
       ))}
     </div>
