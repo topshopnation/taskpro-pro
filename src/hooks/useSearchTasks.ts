@@ -14,11 +14,12 @@ export function useSearchTasks(query: string) {
     if (!user || !query.trim()) return [];
     
     try {
-      // Use ilike for case-insensitive search
+      // Use ilike for case-insensitive search and filter out completed tasks
       const { data, error } = await supabase
         .from('tasks')
         .select('*, projects(name, color)')
         .eq('user_id', user.id)
+        .eq('completed', false) // Only fetch non-completed tasks
         .or(`title.ilike.%${query}%,notes.ilike.%${query}%`)
         .order('due_date', { ascending: true });
       
