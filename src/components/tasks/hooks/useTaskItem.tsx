@@ -31,9 +31,14 @@ export function useTaskItem({
   const handleCompletionToggle = async () => {
     setIsUpdating(true);
     try {
-      await completeTask(task.id, !task.completed);
+      // First call the parent component's onComplete handler
       onComplete(task.id, !task.completed);
+      
+      // Then use the completeTask function which takes care of the toast
+      // but we don't want duplicate toasts, so we'll handle them in the respective view hooks
+      await completeTask(task.id, !task.completed);
     } catch (error: any) {
+      // Show error toast only if it fails
       toast.error(`Error updating task: ${error.message}`);
     } finally {
       setIsUpdating(false);

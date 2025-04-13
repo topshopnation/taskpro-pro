@@ -42,35 +42,37 @@ export function useTaskOperations() {
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
       // Only show ONE toast with undo action - show task title in the message
-      toast(completed ? `"${taskData.title}" completed` : `"${taskData.title}" marked incomplete`, {
-        id: uniqueId,
-        duration: 3000, // Ensure toast stays for 3 seconds
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              // Revert to previous state
-              const { error: undoError } = await supabase
-                .from('tasks')
-                .update({ completed: !completed })
-                .eq('id', taskId);
-              
-              if (undoError) throw undoError;
-              
-              // Re-invalidate queries after undoing
-              queryClient.invalidateQueries({ queryKey: ['tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-            } catch (undoError) {
-              toast.error("Failed to undo", {
-                id: `task-undo-error-${taskId}-${Date.now()}`
-              });
+      if (completed) {
+        toast(`"${taskData.title}" completed`, {
+          id: uniqueId,
+          duration: 3000, // Ensure toast stays for 3 seconds
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                // Revert to previous state
+                const { error: undoError } = await supabase
+                  .from('tasks')
+                  .update({ completed: !completed })
+                  .eq('id', taskId);
+                
+                if (undoError) throw undoError;
+                
+                // Re-invalidate queries after undoing
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+              } catch (undoError) {
+                toast.error("Failed to undo", {
+                  id: `task-undo-error-${taskId}-${Date.now()}`
+                });
+              }
             }
           }
-        }
-      });
+        });
+      }
       
       return true;
     } catch (error: any) {

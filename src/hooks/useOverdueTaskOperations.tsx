@@ -1,10 +1,17 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useOverdueTaskOperations() {
   const handleComplete = async (taskId: string, completed: boolean) => {
     try {
+      const { data: taskData, error: fetchError } = await supabase
+        .from('tasks')
+        .select('title')
+        .eq('id', taskId)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
       const { error } = await supabase
         .from('tasks')
         .update({ completed })
@@ -12,7 +19,15 @@ export function useOverdueTaskOperations() {
         
       if (error) throw error;
       
-      toast.success(completed ? "Task completed" : "Task uncompleted");
+      if (completed) {
+        toast(`"${taskData.title}" completed`, {
+          action: {
+            label: "Undo",
+            onClick: () => handleComplete(taskId, false)
+          }
+        });
+      }
+      
       return true;
     } catch (error: any) {
       toast.error("Failed to update task", {

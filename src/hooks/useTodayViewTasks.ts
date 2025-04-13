@@ -6,24 +6,26 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { Task } from "@/components/tasks/TaskItem"
 import { useTaskRealtime } from "@/hooks/useTaskRealtime"
+import { startOfDay, endOfDay } from "date-fns"
 
 export function useTodayViewTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const { user } = useAuth()
 
-  // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
+  // Get today's start and end of day
+  const getTodayRange = () => {
     const today = new Date()
-    return new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      .toISOString()
-      .split('T')[0]
+    return {
+      start: startOfDay(today).toISOString(),
+      end: endOfDay(today).toISOString()
+    }
   }
 
   // Fetch today's tasks with project information
   const fetchTodayTasks = useCallback(async () => {
     if (!user) return []
     
-    const todayDate = getTodayDate()
+    const { start, end } = getTodayRange()
     
     try {
       // First fetch tasks
@@ -32,8 +34,8 @@ export function useTodayViewTasks() {
         .select('*, projects(name, color)')
         .eq('user_id', user.id)
         .eq('completed', false)
-        .gte('due_date', `${todayDate}T00:00:00`)
-        .lt('due_date', `${todayDate}T23:59:59`)
+        .gte('due_date', start)
+        .lte('due_date', end)
         
       if (taskError) throw taskError
       
