@@ -68,11 +68,10 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
   };
 
   const handleOpen = (open: boolean) => {
-    // If opening the dialog, set a default date (tomorrow)
+    // If opening the dialog, set a default date (today)
     if (open && !rescheduleDate) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setRescheduleDate(tomorrow);
+      const today = new Date();
+      setRescheduleDate(today);
     }
     onOpenChange(open)
   }
@@ -89,7 +88,7 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
               mode="single"
               selected={rescheduleDate}
               onSelect={handleDateSelection}
-              disabled={(date) => date < new Date()}
+              disabled={(date) => date < new Date().setHours(0, 0, 0, 0)} // Only disable dates before today
               showQuickOptions={true}
               onQuickOptionSelect={handleDateSelection}
               className="rounded-md border"
