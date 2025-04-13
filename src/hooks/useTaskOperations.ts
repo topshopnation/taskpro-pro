@@ -7,7 +7,7 @@ import { queryClient } from "@/lib/react-query";
 export function useTaskOperations() {
   const [isLoading, setIsLoading] = useState(false);
   
-  const completeTask = async (taskId: string, completed: boolean) => {
+  const completeTask = async (taskId: string, completed: boolean, suppressToast = false) => {
     setIsLoading(true);
     
     // Store task data before update for potential undo
@@ -41,8 +41,8 @@ export function useTaskOperations() {
       // Generate a unique toast ID to prevent duplicates
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
-      // Only show ONE toast with undo action - show task title in the message
-      if (completed) {
+      // Only show ONE toast with undo action if not suppressed
+      if (completed && !suppressToast) {
         toast(`"${taskData.title}" completed`, {
           id: uniqueId,
           duration: 3000, // Ensure toast stays for 3 seconds

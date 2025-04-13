@@ -112,9 +112,11 @@ export function useTodayViewTasks() {
         task.id === taskId ? { ...task, completed } : task
       ))
       
-      // Show only toast with undo
+      // Only show toast with undo on completion
       if (completed) {
+        const uniqueId = `task-complete-today-${taskId}-${Date.now()}`;
         toast(`"${taskToUpdate.title}" completed`, {
+          id: uniqueId,
           action: {
             label: "Undo",
             onClick: () => handleComplete(taskId, false)

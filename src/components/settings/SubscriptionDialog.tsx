@@ -3,7 +3,6 @@ import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -94,15 +93,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           />
           
           <SubscriptionSummary planType={planType} />
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-            <p className="flex items-center">
-              <CreditCard className="h-4 w-4 mr-2" />
-              <span>
-                Your subscription will automatically renew through PayPal. You can cancel anytime through your PayPal account.
-              </span>
-            </p>
-          </div>
         </div>
         
         <DialogFooter>
