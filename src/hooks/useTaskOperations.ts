@@ -41,9 +41,9 @@ export function useTaskOperations() {
       // Generate a unique toast ID to prevent duplicates
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
-      // Only show ONE toast with undo action if not suppressed
-      if (completed && !suppressToast) {
-        toast(`"${taskData.title}" completed`, {
+      // Only show toast with undo action if not suppressed
+      if (!suppressToast) {
+        toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
           id: uniqueId,
           duration: 3000, // Ensure toast stays for 3 seconds
           action: {

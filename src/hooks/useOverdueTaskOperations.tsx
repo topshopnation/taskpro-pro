@@ -1,5 +1,7 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/react-query";
 
 export function useOverdueTaskOperations() {
   const handleComplete = async (taskId: string, completed: boolean) => {
@@ -19,6 +21,10 @@ export function useOverdueTaskOperations() {
         
       if (error) throw error;
       
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      
+      // Only show toast for completion, not for marking incomplete
       if (completed) {
         toast(`"${taskData.title}" completed`, {
           action: {

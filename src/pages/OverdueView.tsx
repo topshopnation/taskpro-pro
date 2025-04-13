@@ -8,6 +8,8 @@ import { OverdueContent } from "@/components/overdue/OverdueContent";
 import { useOverdueTasks } from "@/hooks/useOverdueTasks";
 import { useOverdueTaskOperations } from "@/hooks/useOverdueTaskOperations";
 import { RescheduleDialog } from "@/components/overdue/RescheduleDialog";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function OverdueView() {
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
@@ -17,6 +19,24 @@ export default function OverdueView() {
 
   const handleRescheduleClick = () => {
     setIsRescheduleOpen(true);
+  };
+
+  const handleProjectChange = async (taskId: string, projectId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ project_id: projectId })
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
+      await refetch();
+      return Promise.resolve();
+    } catch (error: any) {
+      toast.error(`Error changing project: ${error.message}`);
+      return Promise.reject(error);
+    }
   };
 
   return (
@@ -37,6 +57,7 @@ export default function OverdueView() {
             onReschedule={refetch}
             isRescheduleOpen={isRescheduleOpen}
             setIsRescheduleOpen={setIsRescheduleOpen}
+            onProjectChange={handleProjectChange}
           />
         </div>
       </TooltipProvider>

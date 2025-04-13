@@ -18,6 +18,7 @@ interface OverdueContentProps {
   onReschedule: () => void;
   isRescheduleOpen?: boolean;
   setIsRescheduleOpen?: (open: boolean) => void;
+  onProjectChange?: (taskId: string, projectId: string | null) => Promise<void>;
 }
 
 export function OverdueContent({
@@ -28,7 +29,8 @@ export function OverdueContent({
   onFavoriteToggle,
   onReschedule,
   isRescheduleOpen,
-  setIsRescheduleOpen
+  setIsRescheduleOpen,
+  onProjectChange
 }: OverdueContentProps) {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>("dueDate");
@@ -92,6 +94,7 @@ export function OverdueContent({
               onComplete={onComplete}
               onDelete={onDelete}
               onFavoriteToggle={onFavoriteToggle}
+              onProjectChange={onProjectChange}
             />
           ))
         )}

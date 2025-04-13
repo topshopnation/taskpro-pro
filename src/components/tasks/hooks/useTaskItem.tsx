@@ -32,12 +32,12 @@ export function useTaskItem({
     setIsUpdating(true);
     try {
       // First call the parent component's onComplete handler
-      // This will handle the UI update without showing a toast
+      // This will handle the UI update
       onComplete(task.id, !task.completed);
       
-      // Then use completeTask but pass false to suppress the toast
-      // since the parent handlers will show their own toast
-      await completeTask(task.id, !task.completed, false); // false to NOT suppress toast
+      // Then use completeTask with suppressToast=true since the parent handlers 
+      // should already show a toast at the view level, preventing double toasts
+      await completeTask(task.id, !task.completed, true);
     } catch (error: any) {
       // Show error toast only if it fails
       toast.error(`Error updating task: ${error.message}`);
