@@ -51,6 +51,8 @@ export function SidebarProjects({
     onMobileMenuClose();
   };
 
+  const isProjectsPageActive = location.pathname === '/projects';
+
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between mb-2">
@@ -59,7 +61,7 @@ export function SidebarProjects({
             to="/projects"
             className={({ isActive }) =>
               `flex items-center rounded-md text-sm transition-colors ${
-                isActive ? "text-primary font-medium" : "text-sidebar-foreground"
+                isActive || isProjectsPageActive ? "text-primary font-medium" : "text-sidebar-foreground"
               }`
             }
             onClick={onMobileMenuClose}
@@ -89,28 +91,33 @@ export function SidebarProjects({
             </div>
           ) : (
             <>
-              {topProjects.map((project) => (
-                <SidebarMenuItem key={project.id}>
-                  <SidebarMenuButton asChild>
-                    <button
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        location.pathname.includes(`/projects/${project.id}`) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
-                          : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                      )}
-                      onClick={(e) => handleProjectClick(project, e)}
-                    >
-                      <ListTodo 
-                        className="h-4 w-4" 
-                        style={project.color ? { color: project.color } : undefined}
-                      />
-                      <span className="truncate">{project.name}</span>
-                      <ChevronRight className="h-4 w-4 ml-auto" />
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {topProjects.map((project) => {
+                // Determine if this project is active based on the current path
+                const isActive = location.pathname.includes(`/projects/${project.id}`);
+                
+                return (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton asChild>
+                      <button
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
+                            : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        )}
+                        onClick={(e) => handleProjectClick(project, e)}
+                      >
+                        <ListTodo 
+                          className="h-4 w-4" 
+                          style={project.color ? { color: project.color } : undefined}
+                        />
+                        <span className="truncate">{project.name}</span>
+                        <ChevronRight className="h-4 w-4 ml-auto" />
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               
               {hasMoreProjects && (
                 <SidebarMenuItem>
@@ -119,7 +126,7 @@ export function SidebarProjects({
                       to="/projects"
                       className={({ isActive }) => cn(
                         "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        isActive
+                        isActive || isProjectsPageActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]"
                           : "text-muted-foreground hover:text-sidebar-accent-foreground"
                       )}

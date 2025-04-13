@@ -92,7 +92,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             onPlanTypeChange={setPlanType} 
           />
           
-          <SubscriptionSummary planType={planType} />
+          {/* Removed SubscriptionSummary to avoid duplicate pricing display */}
         </div>
         
         <DialogFooter>

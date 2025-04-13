@@ -48,6 +48,8 @@ export function SidebarFilters({
     onMobileMenuClose();
   };
 
+  const isFiltersPageActive = location.pathname === '/filters';
+
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between mb-2">
@@ -56,7 +58,7 @@ export function SidebarFilters({
             to="/filters"
             className={({ isActive }) =>
               `flex items-center rounded-md text-sm transition-colors ${
-                isActive ? "text-primary font-medium" : "text-sidebar-foreground"
+                isActive || isFiltersPageActive ? "text-primary font-medium" : "text-sidebar-foreground"
               }`
             }
             onClick={onMobileMenuClose}
@@ -86,27 +88,32 @@ export function SidebarFilters({
             </div>
           ) : (
             <>
-              {topFilters.map((filter) => (
-                <SidebarMenuItem key={filter.id}>
-                  <SidebarMenuButton asChild>
-                    <button
-                      className={cn(
-                        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        location.pathname.includes(`/filters/${filter.id}`) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
-                          : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                      )}
-                      onClick={(e) => handleFilterClick(filter, e)}
-                    >
-                      <Filter 
-                        className="h-4 w-4" 
-                        style={filter.color ? { color: filter.color } : undefined}
-                      />
-                      <span className="truncate">{filter.name}</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {topFilters.map((filter) => {
+                // Determine if this filter is active based on the current path
+                const isActive = location.pathname.includes(`/filters/${filter.id}`);
+                
+                return (
+                  <SidebarMenuItem key={filter.id}>
+                    <SidebarMenuButton asChild>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
+                            : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        )}
+                        onClick={(e) => handleFilterClick(filter, e)}
+                      >
+                        <Filter 
+                          className="h-4 w-4" 
+                          style={filter.color ? { color: filter.color } : undefined}
+                        />
+                        <span className="truncate">{filter.name}</span>
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               
               {hasMoreFilters && (
                 <SidebarMenuItem>
@@ -115,7 +122,7 @@ export function SidebarFilters({
                       to="/filters"
                       className={({ isActive }) => cn(
                         "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        isActive
+                        isActive || isFiltersPageActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]"
                           : "text-muted-foreground hover:text-sidebar-accent-foreground"
                       )}

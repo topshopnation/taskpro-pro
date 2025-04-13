@@ -53,35 +53,41 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {favoriteItems.map((item) => (
-            <SidebarMenuItem key={`${item.type}-${item.id}`}>
-              <SidebarMenuButton asChild>
-                <button
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                    (item.type === 'project' && location.pathname.includes(`/projects/${item.id}`)) ||
-                    (item.type === 'filter' && location.pathname.includes(`/filters/${item.id}`))
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
-                      : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  )}
-                  onClick={(e) => handleClick(item, e)}
-                >
-                  {item.type === 'project' ? (
-                    <ListTodo
-                      className="h-4 w-4"
-                      style={item.color ? { color: item.color } : undefined}
-                    />
-                  ) : (
-                    <Filter
-                      className="h-4 w-4"
-                      style={item.color ? { color: item.color } : undefined}
-                    />
-                  )}
-                  <span className="truncate">{item.name}</span>
-                </button>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {favoriteItems.map((item) => {
+            // Determine if this item is active based on the current path
+            const isProject = item.type === 'project';
+            const itemPath = isProject ? `/projects/${item.id}` : `/filters/${item.id}`;
+            const isActive = location.pathname.includes(itemPath);
+            
+            return (
+              <SidebarMenuItem key={`${item.type}-${item.id}`}>
+                <SidebarMenuButton asChild>
+                  <button
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
+                        : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    )}
+                    onClick={(e) => handleClick(item, e)}
+                  >
+                    {isProject ? (
+                      <ListTodo
+                        className="h-4 w-4"
+                        style={item.color ? { color: item.color } : undefined}
+                      />
+                    ) : (
+                      <Filter
+                        className="h-4 w-4"
+                        style={item.color ? { color: item.color } : undefined}
+                      />
+                    )}
+                    <span className="truncate">{item.name}</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

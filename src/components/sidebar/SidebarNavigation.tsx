@@ -1,6 +1,6 @@
 
 import { Search, Inbox, CalendarClock, Clock, BarChart2, Plus } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -19,6 +19,7 @@ interface SidebarNavigationProps {
 export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <SidebarGroup>
@@ -58,7 +59,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 to="/inbox"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    isActive 
+                    isActive || location.pathname === '/inbox'
                       ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                       : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   }`
@@ -77,7 +78,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 to="/today"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    isActive 
+                    isActive || location.pathname === '/today'
                       ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                       : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   }`
@@ -96,7 +97,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 to="/overdue"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    isActive 
+                    isActive || location.pathname === '/overdue'
                       ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                       : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   }`
@@ -115,7 +116,7 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 to="/stats"
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    isActive 
+                    isActive || location.pathname === '/stats'
                       ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                       : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   }`
