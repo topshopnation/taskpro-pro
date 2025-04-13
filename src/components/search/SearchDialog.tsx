@@ -9,9 +9,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useSearchTasks } from "@/hooks/useSearchTasks";
-import { Task } from "@/components/tasks/TaskItem";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchTaskItem } from "./SearchTaskItem";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SearchDialogProps {
   open: boolean;
@@ -61,7 +60,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           ) : (
             <ScrollArea className="max-h-[300px]">
               <div className="space-y-1">
-                {results.map((task: Task) => (
+                {results.map((task) => (
                   <SearchTaskItem 
                     key={task.id} 
                     task={task} 

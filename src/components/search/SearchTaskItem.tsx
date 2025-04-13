@@ -6,6 +6,7 @@ import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
+import { Edit } from "lucide-react";
 
 interface SearchTaskItemProps {
   task: Task;
@@ -27,8 +28,11 @@ export function SearchTaskItem({ task, onOpenChange }: SearchTaskItemProps) {
   
   return (
     <>
-      <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-accent">
-        <div className="flex items-center gap-2">
+      <div 
+        className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-accent cursor-pointer"
+        onClick={handleEdit}
+      >
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Checkbox 
             checked={task.completed} 
             onCheckedChange={handleComplete}
@@ -51,7 +55,11 @@ export function SearchTaskItem({ task, onOpenChange }: SearchTaskItemProps) {
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
+        <Button variant="ghost" size="sm" onClick={(e) => {
+          e.stopPropagation();
+          handleEdit();
+        }}>
+          <Edit className="h-4 w-4 mr-2" />
           Edit
         </Button>
       </div>

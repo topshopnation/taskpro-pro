@@ -50,7 +50,7 @@ export function useSearchTasks(query: string) {
     enabled: !!user && query.trim().length > 0
   });
   
-  // Update results when data changes (using useEffect instead of useState)
+  // Update results when data changes
   useEffect(() => {
     if (data) {
       setResults(data);
