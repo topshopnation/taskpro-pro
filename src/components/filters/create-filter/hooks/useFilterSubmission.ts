@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { User } from "@/contexts/auth-context"; // Import the correct User type
 
 interface Condition {
   id: string;
@@ -13,7 +13,7 @@ interface Condition {
 
 // Hook for handling filter submission
 export function useFilterSubmission(
-  user: User | null,
+  user: User | null, // Use the context User type
   name: string,
   conditions: Condition[],
   logic: string,
@@ -61,6 +61,7 @@ export function useFilterSubmission(
     setIsLoading(true);
 
     try {
+      // We only need the user.id for the Supabase operation, not the entire User object
       const { error } = await supabase
         .from('filters')
         .insert({
@@ -73,7 +74,7 @@ export function useFilterSubmission(
               operator: c.operator
             }))
           },
-          user_id: user.id
+          user_id: user.id // Only using the id property which both types have
         });
 
       if (error) throw error;

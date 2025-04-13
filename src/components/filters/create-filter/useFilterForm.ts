@@ -65,9 +65,9 @@ export function useFilterForm(open: boolean, onOpenChange: (open: boolean) => vo
     return baseValidateFilterName(filterName, existingFilters || []);
   };
 
-  // Use the submission hook
+  // Use the submission hook with the user from auth context
   const { isLoading, handleSubmit } = useFilterSubmission(
-    user,
+    user, // Pass the user from auth context
     name,
     conditions,
     logic,
