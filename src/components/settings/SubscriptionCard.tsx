@@ -70,8 +70,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   } else {
     planName = "No Active Subscription";
     statusBadge = (
-      <Badge variant="outline" className="ml-auto text-destructive">
-        <Clock className="h-3 w-3 mr-1" /> {subscription?.status === 'expired' ? 'Expired' : 'Free Plan'}
+      <Badge variant="outline" className="ml-auto">
+        <Clock className="h-3 w-3 mr-1" /> Inactive
       </Badge>
     );
   }
