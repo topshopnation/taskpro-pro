@@ -27,6 +27,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   useEffect(() => {
     if (subscription?.current_period_end) {
       setFormattedExpiryDate(format(new Date(subscription.current_period_end), 'MMMM d, yyyy'));
+    } else if (subscription?.trial_end_date) {
+      setFormattedExpiryDate(format(new Date(subscription.trial_end_date), 'MMMM d, yyyy'));
     }
   }, [subscription]);
 
@@ -47,25 +49,26 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     );
   }
 
-  // Get plan name based on subscription status
-  let planName = "Free Plan";
+  // Get subscription details based on status
+  let planName = "";
   let statusBadge;
   
   if (isTrialActive) {
-    planName = "Trial Plan";
+    planName = "Trial Subscription";
     statusBadge = (
       <Badge variant="outline" className="ml-auto">
         <Clock className="h-3 w-3 mr-1 text-amber-500" /> Trial
       </Badge>
     );
   } else if (subscription?.status === 'active') {
-    planName = subscription.plan_type === 'monthly' ? "Monthly Plan" : "Annual Plan";
+    planName = subscription.plan_type === 'monthly' ? "Monthly Subscription" : "Annual Subscription";
     statusBadge = (
       <Badge variant="outline" className="ml-auto">
-        <BadgeCheck className="h-3 w-3 mr-1 text-green-500" /> Pro Plan
+        <BadgeCheck className="h-3 w-3 mr-1 text-green-500" /> Active
       </Badge>
     );
   } else {
+    planName = "No Active Subscription";
     statusBadge = (
       <Badge variant="outline" className="ml-auto text-destructive">
         <Clock className="h-3 w-3 mr-1" /> {subscription?.status === 'expired' ? 'Expired' : 'Free Plan'}
@@ -87,48 +90,35 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isTrialActive && daysRemaining !== null && (
-          <div className="mb-6">
-            <div className="flex justify-between mb-2">
-              <span className="text-sm font-medium">Trial Period</span>
-              <span className="text-sm text-muted-foreground">{daysRemaining} days left</span>
-            </div>
-            <Progress value={(daysRemaining / 14) * 100} className="h-2" />
-          </div>
-        )}
-
-        {subscription?.status === 'active' && (
-          <div className="flex items-center justify-between border rounded-md p-4 mb-4">
-            <div>
-              <h4 className="font-medium">Current Plan</h4>
-              <p className="text-sm text-muted-foreground">
-                TaskPro Pro ({subscription.plan_type === 'monthly' ? 'Monthly' : 'Annual'})
+        <div className="flex items-center justify-between border rounded-md p-4 mb-4">
+          <div>
+            <h4 className="font-medium">Current Plan</h4>
+            <p className="text-sm text-muted-foreground">
+              {planName}
+            </p>
+            {formattedExpiryDate && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {isTrialActive ? "Trial ends" : subscription?.status === 'active' ? "Renews" : "Expired"} on {formattedExpiryDate}
               </p>
-              {formattedExpiryDate && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Renews on {formattedExpiryDate}
-                </p>
-              )}
+            )}
+          </div>
+          {isTrialActive && (
+            <div className="flex flex-col items-end">
+              <span className="text-sm text-amber-600 font-medium mb-1">{daysRemaining} days left</span>
+              <Progress value={(daysRemaining / 14) * 100} className="h-2 w-24" />
             </div>
+          )}
+          {subscription?.status === 'active' && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               Active
             </Badge>
-          </div>
-        )}
-
-        {subscription?.status === 'expired' && (
-          <div className="flex items-center justify-between border rounded-md p-4 border-destructive/30 bg-destructive/5 mb-4">
-            <div>
-              <h4 className="font-medium text-destructive">Subscription Expired</h4>
-              <p className="text-sm text-muted-foreground">
-                Your subscription has expired. Renew now to continue using TaskPro Pro.
-              </p>
-            </div>
+          )}
+          {subscription?.status === 'expired' && (
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
               Expired
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex items-center justify-between border rounded-md p-4">
           <div className="flex items-center gap-3">
