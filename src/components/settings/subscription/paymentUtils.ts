@@ -12,7 +12,6 @@ const TEST_LINKS = {
 };
 
 // Production PayPal subscription links
-// Note: These plan IDs should be verified in your PayPal dashboard
 const PRODUCTION_LINKS = {
   monthly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-65H54700W12667836M7423DA",
   yearly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-80L22294MH2379142M7422KA"
@@ -42,16 +41,15 @@ export function createPaymentUrl(
   if (PAYMENT_MODE === "test") {
     paymentUrl = TEST_LINKS[planType];
     
-    // In test mode, directly process the payment on the client side
-    // instead of waiting for the webhook to be called
-    console.log("TEST MODE: Directly processing payment for user", userId, "with plan", planType);
+    // Log more detailed information for debugging
+    console.log("TEST MODE: Preparing payment simulation", {
+      userId, 
+      planType, 
+      customData: JSON.parse(customData)
+    });
     
-    toast.info("TEST MODE: Processing payment...");
-    
-    // Simulate a brief delay, then trigger the payment confirmation
+    // In test mode, trigger payment completion directly
     setTimeout(() => {
-      // Use window.postMessage to communicate with the parent window in case
-      // this was opened in a new tab
       const message = {
         type: "TEST_PAYMENT_COMPLETED",
         payload: {
@@ -61,14 +59,15 @@ export function createPaymentUrl(
         }
       };
       
-      // Post to current window (if in same tab) and parent window (if in popup)
+      // Post message to both current and parent windows
       window.postMessage(message, window.location.origin);
+      window.opener?.postMessage(message, window.location.origin);
       
       try {
-        // Also redirect to success page
+        // Redirect to success page
         window.location.href = `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`;
       } catch (e) {
-        console.error("Error redirecting:", e);
+        console.error("Error redirecting after test payment:", e);
       }
     }, 1500);
     
@@ -77,15 +76,7 @@ export function createPaymentUrl(
   
   // Production mode - use real PayPal links
   paymentUrl = PRODUCTION_LINKS[planType];
-  
-  // Add custom data to the PayPal URL
   paymentUrl += `&custom_id=${encodedCustomData}`;
-  
-  // Append return parameters to track payment type
-  paymentUrl += `&return=${encodeURIComponent(window.location.origin + "/settings?payment_success=true&plan_type=" + planType)}`;
-  
-  // Add cancel URL to handle user cancellations
-  paymentUrl += `&cancel_url=${encodeURIComponent(window.location.origin + "/settings?payment_cancelled=true")}`;
   
   return paymentUrl;
 }
@@ -120,6 +111,8 @@ export async function processPaymentConfirmation(
     toast.success(`Successfully upgraded to ${paymentType} plan`);
   } catch (error) {
     console.error("Error processing payment confirmation:", error);
+    toast.error(`Failed to upgrade to ${paymentType} plan`);
     throw error;
   }
 }
+
