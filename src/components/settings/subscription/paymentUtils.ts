@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 
@@ -16,6 +15,17 @@ const PRODUCTION_LINKS = {
   monthly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-65H54700W12667836M7423DA",
   yearly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-80L22294MH2379142M7422KA"
 };
+
+// Check if user can renew (within 14 days of expiry or already expired)
+export function canRenewSubscription(subscription: any): boolean {
+  if (!subscription?.current_period_end) return true;
+  
+  const endDate = new Date(subscription.current_period_end);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  return daysUntilExpiry <= 14;
+}
 
 export function createPaymentUrl(
   planType: "monthly" | "yearly", 

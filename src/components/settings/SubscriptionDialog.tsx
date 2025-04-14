@@ -79,9 +79,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Upgrade Your Subscription</DialogTitle>
+          <DialogTitle>
+            {subscription?.status === 'active' ? 'Renew Your Subscription' : 'Upgrade Your Subscription'}
+          </DialogTitle>
           <DialogDescription>
-            Choose a plan that works for you and unlock all TaskPro features.
+            {subscription?.status === 'active' 
+              ? 'Choose a plan to renew your subscription.' 
+              : 'Choose a plan that works for you and unlock all TaskPro features.'}
           </DialogDescription>
         </DialogHeader>
         
@@ -127,7 +131,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             Cancel
           </Button>
           <Button onClick={openPaymentLink} disabled={isProcessing}>
-            {isProcessing ? "Processing..." : `Subscribe Now`}
+            {isProcessing ? "Processing..." : subscription?.status === 'active' ? 'Renew Now' : 'Subscribe Now'}
           </Button>
         </DialogFooter>
       </DialogContent>

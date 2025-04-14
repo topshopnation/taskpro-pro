@@ -52,6 +52,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   // Get subscription details based on status
   let planName = "";
   let statusBadge;
+  let showRenewButton = false;
   
   if (isTrialActive) {
     planName = "Trial Subscription";
@@ -67,6 +68,12 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         <BadgeCheck className="h-3 w-3 mr-1 text-green-500" /> Active
       </Badge>
     );
+    
+    // Check if within renewal period
+    const endDate = new Date(subscription.current_period_end);
+    const now = new Date();
+    const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    showRenewButton = daysUntilExpiry <= 14;
   } else {
     planName = "No Active Subscription";
     statusBadge = (
@@ -161,10 +168,15 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         </ul>
       </CardContent>
       <CardFooter>
-        <Button onClick={onUpgrade} disabled={subscription?.status === 'active'}>
+        <Button 
+          onClick={onUpgrade} 
+          disabled={subscription?.status === 'active' && !showRenewButton}
+        >
           <CreditCard className="mr-2 h-4 w-4" />
           {subscription?.status === 'active' 
-            ? 'Currently Subscribed' 
+            ? showRenewButton 
+              ? 'Renew Subscription'
+              : 'Currently Subscribed' 
             : 'Subscribe Now'}
         </Button>
       </CardFooter>
