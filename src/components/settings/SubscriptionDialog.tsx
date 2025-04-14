@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
-import SubscriptionSummary from "./subscription/SubscriptionSummary";
 import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
   const { updateSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const location = useLocation();
   const { user } = useAuth();
   
@@ -26,6 +28,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   useEffect(() => {
     if (open) {
       setPlanType("monthly");
+      setPaymentError(null);
     }
   }, [open]);
   
@@ -34,30 +37,41 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     // Check for PayPal success parameters in URL
     const urlParams = new URLSearchParams(location.search);
     const paymentSuccess = urlParams.get('payment_success');
+    const paymentCancelled = urlParams.get('payment_cancelled');
     const paymentType = urlParams.get('plan_type');
     
     if (paymentSuccess === 'true' && (paymentType === 'monthly' || paymentType === 'yearly')) {
       handleSuccessfulPayment(paymentType);
+    } else if (paymentCancelled === 'true') {
+      setPaymentError("Payment was cancelled. Please try again if you wish to upgrade.");
+      // Clean up URL parameters
+      cleanupUrlParams();
     }
   }, [location]);
   
+  const cleanupUrlParams = () => {
+    // Clean up URL parameters
+    const url = new URL(window.location.href);
+    url.searchParams.delete('payment_success');
+    url.searchParams.delete('payment_cancelled');
+    url.searchParams.delete('plan_type');
+    window.history.replaceState({}, document.title, url.toString());
+  };
+  
   const handleSuccessfulPayment = async (paymentType: 'monthly' | 'yearly') => {
     setIsProcessing(true);
+    setPaymentError(null);
     
     try {
       await processPaymentConfirmation(paymentType, updateSubscription);
       onOpenChange(false); // Close dialog after successful payment
     } catch (error) {
       console.error("Error processing payment confirmation:", error);
+      setPaymentError("Failed to activate subscription. Please contact support.");
       toast.error("Failed to activate subscription. Please contact support.");
     } finally {
       setIsProcessing(false);
-      
-      // Clean up URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_success');
-      url.searchParams.delete('plan_type');
-      window.history.replaceState({}, document.title, url.toString());
+      cleanupUrlParams();
     }
   };
   
@@ -67,6 +81,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       return;
     }
     
+    setPaymentError(null);
     const paymentUrl = createPaymentUrl(planType, user.id);
     
     // Only open if we got a valid URL (user ID was present)
@@ -87,12 +102,17 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
+          {paymentError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{paymentError}</AlertDescription>
+            </Alert>
+          )}
+          
           <PlanSelector 
             planType={planType} 
             onPlanTypeChange={setPlanType} 
           />
-          
-          {/* Removed SubscriptionSummary to avoid duplicate pricing display */}
         </div>
         
         <DialogFooter>

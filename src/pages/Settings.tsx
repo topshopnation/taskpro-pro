@@ -23,11 +23,19 @@ export default function Settings() {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const paymentSuccess = urlParams.get('payment_success');
+    const paymentCancelled = urlParams.get('payment_cancelled');
     
     if (paymentSuccess === 'true') {
       // Open subscription dialog to handle payment confirmation
       setIsUpgradeDialogOpen(true);
       toast.info("Processing your subscription...");
+    } else if (paymentCancelled === 'true') {
+      toast.error("Payment was cancelled. You can try again whenever you're ready.");
+      
+      // Clean up URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment_cancelled');
+      window.history.replaceState({}, document.title, url.toString());
     }
   }, [location]);
 
