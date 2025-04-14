@@ -33,15 +33,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
   }, [open]);
   
-  // Clean up URL parameters
-  const cleanupUrlParams = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('payment_success');
-    url.searchParams.delete('payment_cancelled');
-    url.searchParams.delete('plan_type');
-    window.history.replaceState({}, document.title, url.toString());
-  };
-  
   const openPaymentLink = () => {
     if (!user) {
       toast.error("You must be signed in to subscribe");
@@ -50,13 +41,30 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     
     setPaymentError(null);
     console.log("Creating payment URL for user:", user.id, "plan type:", planType);
+    
     const paymentUrl = createPaymentUrl(planType, user.id);
     
     // Only open if we got a valid URL (user ID was present)
     if (paymentUrl) {
-      // Open in new window/tab
-      window.open(paymentUrl, "_blank");
-      toast.info("After completing payment, return to this page to activate your subscription");
+      // In test mode, open in same window to avoid popup blockers
+      if (paymentUrl.includes("client-id=test")) {
+        // Store test payment info in localStorage
+        localStorage.setItem('taskpro_test_payment', JSON.stringify({
+          userId: user.id,
+          planType,
+          timestamp: Date.now()
+        }));
+        
+        // Redirect to test URL in the same window
+        window.location.href = paymentUrl;
+        
+        // This will later redirect back to the app
+        // and Settings.tsx will handle the test payment confirmation
+      } else {
+        // For production, open in new window/tab
+        window.open(paymentUrl, "_blank");
+        toast.info("After completing payment, return to this page to activate your subscription");
+      }
     }
   };
   

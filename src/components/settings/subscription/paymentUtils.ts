@@ -41,35 +41,23 @@ export function createPaymentUrl(
   if (PAYMENT_MODE === "test") {
     paymentUrl = TEST_LINKS[planType];
     
-    // Log more detailed information for debugging
-    console.log("TEST MODE: Preparing payment simulation", {
+    console.log("TEST MODE: Initiating payment simulation for:", {
       userId, 
-      planType, 
-      customData: JSON.parse(customData)
+      planType
     });
     
-    // In test mode, trigger payment completion directly
-    setTimeout(() => {
-      const message = {
-        type: "TEST_PAYMENT_COMPLETED",
-        payload: {
-          user_id: userId,
-          plan_type: planType,
-          success: true
-        }
-      };
-      
-      // Post message to both current and parent windows
-      window.postMessage(message, window.location.origin);
-      window.opener?.postMessage(message, window.location.origin);
-      
-      try {
-        // Redirect to success page
-        window.location.href = `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`;
-      } catch (e) {
-        console.error("Error redirecting after test payment:", e);
-      }
-    }, 1500);
+    // For test mode, open in the same window to avoid popup blockers
+    // and ensure we can catch the return
+    
+    // Create a local storage entry to track that we're in test payment flow
+    localStorage.setItem('taskpro_test_payment', JSON.stringify({
+      userId,
+      planType,
+      timestamp: Date.now()
+    }));
+    
+    // After clicking the test link, this window would reload 
+    // and the Settings component will detect the local storage item
     
     return paymentUrl;
   }
@@ -77,6 +65,10 @@ export function createPaymentUrl(
   // Production mode - use real PayPal links
   paymentUrl = PRODUCTION_LINKS[planType];
   paymentUrl += `&custom_id=${encodedCustomData}`;
+  
+  // Add return URL parameters for production
+  paymentUrl += `&return=${encodeURIComponent(window.location.origin + "/settings?payment_success=true&plan_type=" + planType)}`;
+  paymentUrl += `&cancel_url=${encodeURIComponent(window.location.origin + "/settings?payment_cancelled=true")}`;
   
   return paymentUrl;
 }
@@ -115,4 +107,3 @@ export async function processPaymentConfirmation(
     throw error;
   }
 }
-

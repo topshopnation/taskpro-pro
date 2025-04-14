@@ -23,44 +23,45 @@ export default function Settings() {
   const { user } = useAuth();
   const { updateSubscription, subscription } = useSubscription();
 
-  // Listen for test payment messages from the payment window
+  // Check for test payment in localStorage when component mounts or after navigation
   useEffect(() => {
-    const handlePaymentMessage = (event: MessageEvent) => {
-      // Only process messages from our origin
-      if (event.origin !== window.location.origin) return;
-      
-      // Check if this is a test payment completion message
-      if (event.data?.type === "TEST_PAYMENT_COMPLETED" && event.data?.payload?.success) {
-        const { user_id, plan_type } = event.data.payload;
-        console.log("Received test payment message:", event.data.payload);
-        
-        // Make sure this is for the current user
-        if (user && user.id === user_id) {
-          const processPayment = async () => {
-            try {
-              toast.info("Processing your test subscription...");
-              await processPaymentConfirmation(plan_type, updateSubscription);
-              
-              // Open dialog to show confirmation
-              setIsUpgradeDialogOpen(true);
-            } catch (error) {
-              console.error("Error processing test payment:", error);
-              toast.error("Failed to process test payment. Please try again.");
-            }
-          };
+    const checkForTestPayment = async () => {
+      try {
+        const testPaymentData = localStorage.getItem('taskpro_test_payment');
+        if (testPaymentData) {
+          const { userId, planType, timestamp } = JSON.parse(testPaymentData);
+          console.log("Found test payment data:", { userId, planType, timestamp });
           
-          processPayment();
+          // Clear the test payment data immediately to prevent double processing
+          localStorage.removeItem('taskpro_test_payment');
+          
+          // Make sure this is for the current user and not too old (5 minutes max)
+          const isRecent = Date.now() - timestamp < 5 * 60 * 1000;
+          
+          if (user && user.id === userId && isRecent) {
+            console.log("Processing test payment for plan:", planType);
+            toast.loading("Processing your subscription...");
+            
+            await processPaymentConfirmation(planType, updateSubscription);
+            
+            toast.success(`Test payment processed successfully!`);
+            // Open dialog to show confirmation
+            setIsUpgradeDialogOpen(true);
+          } else if (!isRecent) {
+            console.log("Test payment data is too old, ignoring");
+          } else if (!user || user.id !== userId) {
+            console.log("Test payment user ID doesn't match current user");
+          }
         }
+      } catch (error) {
+        console.error("Error processing test payment data:", error);
+        toast.error("Failed to process test payment. Please try again.");
       }
     };
     
-    // Add the event listener
-    window.addEventListener("message", handlePaymentMessage);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener("message", handlePaymentMessage);
-    };
+    if (user) {
+      checkForTestPayment();
+    }
   }, [user, updateSubscription]);
 
   // Check for payment success in URL params when component mounts
@@ -72,14 +73,14 @@ export default function Settings() {
     
     // Process successful payment
     if (paymentSuccess === 'true' && planType) {
-      console.log("Processing payment success. Plan type:", planType);
+      console.log("Processing payment success from URL. Plan type:", planType);
       console.log("Current user:", user ? user.id : 'Not logged in');
       console.log("Current subscription status:", subscription ? subscription.status : 'None');
       
       // Process the subscription update
       const processPayment = async () => {
         try {
-          toast.info("Processing your subscription...");
+          toast.loading("Processing your subscription...");
           console.log("Starting payment processing for plan:", planType);
           
           await processPaymentConfirmation(planType, updateSubscription);
