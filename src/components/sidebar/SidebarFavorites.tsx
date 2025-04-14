@@ -1,5 +1,5 @@
 
-import { Star, ListTodo, Filter } from "lucide-react";
+import { Star, ListTodo, Filter, StarOff } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarGroup,
@@ -10,6 +10,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FavoriteItem {
   id: string;
@@ -26,8 +29,8 @@ interface SidebarFavoritesProps {
 export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFavoritesProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
-  // Don't show the favorites section if there are no favorites
   if (favoriteItems.length === 0) {
     return null;
   }
@@ -44,6 +47,28 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
     
     onMobileMenuClose();
   };
+
+  const handleUnfavorite = async (item: FavoriteItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) return;
+
+    try {
+      const table = item.type === 'project' ? 'projects' : 'filters';
+      const { error } = await supabase
+        .from(table)
+        .update({ favorite: false })
+        .eq('id', item.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      toast.success(`Removed ${item.name} from favorites`);
+    } catch (error) {
+      console.error('Error unfavoriting item:', error);
+      toast.error('Failed to remove from favorites');
+    }
+  };
   
   return (
     <SidebarGroup>
@@ -54,7 +79,6 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
       <SidebarGroupContent>
         <SidebarMenu>
           {favoriteItems.map((item) => {
-            // Determine if this item is active based on the current path
             const isProject = item.type === 'project';
             const itemPath = isProject ? `/projects/${item.id}` : `/filters/${item.id}`;
             const isActive = location.pathname.includes(itemPath);
@@ -64,7 +88,7 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
                 <SidebarMenuButton asChild>
                   <button
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                      "flex items-center gap-2 rounded-md px-2 py-1 text-xs transition-colors relative group",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                         : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -73,16 +97,23 @@ export function SidebarFavorites({ favoriteItems, onMobileMenuClose }: SidebarFa
                   >
                     {isProject ? (
                       <ListTodo
-                        className="h-4 w-4"
+                        className="h-3.5 w-3.5"
                         style={item.color ? { color: item.color } : undefined}
                       />
                     ) : (
                       <Filter
-                        className="h-4 w-4"
+                        className="h-3.5 w-3.5"
                         style={item.color ? { color: item.color } : undefined}
                       />
                     )}
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate flex-1">{item.name}</span>
+                    <button
+                      onClick={(e) => handleUnfavorite(item, e)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove from favorites"
+                    >
+                      <StarOff className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                    </button>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
