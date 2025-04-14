@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -31,12 +30,10 @@ export function AddConditionForm({
   handleDateSelect,
   addCondition
 }: AddConditionFormProps) {
-  // Fetch projects for project selection
   const { projects } = useTaskProjects();
 
   const handleConditionTypeChange = (type: string) => {
     setConditionType(type);
-    // Reset value when type changes
     setConditionValue("");
   };
 
@@ -118,7 +115,7 @@ export function AddConditionForm({
           disabled={!conditionValue}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add Condition
+          Save Condition
         </Button>
       </div>
     </div>

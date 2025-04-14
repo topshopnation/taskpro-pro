@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ConditionTypeSelector } from "./ConditionTypeSelector";
@@ -59,7 +58,7 @@ export function ConditionForm({
         variant="outline"
       >
         <Plus className="mr-2 h-4 w-4" />
-        Add Condition
+        Save Condition
       </Button>
     </div>
   );
