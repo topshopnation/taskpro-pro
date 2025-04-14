@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,7 +35,7 @@ const App = () => (
             <SubscriptionProvider>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<Navigate to="/today" replace />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 

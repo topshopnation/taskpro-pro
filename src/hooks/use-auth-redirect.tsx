@@ -26,9 +26,10 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     }
     
     // Redirect logic for unauthenticated users - only for protected routes
+    // Don't redirect from the home page (/) when not authenticated
     if (!user && !isAuthPage && !isHomePage) {
-      console.log("No user, redirecting to /auth from protected page");
-      navigate('/auth');
+      console.log("No user, redirecting to / from protected page");
+      navigate('/');
     }
 
     // IMPORTANT: Do NOT add any other redirects that would trigger on regular page loads

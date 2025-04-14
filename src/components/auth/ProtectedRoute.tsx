@@ -33,11 +33,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect to auth page if user is not authenticated
+  // Redirect to home page if user is not authenticated
   if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to /auth");
+    console.log("ProtectedRoute: No user, redirecting to /");
     // Save the current location to redirect back after login
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render the protected content
