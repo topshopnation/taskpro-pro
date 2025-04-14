@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
-import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
+import { createPaymentUrl } from "./subscription/paymentUtils";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -32,47 +32,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
   }, [open]);
   
-  // PayPal return handling
-  useEffect(() => {
-    // Check for PayPal success parameters in URL
-    const urlParams = new URLSearchParams(location.search);
-    const paymentSuccess = urlParams.get('payment_success');
-    const paymentCancelled = urlParams.get('payment_cancelled');
-    const paymentType = urlParams.get('plan_type');
-    
-    if (paymentSuccess === 'true' && (paymentType === 'monthly' || paymentType === 'yearly')) {
-      handleSuccessfulPayment(paymentType);
-    } else if (paymentCancelled === 'true') {
-      setPaymentError("Payment was cancelled. Please try again if you wish to upgrade.");
-      // Clean up URL parameters
-      cleanupUrlParams();
-    }
-  }, [location]);
-  
+  // Clean up URL parameters
   const cleanupUrlParams = () => {
-    // Clean up URL parameters
     const url = new URL(window.location.href);
     url.searchParams.delete('payment_success');
     url.searchParams.delete('payment_cancelled');
     url.searchParams.delete('plan_type');
     window.history.replaceState({}, document.title, url.toString());
-  };
-  
-  const handleSuccessfulPayment = async (paymentType: 'monthly' | 'yearly') => {
-    setIsProcessing(true);
-    setPaymentError(null);
-    
-    try {
-      await processPaymentConfirmation(paymentType, updateSubscription);
-      onOpenChange(false); // Close dialog after successful payment
-    } catch (error) {
-      console.error("Error processing payment confirmation:", error);
-      setPaymentError("Failed to activate subscription. Please contact support.");
-      toast.error("Failed to activate subscription. Please contact support.");
-    } finally {
-      setIsProcessing(false);
-      cleanupUrlParams();
-    }
   };
   
   const openPaymentLink = () => {

@@ -80,13 +80,18 @@ export async function processPaymentConfirmation(
     periodEnd.setFullYear(periodEnd.getFullYear() + 1);
   }
   
-  // Update the subscription in the database
-  await updateSubscription({
-    status: "active",
-    planType: paymentType,
-    currentPeriodStart: currentDate.toISOString(),
-    currentPeriodEnd: periodEnd.toISOString()
-  });
-  
-  toast.success(`Successfully upgraded to ${paymentType} plan`);
+  try {
+    // Update the subscription in the database
+    await updateSubscription({
+      status: "active",
+      planType: paymentType,
+      currentPeriodStart: currentDate.toISOString(),
+      currentPeriodEnd: periodEnd.toISOString()
+    });
+    
+    toast.success(`Successfully upgraded to ${paymentType} plan`);
+  } catch (error) {
+    console.error("Error processing payment confirmation:", error);
+    throw error;
+  }
 }
