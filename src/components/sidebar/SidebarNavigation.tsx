@@ -1,6 +1,5 @@
-
-import { Search, Inbox, CalendarClock, Clock, BarChart2, Plus } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Search, Inbox, CalendarClock, Clock, BarChart2, Plus, Settings, User } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -11,6 +10,15 @@ import {
 import { useState } from "react";
 import { SearchDialog } from "@/components/search/SearchDialog";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SidebarNavigationProps {
   onMobileMenuClose: () => void;
@@ -20,11 +28,66 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const auth = useAuth();
+  
+  const userProfile = {
+    name: auth.user?.firstName || "User",
+    imageUrl: auth.user?.avatarUrl
+  };
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
+          {/* Profile Menu */}
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="w-full justify-start">
+                  <Avatar className="h-6 w-6 mr-2">
+                    <AvatarImage src={userProfile.imageUrl} alt={userProfile.name} />
+                    <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span>{userProfile.name}</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => {
+                  navigate('/settings');
+                  onMobileMenuClose();
+                }}>
+                  <User className="h-4 w-4 mr-2" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => auth.signOut()}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+
+          {/* Settings Link */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive || location.pathname === '/settings'
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
+                      : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  }`
+                }
+                onClick={onMobileMenuClose}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <SidebarMenuButton 
               onClick={() => {
@@ -134,5 +197,5 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
       <SearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
       <CreateTaskDialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen} />
     </SidebarGroup>
-  )
+  );
 }
