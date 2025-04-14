@@ -34,7 +34,7 @@ const App = () => (
             <SubscriptionProvider>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Navigate to="/today" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 
