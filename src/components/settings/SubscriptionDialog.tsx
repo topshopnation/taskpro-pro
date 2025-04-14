@@ -21,6 +21,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { updateSubscription, subscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
   
@@ -53,9 +54,15 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     
     // Only open if we got a valid URL (user ID was present)
     if (paymentUrl) {
+      // Open in new window/tab
       window.open(paymentUrl, "_blank");
       toast.info("After completing payment, return to this page to activate your subscription");
     }
+  };
+  
+  // Toggle debug information
+  const toggleDebug = () => {
+    setShowDebug(!showDebug);
   };
   
   return (
@@ -82,6 +89,19 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
                 <div><strong>Current user:</strong> {user.id}</div>
                 <div><strong>Current subscription:</strong> {subscription ? subscription.status : 'None'}</div>
                 <div><strong>Testing mode:</strong> {process.env.NODE_ENV}</div>
+                <div className="mt-2">
+                  <Button variant="outline" size="sm" onClick={toggleDebug}>
+                    {showDebug ? 'Hide' : 'Show'} Debug Info
+                  </Button>
+                </div>
+                
+                {showDebug && subscription && (
+                  <div className="mt-2 text-xs overflow-auto max-h-32 border rounded p-2">
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(subscription, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}

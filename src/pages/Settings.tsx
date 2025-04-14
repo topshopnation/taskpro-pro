@@ -23,6 +23,46 @@ export default function Settings() {
   const { user } = useAuth();
   const { updateSubscription, subscription } = useSubscription();
 
+  // Listen for test payment messages from the payment window
+  useEffect(() => {
+    const handlePaymentMessage = (event: MessageEvent) => {
+      // Only process messages from our origin
+      if (event.origin !== window.location.origin) return;
+      
+      // Check if this is a test payment completion message
+      if (event.data?.type === "TEST_PAYMENT_COMPLETED" && event.data?.payload?.success) {
+        const { user_id, plan_type } = event.data.payload;
+        console.log("Received test payment message:", event.data.payload);
+        
+        // Make sure this is for the current user
+        if (user && user.id === user_id) {
+          const processPayment = async () => {
+            try {
+              toast.info("Processing your test subscription...");
+              await processPaymentConfirmation(plan_type, updateSubscription);
+              
+              // Open dialog to show confirmation
+              setIsUpgradeDialogOpen(true);
+            } catch (error) {
+              console.error("Error processing test payment:", error);
+              toast.error("Failed to process test payment. Please try again.");
+            }
+          };
+          
+          processPayment();
+        }
+      }
+    };
+    
+    // Add the event listener
+    window.addEventListener("message", handlePaymentMessage);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener("message", handlePaymentMessage);
+    };
+  }, [user, updateSubscription]);
+
   // Check for payment success in URL params when component mounts
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);

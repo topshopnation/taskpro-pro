@@ -42,13 +42,36 @@ export function createPaymentUrl(
   if (PAYMENT_MODE === "test") {
     paymentUrl = TEST_LINKS[planType];
     
-    // In test mode, simulate successful payment by redirecting back to app with success params
+    // In test mode, directly process the payment on the client side
+    // instead of waiting for the webhook to be called
+    console.log("TEST MODE: Directly processing payment for user", userId, "with plan", planType);
+    
+    toast.info("TEST MODE: Processing payment...");
+    
+    // Simulate a brief delay, then trigger the payment confirmation
     setTimeout(() => {
-      console.log("TEST MODE: Simulating successful payment for user", userId, "with plan", planType);
-      window.location.href = `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`;
+      // Use window.postMessage to communicate with the parent window in case
+      // this was opened in a new tab
+      const message = {
+        type: "TEST_PAYMENT_COMPLETED",
+        payload: {
+          user_id: userId,
+          plan_type: planType,
+          success: true
+        }
+      };
+      
+      // Post to current window (if in same tab) and parent window (if in popup)
+      window.postMessage(message, window.location.origin);
+      
+      try {
+        // Also redirect to success page
+        window.location.href = `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`;
+      } catch (e) {
+        console.error("Error redirecting:", e);
+      }
     }, 1500);
     
-    toast.info("TEST MODE: Simulating successful payment...");
     return paymentUrl;
   }
   
