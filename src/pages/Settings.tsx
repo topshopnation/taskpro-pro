@@ -42,11 +42,13 @@ export default function Settings() {
             console.log("Processing test payment for plan:", planType);
             toast.loading("Processing your subscription...");
             
-            await processPaymentConfirmation(planType, updateSubscription);
-            
-            toast.success(`Test payment processed successfully!`);
-            // Open dialog to show confirmation
-            setIsUpgradeDialogOpen(true);
+            try {
+              await processPaymentConfirmation(planType, updateSubscription);
+              toast.success(`Subscription processed successfully!`);
+            } catch (error) {
+              console.error("Error processing test payment:", error);
+              toast.error("Failed to process test payment. Please try again.");
+            }
           } else if (!isRecent) {
             console.log("Test payment data is too old, ignoring");
           } else if (!user || user.id !== userId) {
@@ -86,8 +88,7 @@ export default function Settings() {
           await processPaymentConfirmation(planType, updateSubscription);
           console.log("Subscription updated successfully");
           
-          // Open dialog to show confirmation
-          setIsUpgradeDialogOpen(true);
+          toast.success(`Successfully subscribed to ${planType} plan!`);
         } catch (error) {
           console.error("Error processing payment:", error);
           toast.error("Failed to process payment. Please try again or contact support.");

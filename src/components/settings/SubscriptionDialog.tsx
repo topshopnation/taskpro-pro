@@ -39,32 +39,34 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       return;
     }
     
+    setIsProcessing(true);
     setPaymentError(null);
     console.log("Creating payment URL for user:", user.id, "plan type:", planType);
     
-    const paymentUrl = createPaymentUrl(planType, user.id);
-    
-    // Only open if we got a valid URL (user ID was present)
-    if (paymentUrl) {
-      // In test mode, open in same window to avoid popup blockers
-      if (paymentUrl.includes("client-id=test")) {
-        // Store test payment info in localStorage
-        localStorage.setItem('taskpro_test_payment', JSON.stringify({
-          userId: user.id,
-          planType,
-          timestamp: Date.now()
-        }));
-        
-        // Redirect to test URL in the same window
-        window.location.href = paymentUrl;
-        
-        // This will later redirect back to the app
-        // and Settings.tsx will handle the test payment confirmation
-      } else {
-        // For production, open in new window/tab
-        window.open(paymentUrl, "_blank");
-        toast.info("After completing payment, return to this page to activate your subscription");
+    try {
+      const paymentUrl = createPaymentUrl(planType, user.id);
+      
+      // Only open if we got a valid URL (user ID was present)
+      if (paymentUrl) {
+        // In test mode, the URL contains test client id
+        if (paymentUrl.includes("client-id=test")) {
+          // For test mode, we don't actually navigate to PayPal
+          // The createPaymentUrl function will handle the redirection to settings page
+          console.log("Test mode payment - simulated PayPal redirect");
+          
+          // Close the dialog since we're handling it automatically
+          onOpenChange(false);
+        } else {
+          // For production, open in new window/tab
+          window.open(paymentUrl, "_blank");
+          toast.info("After completing payment, return to this page to activate your subscription");
+        }
       }
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      setPaymentError("Failed to initiate payment process. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
   

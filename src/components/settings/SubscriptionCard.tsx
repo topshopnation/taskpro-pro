@@ -166,7 +166,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           {subscription?.status === 'active' 
             ? 'Currently Subscribed' 
             : isTrialActive 
-              ? 'Upgrade to Pro' 
+              ? 'Subscribe Now' 
               : 'Subscribe Now'}
         </Button>
       </CardFooter>

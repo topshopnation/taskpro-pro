@@ -46,8 +46,8 @@ export function createPaymentUrl(
       planType
     });
     
-    // For test mode, open in the same window to avoid popup blockers
-    // and ensure we can catch the return
+    // For test mode, don't open in a new window - just store the test payment data
+    // and process it directly
     
     // Create a local storage entry to track that we're in test payment flow
     localStorage.setItem('taskpro_test_payment', JSON.stringify({
@@ -56,8 +56,11 @@ export function createPaymentUrl(
       timestamp: Date.now()
     }));
     
-    // After clicking the test link, this window would reload 
-    // and the Settings component will detect the local storage item
+    // Auto-process the payment immediately in test mode - no need to visit the PayPal page
+    setTimeout(() => {
+      console.log("TEST MODE: Auto-processing payment after delay");
+      window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType;
+    }, 500);
     
     return paymentUrl;
   }
