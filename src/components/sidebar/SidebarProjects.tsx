@@ -1,5 +1,4 @@
-
-import { ListTodo, Plus, ChevronRight, Loader2 } from "lucide-react";
+import { ListTodo, Plus, ChevronRight, Star, StarOff } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +10,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Project {
   id: string;
@@ -34,22 +36,45 @@ export function SidebarProjects({
 }: SidebarProjectsProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
+  const handleProjectClick = (project: Project, e: React.MouseEvent) => {
+    e.preventDefault();
+    const slugName = project.name.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/projects/${project.id}/${slugName}`);
+    onMobileMenuClose();
+  };
+
+  const handleFavoriteToggle = async (project: Project, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) return;
+
+    try {
+      const newValue = !project.favorite;
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ favorite: newValue })
+        .eq('id', project.id)
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      toast.success(newValue ? "Added to favorites" : "Removed from favorites");
+    } catch (error: any) {
+      console.error('Error updating project:', error);
+      toast.error('Failed to update project');
+    }
+  };
+
   // Filter out any "inbox" project that may be listed
   const filteredProjects = projects.filter(project => project.id !== "inbox");
   
   // Only show the top 5 projects in the sidebar, the rest are in the projects page
   const topProjects = filteredProjects.slice(0, 5);
   const hasMoreProjects = filteredProjects.length > 5;
-
-  const handleProjectClick = (project: Project, e: React.MouseEvent) => {
-    e.preventDefault();
-    // Use slugified name in URL
-    const slugName = project.name.toLowerCase().replace(/\s+/g, '-');
-    console.log("Navigating to project:", project.id, slugName);
-    navigate(`/projects/${project.id}/${slugName}`);
-    onMobileMenuClose();
-  };
 
   const isProjectsPageActive = location.pathname === '/projects';
 
@@ -92,15 +117,14 @@ export function SidebarProjects({
           ) : (
             <>
               {topProjects.map((project) => {
-                // Determine if this project is active based on the current path
                 const isActive = location.pathname.includes(`/projects/${project.id}`);
                 
                 return (
-                  <SidebarMenuItem key={project.id}>
+                  <SidebarMenuItem key={project.id} className="group">
                     <SidebarMenuButton asChild>
                       <button
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors relative",
                           isActive
                             ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                             : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -113,6 +137,17 @@ export function SidebarProjects({
                         />
                         <span className="truncate">{project.name}</span>
                         <ChevronRight className="h-4 w-4 ml-auto" />
+                        <button
+                          onClick={(e) => handleFavoriteToggle(project, e)}
+                          className="absolute right-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title={project.favorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          {project.favorite ? (
+                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                          ) : (
+                            <StarOff className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                          )}
+                        </button>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

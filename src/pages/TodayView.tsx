@@ -46,7 +46,8 @@ export default function TodayView() {
   return (
     <AppLayout>
       <div className="space-y-4">
-        <div className="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <TodayViewHeader onAddTask={handleAddTask} />
           <TodaySortControls 
             sortBy={sortField}
             setSortBy={setSortField}
@@ -55,7 +56,6 @@ export default function TodayView() {
             groupBy={groupBy}
             setGroupBy={setGroupBy}
           />
-          <TodayViewHeader onAddTask={handleAddTask} />
         </div>
 
         {tasks.length === 0 ? (
