@@ -1,5 +1,7 @@
+
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
+import { supabase } from "@/integrations/supabase/client";
 
 // Payment mode for testing vs production
 const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
@@ -25,6 +27,59 @@ export function canRenewSubscription(subscription: any): boolean {
   const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   
   return daysUntilExpiry <= 14;
+}
+
+// Function to create a trial subscription for new users
+export async function createTrialSubscription(userId: string): Promise<boolean> {
+  if (!userId) {
+    console.error("Cannot create trial: No user ID provided");
+    return false;
+  }
+  
+  try {
+    console.log("Creating trial subscription for user:", userId);
+    
+    const now = new Date();
+    const trialEnd = new Date(now);
+    trialEnd.setDate(trialEnd.getDate() + 14); // 14 day trial
+    
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+      
+    // If user already has a subscription, don't create a trial
+    if (data) {
+      console.log("User already has a subscription, not creating trial");
+      return false;
+    }
+    
+    // Create trial subscription
+    const { error: insertError } = await supabase
+      .from("subscriptions")
+      .insert({
+        user_id: userId,
+        status: "trial",
+        plan_type: "monthly",
+        trial_start_date: now.toISOString(),
+        trial_end_date: trialEnd.toISOString(),
+        current_period_start: now.toISOString(),
+        current_period_end: trialEnd.toISOString(),
+        updated_at: now.toISOString()
+      });
+      
+    if (insertError) {
+      console.error("Error creating trial subscription:", insertError);
+      return false;
+    }
+    
+    console.log("Trial subscription created successfully");
+    return true;
+  } catch (error) {
+    console.error("Error creating trial subscription:", error);
+    return false;
+  }
 }
 
 export function createPaymentUrl(

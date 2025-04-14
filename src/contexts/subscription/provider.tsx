@@ -102,6 +102,10 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     if (!user) {
       console.log("No user, skipping subscription fetch");
       setLoading(false);
+      setSubscription(null);
+      setIsActive(false);
+      setIsTrialActive(false);
+      setDaysRemaining(0);
       return;
     }
     
@@ -120,6 +124,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
           // No subscription found, user might need to create one
           console.log("No subscription found for user");
           setSubscription(null);
+          setIsActive(false);
+          setIsTrialActive(false);
+          setDaysRemaining(0);
         } else {
           throw error;
         }
@@ -135,31 +142,47 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         setSubscription(typedData);
         
         // Check if subscription has expired but hasn't been updated in the database
-        const now = new Date();
-        const periodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
+        const status = updateSubscriptionStatus(typedData);
+        console.log("Subscription status calculated:", status);
         
-        if (data.status === 'active' && periodEnd && periodEnd < now) {
-          console.log("Subscription has expired, updating in database");
-          // Subscription has expired, update in database
-          await updateSubscription({
-            status: 'expired',
-          });
-          
-          const status = updateSubscriptionStatus({
-            ...typedData,
-            status: 'expired'
-          });
-          
-          setIsActive(status.isActive);
-          setIsTrialActive(status.isTrialActive);
-          setDaysRemaining(status.daysRemaining);
-        } else {
-          const status = updateSubscriptionStatus(typedData);
-          console.log("Subscription status:", status);
-          setIsActive(status.isActive);
-          setIsTrialActive(status.isTrialActive);
-          setDaysRemaining(status.daysRemaining);
+        const now = new Date();
+        
+        // Check if trial has expired
+        if (typedData.status === 'trial' && typedData.trial_end_date) {
+          const trialEnd = new Date(typedData.trial_end_date);
+          if (trialEnd < now) {
+            console.log("Trial has expired, updating in database");
+            // Trial has expired, update in database
+            await updateSubscription({
+              status: 'expired',
+            });
+            setIsActive(false);
+            setIsTrialActive(false);
+            setDaysRemaining(0);
+            return;
+          }
         }
+        
+        // Check if regular subscription has expired
+        if (typedData.status === 'active' && typedData.current_period_end) {
+          const periodEnd = new Date(typedData.current_period_end);
+          if (periodEnd < now) {
+            console.log("Subscription has expired, updating in database");
+            // Subscription has expired, update in database
+            await updateSubscription({
+              status: 'expired',
+            });
+            setIsActive(false);
+            setIsTrialActive(false);
+            setDaysRemaining(0);
+            return;
+          }
+        }
+        
+        // Set subscription status
+        setIsActive(status.isActive);
+        setIsTrialActive(status.isTrialActive);
+        setDaysRemaining(status.daysRemaining);
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
@@ -201,6 +224,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   useEffect(() => {
     if (!user) {
       console.log("No user, skipping realtime subscription setup");
+      setLoading(false);
       return;
     }
     
@@ -215,6 +239,26 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
         console.log("Subscription updated in database:", payload);
+        const newData = payload.new as any;
+        const typedData: Subscription = {
+          ...newData,
+          status: newData.status as SubscriptionStatus,
+          plan_type: newData.plan_type as SubscriptionPlanType
+        };
+        setSubscription(typedData);
+        
+        const status = updateSubscriptionStatus(typedData);
+        setIsActive(status.isActive);
+        setIsTrialActive(status.isTrialActive);
+        setDaysRemaining(status.daysRemaining);
+      })
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public", 
+        table: "subscriptions",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        console.log("New subscription inserted in database:", payload);
         const newData = payload.new as any;
         const typedData: Subscription = {
           ...newData,
@@ -245,7 +289,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     subscription,
     daysRemaining,
     loading,
-    updateSubscription
+    updateSubscription,
+    fetchSubscription
   };
 
   return (

@@ -13,7 +13,7 @@ import SignOutCard from "@/components/settings/SignOutCard";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useSubscription } from "@/contexts/subscription";
-import { processPaymentConfirmation } from "@/components/settings/subscription/paymentUtils";
+import { processPaymentConfirmation, createTrialSubscription } from "@/components/settings/subscription/paymentUtils";
 
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
@@ -21,7 +21,24 @@ export default function Settings() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { updateSubscription, subscription } = useSubscription();
+  const { updateSubscription, subscription, loading } = useSubscription();
+
+  // Check if user needs a trial subscription
+  useEffect(() => {
+    const initializeTrialIfNeeded = async () => {
+      if (user && !loading && !subscription) {
+        console.log("No subscription found, attempting to create trial for user:", user.id);
+        const created = await createTrialSubscription(user.id);
+        if (created) {
+          console.log("Created trial subscription for new user");
+          // Refresh the page to show the new trial subscription
+          window.location.reload();
+        }
+      }
+    };
+    
+    initializeTrialIfNeeded();
+  }, [user, subscription, loading]);
 
   // Check for test payment in localStorage when component mounts or after navigation
   useEffect(() => {
