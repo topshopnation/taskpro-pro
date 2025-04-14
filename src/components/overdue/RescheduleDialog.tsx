@@ -42,9 +42,31 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
       }
       
       for (const taskId of taskIds) {
+        // Get the current task to preserve time if it exists
+        const { data: taskData, error: fetchError } = await supabase
+          .from('tasks')
+          .select('due_date')
+          .eq('id', taskId)
+          .single()
+          
+        if (fetchError) throw fetchError
+        
+        // Determine the time component to preserve
+        let timeComponent = "T12:00:00"
+        if (taskData?.due_date) {
+          const existingDate = new Date(taskData.due_date)
+          // Only use existing time if it's not midnight (00:00:00)
+          if (existingDate.getHours() !== 0 || existingDate.getMinutes() !== 0) {
+            const hours = existingDate.getHours().toString().padStart(2, '0')
+            const minutes = existingDate.getMinutes().toString().padStart(2, '0')
+            timeComponent = `T${hours}:${minutes}:00`
+          }
+        }
+        
+        // Update with new date but preserve time
         const { error } = await supabase
           .from('tasks')
-          .update({ due_date: `${formattedDate}T12:00:00` })
+          .update({ due_date: `${formattedDate}${timeComponent}` })
           .eq('id', taskId)
           
         if (error) throw error
@@ -98,7 +120,7 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
               disabled={isDateBeforeToday} // Use the function to check if date is before today
               showQuickOptions={true}
               onQuickOptionSelect={handleDateSelection}
-              className="rounded-md border"
+              className="rounded-md border shadow-sm bg-background pointer-events-auto"
             />
           </div>
           <p className="text-sm text-muted-foreground text-center">
