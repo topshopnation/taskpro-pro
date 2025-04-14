@@ -1,3 +1,4 @@
+
 import { ListTodo, Plus, ChevronRight, Star, StarOff, Loader2, ChevronDown } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -85,38 +86,38 @@ export function SidebarProjects({
 
   return (
     <SidebarGroup>
-      <div className="flex items-center justify-between mb-2">
-        <CollapsibleTrigger asChild onClick={() => setIsOpen(!isOpen)}>
-          <SidebarMenuButton asChild>
-            <NavLink
-              to="/projects"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-2 rounded-md text-sm transition-colors",
-                  isActive ? "text-primary font-medium" : "text-sidebar-foreground"
-                )
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setIsOpen(!isOpen);
-              }}
-            >
-              <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", !isOpen && "-rotate-90")} />
-              <SidebarGroupLabel>Projects</SidebarGroupLabel>
-            </NavLink>
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-5 w-5"
-          onClick={onOpenCreateProject}
-        >
-          <Plus className="h-4 w-4" />
-          <span className="sr-only">Add Project</span>
-        </Button>
-      </div>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="flex items-center justify-between mb-2">
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to="/projects"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-2 rounded-md text-sm transition-colors",
+                    isActive ? "text-primary font-medium" : "text-sidebar-foreground"
+                  )
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsOpen(!isOpen);
+                }}
+              >
+                <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", !isOpen && "-rotate-90")} />
+                <SidebarGroupLabel>Projects</SidebarGroupLabel>
+              </NavLink>
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-5 w-5"
+            onClick={onOpenCreateProject}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="sr-only">Add Project</span>
+          </Button>
+        </div>
         <CollapsibleContent>
           <SidebarGroupContent>
             <SidebarMenu>
