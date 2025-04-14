@@ -45,44 +45,46 @@ export default function TodayView() {
 
   return (
     <AppLayout>
-      <TodayViewHeader />
+      <div className="space-y-4">
+        <div className="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-4">
+          <TodaySortControls 
+            sortBy={sortField}
+            setSortBy={setSortField}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
+          />
+          <TodayViewHeader onAddTask={handleAddTask} />
+        </div>
 
-      <TodaySortControls 
-        sortBy={sortField}
-        setSortBy={setSortField}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-        groupBy={groupBy}
-        setGroupBy={setGroupBy}
-        onAddTask={handleAddTask}
-      />
+        {tasks.length === 0 ? (
+          <EmptyTodayState onAddTask={handleAddTask} />
+        ) : groupBy ? (
+          <GroupedTaskLists
+            groupedTasks={groupedTasks}
+            groupBy={groupBy}
+            isLoadingTasks={isLoading}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onFavoriteToggle={handleFavoriteToggle}
+            onAddTask={handleAddTask}
+          />
+        ) : (
+          <TaskList
+            title="Today's Tasks"
+            tasks={tasks}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onFavoriteToggle={handleFavoriteToggle}
+          />
+        )}
 
-      {tasks.length === 0 ? (
-        <EmptyTodayState onAddTask={handleAddTask} />
-      ) : groupBy ? (
-        <GroupedTaskLists
-          groupedTasks={groupedTasks}
-          groupBy={groupBy}
-          isLoadingTasks={isLoading}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onFavoriteToggle={handleFavoriteToggle}
-          onAddTask={handleAddTask}
+        <CreateTaskDialog
+          open={isCreateTaskOpen}
+          onOpenChange={setIsCreateTaskOpen}
         />
-      ) : (
-        <TaskList
-          title="Today's Tasks"
-          tasks={tasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onFavoriteToggle={handleFavoriteToggle}
-        />
-      )}
-
-      <CreateTaskDialog
-        open={isCreateTaskOpen}
-        onOpenChange={setIsCreateTaskOpen}
-      />
+      </div>
     </AppLayout>
   );
 }
