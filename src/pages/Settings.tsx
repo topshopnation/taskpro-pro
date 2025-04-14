@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -21,7 +20,7 @@ export default function Settings() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { updateSubscription, subscription, loading } = useSubscription();
+  const { updateSubscription, subscription, loading, fetchSubscription } = useSubscription();
 
   // Check if user needs a trial subscription
   useEffect(() => {
@@ -31,14 +30,14 @@ export default function Settings() {
         const created = await createTrialSubscription(user.id);
         if (created) {
           console.log("Created trial subscription for new user");
-          // Refresh the page to show the new trial subscription
-          window.location.reload();
+          // Refresh the subscription data
+          await fetchSubscription();
         }
       }
     };
     
     initializeTrialIfNeeded();
-  }, [user, subscription, loading]);
+  }, [user, subscription, loading, fetchSubscription]);
 
   // Check for test payment in localStorage when component mounts or after navigation
   useEffect(() => {
