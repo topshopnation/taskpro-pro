@@ -47,14 +47,19 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     );
   }
 
+  // Get plan name based on subscription status
+  let planName = "Free Plan";
   let statusBadge;
+  
   if (isTrialActive) {
+    planName = "Trial Plan";
     statusBadge = (
       <Badge variant="outline" className="ml-auto">
         <Clock className="h-3 w-3 mr-1 text-amber-500" /> Trial
       </Badge>
     );
   } else if (subscription?.status === 'active') {
+    planName = subscription.plan_type === 'monthly' ? "Monthly Plan" : "Annual Plan";
     statusBadge = (
       <Badge variant="outline" className="ml-auto">
         <BadgeCheck className="h-3 w-3 mr-1 text-green-500" /> Pro Plan
@@ -97,7 +102,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             <div>
               <h4 className="font-medium">Current Plan</h4>
               <p className="text-sm text-muted-foreground">
-                TaskPro Pro ({subscription.plan_type === 'monthly' ? 'Monthly' : 'Yearly'})
+                TaskPro Pro ({subscription.plan_type === 'monthly' ? 'Monthly' : 'Annual'})
               </p>
               {formattedExpiryDate && (
                 <p className="text-xs text-muted-foreground mt-1">

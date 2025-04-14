@@ -1,4 +1,5 @@
-import { ListTodo, Plus, ChevronRight, Star, StarOff } from "lucide-react";
+
+import { ListTodo, Plus, ChevronRight, Star, StarOff, Loader2 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {

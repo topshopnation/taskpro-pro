@@ -1,4 +1,5 @@
-import { Filter, Plus, Star, StarOff } from "lucide-react";
+
+import { Filter, Plus, Star, StarOff, Loader2 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,12 @@ export function SidebarFilters({
       toast.error('Failed to update filter');
     }
   };
+
+  // Check if the current page is the filters page
+  const isFiltersPageActive = location.pathname === '/filters';
+  
+  // Determine if we should show "View all filters" link
+  const hasMoreFilters = filters.length > 5;
 
   return (
     <SidebarGroup>
