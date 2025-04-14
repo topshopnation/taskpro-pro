@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { ConditionTypeSelector } from "./ConditionTypeSelector";
-import { ConditionOperatorSelector } from "./ConditionOperatorSelector";
+
 import { ConditionValueSelector } from "./ConditionValueSelector";
+import { ConditionSelectors } from "./components/ConditionSelectors";
+import { SaveConditionButton } from "./components/SaveConditionButton";
 
 interface ConditionFormProps {
   conditionType: string;
@@ -27,21 +26,19 @@ export function ConditionForm({
   handleDateSelect,
   addCondition
 }: ConditionFormProps) {
+  const handleConditionTypeChange = (value: string) => {
+    setConditionType(value);
+    setConditionValue("");
+  };
+
   return (
     <div className="space-y-3 rounded-md border p-4">
-      <div className="grid grid-cols-2 gap-4">
-        <ConditionTypeSelector 
-          conditionType={conditionType}
-          onConditionTypeChange={(value) => {
-            setConditionType(value);
-            setConditionValue("");
-          }}
-        />
-        <ConditionOperatorSelector
-          conditionOperator={conditionOperator}
-          setConditionOperator={setConditionOperator}
-        />
-      </div>
+      <ConditionSelectors
+        conditionType={conditionType}
+        onConditionTypeChange={handleConditionTypeChange}
+        conditionOperator={conditionOperator}
+        setConditionOperator={setConditionOperator}
+      />
 
       <ConditionValueSelector
         conditionType={conditionType}
@@ -51,15 +48,7 @@ export function ConditionForm({
         handleDateSelect={handleDateSelect}
       />
 
-      <Button
-        type="button"
-        onClick={addCondition}
-        className="w-full mt-2"
-        variant="outline"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Save Condition
-      </Button>
+      <SaveConditionButton onClick={addCondition} />
     </div>
   );
 }
