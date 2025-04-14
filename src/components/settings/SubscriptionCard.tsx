@@ -19,16 +19,26 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     loading, 
     isActive, 
     isTrialActive,
-    daysRemaining
+    daysRemaining,
+    fetchSubscription
   } = useSubscription();
   
   const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
+  
+  // Make sure subscription data is loaded
+  useEffect(() => {
+    if (!subscription && !loading) {
+      fetchSubscription();
+    }
+  }, [subscription, loading, fetchSubscription]);
   
   useEffect(() => {
     if (subscription?.current_period_end) {
       setFormattedExpiryDate(format(new Date(subscription.current_period_end), 'MMMM d, yyyy'));
     } else if (subscription?.trial_end_date) {
       setFormattedExpiryDate(format(new Date(subscription.trial_end_date), 'MMMM d, yyyy'));
+    } else {
+      setFormattedExpiryDate(null);
     }
   }, [subscription]);
 
@@ -40,7 +50,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           <CardDescription>Loading subscription information...</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="h-40 flex items-center justify-center">
+          <div className="h-40 flex flex-col items-center justify-center">
             <div className="animate-pulse bg-primary/10 h-5 w-5/6 rounded mb-2"></div>
             <div className="animate-pulse bg-primary/10 h-5 w-3/6 rounded"></div>
           </div>
