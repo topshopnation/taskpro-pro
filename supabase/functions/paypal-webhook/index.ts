@@ -13,6 +13,10 @@ serve(async (req) => {
   logger.info("Request method:", req.method);
   logger.info("Request URL:", req.url);
   
+  // Log request headers for debugging
+  const headersObj = Object.fromEntries([...req.headers.entries()]);
+  logger.info("Request headers:", JSON.stringify(headersObj, null, 2));
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     logger.info("Handling OPTIONS request (CORS preflight)");
@@ -20,8 +24,28 @@ serve(async (req) => {
   }
 
   try {
-    // Validate and parse the webhook request
-    const { requestData, headersObj, isSimulator } = await validateWebhookRequest(req);
+    // Get request body and log it for debugging
+    const bodyText = await req.text();
+    logger.info("Request body:", bodyText);
+    
+    let requestData;
+    try {
+      requestData = JSON.parse(bodyText);
+    } catch (e) {
+      logger.error("Failed to parse request body as JSON:", e);
+      return createResponse({ error: "Invalid JSON payload" }, 400);
+    }
+    
+    // Log parsed request data
+    logger.info("Parsed request data:", JSON.stringify(requestData, null, 2));
+    
+    // Validate webhook request (simplified for more immediate logging)
+    const isSimulator = !headersObj["paypal-transmission-id"] || 
+                      headersObj["paypal-transmission-id"]?.includes("simulator") || 
+                      requestData?.id?.includes("WH-TEST") || 
+                      requestData?.test === true;
+    
+    logger.info("Is simulator request:", isSimulator);
     
     // Process payment events
     if (
@@ -43,6 +67,7 @@ serve(async (req) => {
       event_type: requestData.event_type 
     }, 200);
   } catch (error) {
+    logger.error("Error processing webhook:", error);
     return handleError(error);
   }
 });

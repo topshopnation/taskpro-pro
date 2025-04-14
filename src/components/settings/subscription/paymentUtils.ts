@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 
 // Payment mode for testing vs production
-const PAYMENT_MODE = "test"; // Change to "production" for live payments
+const PAYMENT_MODE = "production"; // Changed from "test" to "production" for live payments
 
 // Test mode PayPal links - these just redirect back to the app for testing
 const TEST_LINKS = {

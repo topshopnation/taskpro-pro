@@ -43,7 +43,7 @@ export async function updateSubscription(userData: { user_id: string; plan_type:
     // First, check if the subscription exists
     const { data: existingSubscription, error: checkError } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select("id, status")
       .eq("user_id", user_id)
       .maybeSingle();
       
@@ -52,10 +52,13 @@ export async function updateSubscription(userData: { user_id: string; plan_type:
       throw new DatabaseError(`Failed to check existing subscription: ${checkError.message}`);
     }
     
+    logger.info("Existing subscription check result:", existingSubscription);
+    
     let result;
     
     if (existingSubscription) {
       // Update existing subscription
+      logger.info("Updating existing subscription for user:", user_id);
       const { data, error } = await supabase
         .from("subscriptions")
         .update({
@@ -65,12 +68,15 @@ export async function updateSubscription(userData: { user_id: string; plan_type:
           current_period_end: periodEnd.toISOString(),
           updated_at: currentDate.toISOString(),
         })
-        .eq("user_id", user_id);
+        .eq("user_id", user_id)
+        .select();
 
       if (error) {
         logger.error("Error updating subscription:", error);
         throw new DatabaseError(`Failed to update subscription: ${error.message}`);
       }
+      
+      logger.info("Subscription updated successfully:", data);
       result = data;
     } else {
       // Create new subscription if it doesn't exist
@@ -83,16 +89,18 @@ export async function updateSubscription(userData: { user_id: string; plan_type:
           plan_type: plan_type,
           current_period_start: currentDate.toISOString(),
           current_period_end: periodEnd.toISOString(),
-        });
+        })
+        .select();
         
       if (error) {
         logger.error("Error creating new subscription:", error);
         throw new DatabaseError(`Failed to create subscription: ${error.message}`);
       }
+      
+      logger.info("New subscription created successfully:", data);
       result = data;
     }
 
-    logger.info("Subscription updated/created successfully for user:", user_id);
     return {
       user_id,
       plan_type,
