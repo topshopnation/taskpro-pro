@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
-import { User } from "@/contexts/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchUserProfile } from "@/utils/auth-utils";
 import { useNavigate } from "react-router-dom";
+import { useUserProfile } from "./use-user-profile";
 
 export const useAuthState = () => {
-  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { user, setUser, updateUserFromSession } = useUserProfile();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -20,22 +19,11 @@ export const useAuthState = () => {
         if (newSession?.user) {
           setSession(newSession);
           setTimeout(async () => {
-            try {
-              const profile = await fetchUserProfile(newSession.user.id);
-              setUser({
-                id: newSession.user.id,
-                email: newSession.user.email,
-                firstName: profile?.first_name,
-                lastName: profile?.last_name,
-                avatarUrl: profile?.avatar_url || newSession.user.user_metadata?.avatar_url,
-              });
-            } catch (error) {
-              console.error("Failed to fetch profile:", error);
-              setUser({
-                id: newSession.user.id,
-                email: newSession.user.email,
-              });
-            }
+            await updateUserFromSession(
+              newSession.user.id,
+              newSession.user.email,
+              newSession.user.user_metadata?.avatar_url
+            );
           }, 0);
           
           if (event === 'SIGNED_IN') {
@@ -65,22 +53,11 @@ export const useAuthState = () => {
 
         if (data?.session) {
           setSession(data.session);
-          try {
-            const profile = await fetchUserProfile(data.session.user.id);
-            setUser({
-              id: data.session.user.id,
-              email: data.session.user.email,
-              firstName: profile?.first_name,
-              lastName: profile?.last_name,
-              avatarUrl: profile?.avatar_url || data.session.user.user_metadata?.avatar_url,
-            });
-          } catch (error) {
-            console.error("Failed to fetch profile:", error);
-            setUser({
-              id: data.session.user.id,
-              email: data.session.user.email,
-            });
-          }
+          await updateUserFromSession(
+            data.session.user.id,
+            data.session.user.email,
+            data.session.user.user_metadata?.avatar_url
+          );
         }
         
         setIsLoading(false);
@@ -95,7 +72,7 @@ export const useAuthState = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, setUser, updateUserFromSession]);
 
   return { user, setUser, session, loading };
 };
