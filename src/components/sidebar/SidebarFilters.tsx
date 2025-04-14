@@ -139,11 +139,22 @@ export function SidebarFilters({
                           className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                           title={filter.favorite ? "Remove from favorites" : "Add to favorites"}
                         >
-                          {filter.favorite ? (
-                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                          ) : (
-                            <StarOff className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                          )}
+                          <div className="group/star">
+                            <div className="block group-hover/star:hidden">
+                              {filter.favorite ? (
+                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              ) : (
+                                <StarOff className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                              )}
+                            </div>
+                            <div className="hidden group-hover/star:block">
+                              {filter.favorite ? (
+                                <StarOff className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                              ) : (
+                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              )}
+                            </div>
+                          </div>
                         </button>
                       </button>
                     </SidebarMenuButton>
