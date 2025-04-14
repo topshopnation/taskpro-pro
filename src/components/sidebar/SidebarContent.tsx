@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { CreateFilterDialog } from "@/components/filters/CreateFilterDialog";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
@@ -13,6 +12,7 @@ import { SidebarFilters } from "./SidebarFilters";
 import { TaskProLogo } from "@/components/ui/taskpro-logo";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface FavoriteItem {
@@ -67,23 +66,22 @@ export function SidebarContent({
   const auth = useAuth();
   const navigate = useNavigate();
   
-  const userProfile = {
-    name: auth.user?.firstName || "User",
-    imageUrl: auth.user?.avatarUrl
-  };
+  const displayName = auth.user?.firstName 
+    ? `${auth.user.firstName}${auth.user.lastName ? ' ' + auth.user.lastName : ''}` 
+    : auth.user?.email?.split('@')[0] || 'User';
 
   return (
     <ScrollArea className="h-full">
       <div className="p-2 space-y-3">
-        <div>
+        <div className="flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start p-1.5 h-auto text-xs">
+              <Button variant="ghost" className="flex-1 justify-start p-1.5 h-auto text-xs">
                 <Avatar className="h-5 w-5 mr-1.5">
-                  <AvatarImage src={userProfile.imageUrl} alt={userProfile.name} />
-                  <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={auth.user?.avatarUrl} alt={displayName} />
+                  <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span>{userProfile.name}</span>
+                <span className="truncate">{displayName}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
@@ -100,6 +98,7 @@ export function SidebarContent({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <SubscriptionStatus />
         </div>
 
         <div className="hidden md:block">

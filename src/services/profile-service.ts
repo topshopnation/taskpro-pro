@@ -34,7 +34,7 @@ export const mapProfileToUser = (
 ): User => ({
   id: userId,
   email: email,
-  firstName: profile?.first_name,
-  lastName: profile?.last_name,
+  firstName: profile?.first_name || undefined,
+  lastName: profile?.last_name || undefined,
   avatarUrl: profile?.avatar_url || avatarUrl,
 });
