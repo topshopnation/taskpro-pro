@@ -30,6 +30,7 @@ export function useSearchTasks(query: string) {
         title: task.title,
         notes: task.notes,
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        dueTime: task.due_date ? new Date(task.due_date).toTimeString().slice(0, 5) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
         projectName: task.projects?.name || 'No Project',
