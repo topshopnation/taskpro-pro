@@ -21,39 +21,92 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   // Update subscription in database
   const updateSubscription = async (update: SubscriptionUpdate) => {
-    if (!user || !subscription) return;
+    if (!user || !user.id) {
+      console.error("Cannot update subscription: No authenticated user");
+      toast.error("You must be signed in to update your subscription.");
+      return;
+    }
     
     try {
+      console.log("Updating subscription for user:", user.id);
+      console.log("Update data:", update);
+      
       const { status, planType, trialStartDate, trialEndDate, currentPeriodStart, currentPeriodEnd } = update;
       
-      const { error } = await supabase
+      // Check if subscription exists first
+      const { data: existingSubscription, error: checkError } = await supabase
         .from("subscriptions")
-        .update({
-          status: status as SubscriptionStatus,
-          plan_type: planType as SubscriptionPlanType,
-          trial_start_date: trialStartDate,
-          trial_end_date: trialEndDate,
-          current_period_start: currentPeriodStart,
-          current_period_end: currentPeriodEnd,
-          updated_at: new Date().toISOString()
-        })
-        .eq("user_id", user.id);
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+        
+      if (checkError) {
+        throw checkError;
+      }
       
-      if (error) throw error;
+      console.log("Existing subscription check:", existingSubscription);
+      
+      let updateResult;
+      
+      if (existingSubscription) {
+        // Update existing subscription
+        console.log("Updating existing subscription");
+        updateResult = await supabase
+          .from("subscriptions")
+          .update({
+            status: status as SubscriptionStatus,
+            plan_type: planType as SubscriptionPlanType,
+            trial_start_date: trialStartDate,
+            trial_end_date: trialEndDate,
+            current_period_start: currentPeriodStart,
+            current_period_end: currentPeriodEnd,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id)
+          .select();
+      } else {
+        // Create new subscription
+        console.log("Creating new subscription");
+        updateResult = await supabase
+          .from("subscriptions")
+          .insert({
+            user_id: user.id,
+            status: status as SubscriptionStatus,
+            plan_type: planType as SubscriptionPlanType,
+            trial_start_date: trialStartDate,
+            trial_end_date: trialEndDate,
+            current_period_start: currentPeriodStart,
+            current_period_end: currentPeriodEnd,
+            updated_at: new Date().toISOString()
+          })
+          .select();
+      }
+      
+      if (updateResult.error) {
+        throw updateResult.error;
+      }
+      
+      console.log("Subscription updated successfully:", updateResult.data);
       
       // Refresh subscription data
       fetchSubscription();
     } catch (error) {
       console.error("Error updating subscription:", error);
       toast.error("Failed to update subscription. Please try again.");
+      throw error;
     }
   };
 
   // Fetch subscription data
   const fetchSubscription = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log("No user, skipping subscription fetch");
+      setLoading(false);
+      return;
+    }
     
     try {
+      console.log("Fetching subscription for user:", user.id);
       setLoading(true);
       
       const { data, error } = await supabase
@@ -65,11 +118,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       if (error) {
         if (error.code === "PGRST116") {
           // No subscription found, user might need to create one
+          console.log("No subscription found for user");
           setSubscription(null);
         } else {
           throw error;
         }
       } else if (data) {
+        console.log("Subscription found:", data);
+        
         // Convert string status to proper SubscriptionStatus type
         const typedData: Subscription = {
           ...data,
@@ -83,6 +139,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         const periodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
         
         if (data.status === 'active' && periodEnd && periodEnd < now) {
+          console.log("Subscription has expired, updating in database");
           // Subscription has expired, update in database
           await updateSubscription({
             status: 'expired',
@@ -98,6 +155,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
           setDaysRemaining(status.daysRemaining);
         } else {
           const status = updateSubscriptionStatus(typedData);
+          console.log("Subscription status:", status);
           setIsActive(status.isActive);
           setIsTrialActive(status.isTrialActive);
           setDaysRemaining(status.daysRemaining);
@@ -121,12 +179,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       
       // If status has changed, update state and potentially database
       if (status.isActive !== isActive || status.isTrialActive !== isTrialActive) {
+        console.log("Subscription status changed:", status);
         setIsActive(status.isActive);
         setIsTrialActive(status.isTrialActive);
         setDaysRemaining(status.daysRemaining);
         
         // If subscription has expired, update it in the database
         if (!status.isActive && !status.isTrialActive && subscription.status === 'active') {
+          console.log("Subscription expired, updating database");
           updateSubscription({
             status: 'expired'
           });
@@ -139,7 +199,12 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   // Setup realtime subscription updates
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log("No user, skipping realtime subscription setup");
+      return;
+    }
+    
+    console.log("Setting up realtime subscription for user:", user.id);
     
     const channel = supabase
       .channel("subscription-updates")
@@ -149,6 +214,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         table: "subscriptions",
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
+        console.log("Subscription updated in database:", payload);
         const newData = payload.new as any;
         const typedData: Subscription = {
           ...newData,
@@ -168,6 +234,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     fetchSubscription();
     
     return () => {
+      console.log("Cleaning up subscription channel");
       supabase.removeChannel(channel);
     };
   }, [user]);

@@ -13,13 +13,15 @@ import SignOutCard from "@/components/settings/SignOutCard";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useSubscription } from "@/contexts/subscription";
+import { processPaymentConfirmation } from "@/components/settings/subscription/paymentUtils";
 
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { updateSubscription } = useSubscription();
+  const { user } = useAuth();
+  const { updateSubscription, subscription } = useSubscription();
 
   // Check for payment success in URL params when component mounts
   useEffect(() => {
@@ -28,49 +30,45 @@ export default function Settings() {
     const paymentCancelled = urlParams.get('payment_cancelled');
     const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
     
+    // Process successful payment
     if (paymentSuccess === 'true' && planType) {
-      // Open subscription dialog to handle payment confirmation
-      setIsUpgradeDialogOpen(true);
+      console.log("Processing payment success. Plan type:", planType);
+      console.log("Current user:", user ? user.id : 'Not logged in');
+      console.log("Current subscription status:", subscription ? subscription.status : 'None');
       
-      // Process the subscription update directly
+      // Process the subscription update
       const processPayment = async () => {
         try {
           toast.info("Processing your subscription...");
+          console.log("Starting payment processing for plan:", planType);
           
-          // Calculate the new period end date based on plan type
-          const currentDate = new Date();
-          const periodEnd = new Date(currentDate);
+          await processPaymentConfirmation(planType, updateSubscription);
+          console.log("Subscription updated successfully");
           
-          if (planType === "monthly") {
-            periodEnd.setMonth(periodEnd.getMonth() + 1);
-          } else {
-            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-          }
-          
-          // Update the subscription in the database
-          await updateSubscription({
-            status: "active",
-            planType: planType,
-            currentPeriodStart: currentDate.toISOString(),
-            currentPeriodEnd: periodEnd.toISOString()
-          });
-          
-          toast.success(`Successfully upgraded to ${planType} plan!`);
+          // Open dialog to show confirmation
+          setIsUpgradeDialogOpen(true);
         } catch (error) {
           console.error("Error processing payment:", error);
           toast.error("Failed to process payment. Please try again or contact support.");
+        } finally {
+          // Clean up URL parameters
+          const url = new URL(window.location.href);
+          url.searchParams.delete('payment_success');
+          url.searchParams.delete('payment_cancelled');
+          url.searchParams.delete('plan_type');
+          window.history.replaceState({}, document.title, url.toString());
         }
-        
-        // Clean up URL parameters
-        const url = new URL(window.location.href);
-        url.searchParams.delete('payment_success');
-        url.searchParams.delete('payment_cancelled');
-        url.searchParams.delete('plan_type');
-        window.history.replaceState({}, document.title, url.toString());
       };
       
-      processPayment();
-    } else if (paymentCancelled === 'true') {
+      if (user) {
+        processPayment();
+      } else {
+        console.error("Cannot process payment: User not logged in");
+        toast.error("You must be logged in to process payments");
+      }
+    } 
+    // Handle payment cancellation
+    else if (paymentCancelled === 'true') {
       toast.error("Payment was cancelled. You can try again whenever you're ready.");
       
       // Clean up URL parameters
@@ -78,7 +76,7 @@ export default function Settings() {
       url.searchParams.delete('payment_cancelled');
       window.history.replaceState({}, document.title, url.toString());
     }
-  }, [location, updateSubscription]);
+  }, [location, updateSubscription, user, subscription]);
 
   return (
     <AppLayout>

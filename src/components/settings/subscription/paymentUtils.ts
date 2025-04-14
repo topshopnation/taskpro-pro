@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 
 // Payment mode for testing vs production
-const PAYMENT_MODE: "production" | "test" = "production"; // Changed from "test" to "production" for live payments
+const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
 
 // Test mode PayPal links - these just redirect back to the app for testing
 const TEST_LINKS = {
@@ -44,6 +44,7 @@ export function createPaymentUrl(
     
     // In test mode, simulate successful payment by redirecting back to app with success params
     setTimeout(() => {
+      console.log("TEST MODE: Simulating successful payment for user", userId, "with plan", planType);
       window.location.href = `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`;
     }, 1500);
     
@@ -81,6 +82,10 @@ export async function processPaymentConfirmation(
   }
   
   try {
+    console.log("Processing payment confirmation for plan:", paymentType);
+    console.log("Current period starts:", currentDate.toISOString());
+    console.log("Current period ends:", periodEnd.toISOString());
+    
     // Update the subscription in the database
     await updateSubscription({
       status: "active",

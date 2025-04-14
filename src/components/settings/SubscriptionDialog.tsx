@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
-import { createPaymentUrl } from "./subscription/paymentUtils";
+import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -18,7 +18,7 @@ interface SubscriptionDialogProps {
 
 export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionDialogProps) {
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
-  const { updateSubscription } = useSubscription();
+  const { updateSubscription, subscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const location = useLocation();
@@ -48,6 +48,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
     
     setPaymentError(null);
+    console.log("Creating payment URL for user:", user.id, "plan type:", planType);
     const paymentUrl = createPaymentUrl(planType, user.id);
     
     // Only open if we got a valid URL (user ID was present)
@@ -72,6 +73,16 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{paymentError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {user && (
+            <Alert variant="default" className="bg-muted">
+              <AlertDescription className="text-xs">
+                <div><strong>Current user:</strong> {user.id}</div>
+                <div><strong>Current subscription:</strong> {subscription ? subscription.status : 'None'}</div>
+                <div><strong>Testing mode:</strong> {process.env.NODE_ENV}</div>
+              </AlertDescription>
             </Alert>
           )}
           
