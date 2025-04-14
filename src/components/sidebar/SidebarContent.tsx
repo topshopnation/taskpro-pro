@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -73,12 +74,12 @@ export function SidebarContent({
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-4 space-y-6">
-        <div className="mb-4">
+      <div className="p-2 space-y-3">
+        <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start p-2 h-auto">
-                <Avatar className="h-6 w-6 mr-2">
+              <Button variant="ghost" className="w-full justify-start p-1.5 h-auto text-xs">
+                <Avatar className="h-5 w-5 mr-1.5">
                   <AvatarImage src={userProfile.imageUrl} alt={userProfile.name} />
                   <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
@@ -90,7 +91,7 @@ export function SidebarContent({
                 navigate('/settings');
                 onMobileMenuClose();
               }}>
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-3.5 w-3.5 mr-1.5" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -101,16 +102,17 @@ export function SidebarContent({
           </DropdownMenu>
         </div>
 
-        <div className="mb-4 hidden md:block">
-          <TaskProLogo size="medium" className="mx-auto" />
+        <div className="hidden md:block">
+          <TaskProLogo size="small" className="mx-auto" />
         </div>
         
-        <div className="mb-4">
+        <div>
           <Button 
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-1.5 text-xs py-1.5"
+            size="sm"
             onClick={() => setIsCreateTaskOpen(true)}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span>Add Task</span>
           </Button>
         </div>
