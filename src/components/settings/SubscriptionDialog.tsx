@@ -127,7 +127,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             Cancel
           </Button>
           <Button onClick={openPaymentLink} disabled={isProcessing}>
-            {isProcessing ? "Processing..." : `Continue`}
+            {isProcessing ? "Processing..." : `Subscribe Now`}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -46,9 +46,6 @@ export function createPaymentUrl(
       planType
     });
     
-    // For test mode, don't open in a new window - just store the test payment data
-    // and process it directly
-    
     // Create a local storage entry to track that we're in test payment flow
     localStorage.setItem('taskpro_test_payment', JSON.stringify({
       userId,
@@ -57,10 +54,10 @@ export function createPaymentUrl(
     }));
     
     // Auto-process the payment immediately in test mode - no need to visit the PayPal page
-    setTimeout(() => {
-      console.log("TEST MODE: Auto-processing payment after delay");
-      window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType;
-    }, 500);
+    console.log("TEST MODE: Auto-processing payment after delay");
+    
+    // Redirect to settings page with success parameters for both plans
+    window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType;
     
     return paymentUrl;
   }
@@ -69,9 +66,10 @@ export function createPaymentUrl(
   paymentUrl = PRODUCTION_LINKS[planType];
   paymentUrl += `&custom_id=${encodedCustomData}`;
   
-  // Add return URL parameters for production
-  paymentUrl += `&return=${encodeURIComponent(window.location.origin + "/settings?payment_success=true&plan_type=" + planType)}`;
-  paymentUrl += `&cancel_url=${encodeURIComponent(window.location.origin + "/settings?payment_cancelled=true")}`;
+  // Add return URL parameters for production - always return to settings page
+  const settingsUrl = window.location.origin + "/settings";
+  paymentUrl += `&return=${encodeURIComponent(settingsUrl + "?payment_success=true&plan_type=" + planType)}`;
+  paymentUrl += `&cancel_url=${encodeURIComponent(settingsUrl + "?payment_cancelled=true")}`;
   
   return paymentUrl;
 }

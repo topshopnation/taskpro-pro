@@ -165,9 +165,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           <CreditCard className="mr-2 h-4 w-4" />
           {subscription?.status === 'active' 
             ? 'Currently Subscribed' 
-            : isTrialActive 
-              ? 'Subscribe Now' 
-              : 'Subscribe Now'}
+            : 'Subscribe Now'}
         </Button>
       </CardFooter>
     </Card>
