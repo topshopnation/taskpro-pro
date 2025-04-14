@@ -1,3 +1,4 @@
+
 import { Search, Inbox, CalendarClock, Clock, BarChart2, Plus, Settings, User } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -40,8 +41,8 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          {/* Profile Menu */}
-          <SidebarMenuItem>
+          {/* Profile Menu - Now first item */}
+          <SidebarMenuItem className="mb-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="w-full justify-start">
@@ -57,8 +58,8 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                   navigate('/settings');
                   onMobileMenuClose();
                 }}>
-                  <User className="h-4 w-4 mr-2" />
-                  <span>Profile</span>
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => auth.signOut()}>
@@ -66,26 +67,6 @@ export function SidebarNavigation({ onMobileMenuClose }: SidebarNavigationProps)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </SidebarMenuItem>
-
-          {/* Settings Link */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink
-                to="/settings"
-                className={({ isActive }) =>
-                  `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    isActive || location.pathname === '/settings'
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
-                      : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  }`
-                }
-                onClick={onMobileMenuClose}
-              >
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </NavLink>
-            </SidebarMenuButton>
           </SidebarMenuItem>
 
           <SidebarMenuItem>
