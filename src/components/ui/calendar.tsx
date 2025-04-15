@@ -62,7 +62,9 @@ function Calendar({
               onClick={() => handleQuickOptionClick(option.date)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
-                option.date && isDateSelected(option.date, props.selected) && "bg-primary/10"
+                // Fix the TypeScript error by ensuring we're comparing dates only
+                option.date && props.selected instanceof Date && 
+                isDateSelected(option.date, props.selected) && "bg-primary/10"
               )}
               type="button"
             >

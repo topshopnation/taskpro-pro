@@ -21,7 +21,6 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const isOverdue = dueDate && new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0))
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [timeInput, setTimeInput] = useState<string>("")
-  const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [open, setOpen] = useState(false)
   
@@ -48,14 +47,15 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     return newDate;
   };
 
-  // Handle setting a date with time
-  const handleDateTimeSelection = (date: Date | undefined) => {
+  // Handle setting a date without time
+  const handleDateSelection = (date: Date | undefined) => {
     if (!date) {
       onDateChange(undefined);
       return;
     }
     
     if (timeInput) {
+      // If time was already set by the user, preserve it
       const dateWithTime = addTimeToDate(date, timeInput);
       onDateChange(dateWithTime);
     } else {
@@ -69,9 +69,20 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     setOpen(false);
   };
 
-  // Handle quick date selection
+  // Handle quick date selection (Today, Tomorrow, etc.)
   const handleQuickDateSelection = (date: Date | undefined) => {
-    handleDateTimeSelection(date);
+    if (!date) {
+      onDateChange(undefined);
+      return;
+    }
+    
+    // For quick selections, we always set time to midnight (beginning of day)
+    const dateWithoutTime = new Date(date);
+    dateWithoutTime.setHours(0, 0, 0, 0);
+    onDateChange(dateWithoutTime);
+    
+    // Close popover after selection
+    setOpen(false);
   };
 
   // Handle setting time for a date
@@ -88,21 +99,6 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       const dateWithoutTime = new Date(dueDate);
       dateWithoutTime.setHours(0, 0, 0, 0);
       onDateChange(dateWithoutTime);
-    }
-  };
-
-  // Handle time input focus - set default to 8:00 AM if empty
-  const handleTimeInputFocus = () => {
-    setTimeInputFocused(true);
-    if (!timeInput) {
-      setTimeInput("08:00");
-      
-      // If we have a date, update it with the default time
-      if (dueDate) {
-        const dateWithDefaultTime = new Date(dueDate);
-        dateWithDefaultTime.setHours(8, 0, 0, 0);
-        onDateChange(dateWithDefaultTime);
-      }
     }
   };
 
@@ -171,7 +167,6 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
               placeholder="Add time"
               value={timeInput}
               onChange={handleTimeInputChange}
-              onFocus={handleTimeInputFocus}
               className="h-7 py-1"
             />
             {timeInput && (
@@ -190,7 +185,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
           <Calendar
             mode="single"
             selected={dueDate}
-            onSelect={handleDateTimeSelection}
+            onSelect={handleDateSelection}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             showQuickOptions={true}

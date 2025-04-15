@@ -27,6 +27,11 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
   
   // Direct handler for quick option selection from Calendar component
   const handleCalendarQuickOptionSelect = (date: Date | undefined) => {
+    if (!date) {
+      handleQuickOptionSelect(undefined, "all");
+      return;
+    }
+    
     // Map the date to the corresponding filter value based on quick options
     const option = quickOptions.find(opt => 
       opt.date && date && opt.date.getTime() === date.getTime()
@@ -44,6 +49,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     } else {
       // Handle custom date if needed
       setDate(date);
+      // For a custom date, we don't change the filter value
     }
   };
 
@@ -102,9 +108,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
             selected={date}
             onSelect={(newDate) => {
               setDate(newDate);
-              if (newDate) {
-                // Custom date handling if needed
-              }
+              // We don't change filter value on custom date selection
             }}
             showQuickOptions={true}
             onQuickOptionSelect={handleCalendarQuickOptionSelect}

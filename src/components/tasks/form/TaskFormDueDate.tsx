@@ -17,7 +17,6 @@ interface TaskFormDueDateProps {
 
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const [timeInput, setTimeInput] = useState<string>("");
-  const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false);
   const [open, setOpen] = useState(false);
   
   // Initialize timeInput when dueDate changes, but only if it has hours/minutes set
@@ -44,14 +43,15 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
     return newDate;
   };
 
-  // Handle setting a date with time
-  const handleDateTimeSelection = (date: Date | undefined) => {
+  // Handle setting a date without time
+  const handleDateSelection = (date: Date | undefined) => {
     if (!date) {
       onChange(undefined);
       return;
     }
     
     if (timeInput) {
+      // If time was already set by the user, preserve it
       const dateWithTime = addTimeToDate(date, timeInput);
       onChange(dateWithTime);
     } else {
@@ -67,7 +67,18 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
 
   // Handle quick date selection (Today, Tomorrow, etc.)
   const handleQuickDateSelection = (date: Date | undefined) => {
-    handleDateTimeSelection(date);
+    if (!date) {
+      onChange(undefined);
+      return;
+    }
+    
+    // For quick selections, we always set time to midnight (beginning of day)
+    const dateWithoutTime = new Date(date);
+    dateWithoutTime.setHours(0, 0, 0, 0);
+    onChange(dateWithoutTime);
+    
+    // Close popover after selection
+    setOpen(false);
   };
 
   // Handle setting time for a date
@@ -84,21 +95,6 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
       const dateWithoutTime = new Date(dueDate);
       dateWithoutTime.setHours(0, 0, 0, 0);
       onChange(dateWithoutTime);
-    }
-  };
-
-  // Handle time input focus - set default to 8:00 AM if empty
-  const handleTimeInputFocus = () => {
-    setTimeInputFocused(true);
-    if (!timeInput) {
-      setTimeInput("08:00");
-      
-      // If we have a date, update it with the default time
-      if (dueDate) {
-        const dateWithDefaultTime = new Date(dueDate);
-        dateWithDefaultTime.setHours(8, 0, 0, 0);
-        onChange(dateWithDefaultTime);
-      }
     }
   };
 
@@ -157,7 +153,6 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
                 placeholder="Add time"
                 value={timeInput}
                 onChange={handleTimeInputChange}
-                onFocus={handleTimeInputFocus}
                 className="h-7 py-1"
               />
               {timeInput && (
@@ -176,7 +171,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
             <Calendar
               mode="single"
               selected={dueDate}
-              onSelect={handleDateTimeSelection}
+              onSelect={handleDateSelection}
               initialFocus
               showQuickOptions={true}
               onQuickOptionSelect={handleQuickDateSelection}

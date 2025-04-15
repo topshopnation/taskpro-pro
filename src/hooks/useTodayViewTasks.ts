@@ -45,8 +45,10 @@ export function useTodayViewTasks() {
         let dueTime = null;
         
         if (dueDate) {
-          const timeString = dueDate.toISOString().split('T')[1];
-          if (timeString && timeString !== '00:00:00.000Z') {
+          // Only set dueTime if hours or minutes are non-zero (explicitly set by user)
+          const hours = dueDate.getHours();
+          const minutes = dueDate.getMinutes();
+          if (hours !== 0 || minutes !== 0) {
             dueTime = dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           }
         }

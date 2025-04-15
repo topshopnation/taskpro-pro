@@ -36,9 +36,38 @@ export function DateConditionValue({
     }
   };
   
-  // Handle quick date selection
+  // Handle quick date selection - also sets condition value to appropriate predefined option
   const handleQuickDateSelect = (date: Date | undefined) => {
-    handleCalendarSelect(date);
+    handleDateSelect(date);
+    
+    // Set the appropriate condition value based on the quick option selected
+    if (!date) {
+      setConditionValue("");
+      return;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const nextMonday = new Date(today);
+    const dayOfWeek = today.getDay();
+    const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+    nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+    
+    // Check which quick date was selected
+    if (date.getTime() === today.getTime()) {
+      setConditionValue("today");
+    } else if (date.getTime() === tomorrow.getTime()) {
+      setConditionValue("tomorrow");
+    } else if (date.getTime() === nextMonday.getTime()) {
+      setConditionValue("next_week");
+    } else {
+      // For other dates, use the formatted date
+      setConditionValue(formatDateToValue(date));
+    }
   };
 
   // Get quick date options for consistency
