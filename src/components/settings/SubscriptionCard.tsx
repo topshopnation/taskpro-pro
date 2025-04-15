@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   
   const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
   
-  // Make sure subscription data is loaded
+  // Make sure subscription data is loaded - only fetch once
   useEffect(() => {
     if (!loading && !initialized) {
       console.log("SubscriptionCard: Fetching subscription data");
@@ -43,9 +42,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     }
   }, [subscription]);
 
-  console.log("SubscriptionCard state:", { loading, initialized, subscription });
-
-  if (loading) {
+  // Display loading state until we have finished initializing
+  if (loading || !initialized) {
     return (
       <Card>
         <CardHeader>

@@ -29,6 +29,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       console.log("No user, skipping subscription fetch");
       setLoading(false);
       updateState(null);
+      setInitialized(true);
       return;
     }
 
@@ -48,6 +49,11 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
+    if (initialized) {
+      // If already initialized, reset the state
+      setInitialized(false);
+    }
+    
     if (user) {
       console.log("User authenticated, fetching subscription");
       fetchSubscription();

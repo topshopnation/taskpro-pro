@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export function SubscriptionStatus() {
   const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription, initialized } = useSubscription();
 
-  // Ensure subscription data is loaded
+  // Ensure subscription data is loaded - only fetch once
   useEffect(() => {
     if (!loading && !initialized) {
       console.log("SubscriptionStatus: Fetching subscription data");
@@ -15,10 +15,11 @@ export function SubscriptionStatus() {
     }
   }, [fetchSubscription, loading, initialized]);
 
-  if (loading) {
+  // Don't show anything while loading to prevent flickering
+  if (loading || !initialized) {
     return (
       <div className="flex items-center space-x-1">
-        <Badge variant="outline" className="text-xs animate-pulse">
+        <Badge variant="outline" className="text-xs">
           Loading...
         </Badge>
       </div>
