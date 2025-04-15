@@ -34,6 +34,7 @@ export interface SubscriptionContextType {
   subscription: Subscription | null;
   daysRemaining: number;
   loading: boolean;
+  initialized: boolean;
   updateSubscription: (update: SubscriptionUpdate) => Promise<void>;
   fetchSubscription: () => Promise<void>;
 }

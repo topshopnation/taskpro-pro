@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { SubscriptionContext } from "./context";
 import { SubscriptionUpdate } from "./types";
@@ -13,6 +13,7 @@ interface SubscriptionProviderProps {
 
 export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children }) => {
   const { user } = useAuth();
+  const [initialized, setInitialized] = useState(false);
   const {
     subscription,
     loading,
@@ -41,12 +42,21 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       console.error("Error fetching subscription:", error);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   }, [user, setLoading, updateState]);
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
-    fetchSubscription();
+    if (user) {
+      console.log("User authenticated, fetching subscription");
+      fetchSubscription();
+    } else {
+      console.log("No user authenticated, resetting subscription state");
+      updateState(null);
+      setLoading(false);
+      setInitialized(true);
+    }
   }, [user?.id]);
 
   const updateSubscription = useCallback(async (update: SubscriptionUpdate) => {
@@ -68,6 +78,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     subscription,
     daysRemaining,
     loading,
+    initialized,
     updateSubscription,
     fetchSubscription
   };

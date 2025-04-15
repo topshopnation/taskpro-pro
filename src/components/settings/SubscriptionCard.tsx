@@ -6,7 +6,6 @@ import { CreditCard, BadgeCheck, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/contexts/subscription";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface SubscriptionCardProps {
@@ -20,17 +19,19 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     isActive, 
     isTrialActive,
     daysRemaining,
-    fetchSubscription
+    fetchSubscription,
+    initialized
   } = useSubscription();
   
   const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
   
   // Make sure subscription data is loaded
   useEffect(() => {
-    if (!subscription && !loading) {
+    if (!loading && !initialized) {
+      console.log("SubscriptionCard: Fetching subscription data");
       fetchSubscription();
     }
-  }, [subscription, loading, fetchSubscription]);
+  }, [loading, initialized, fetchSubscription]);
   
   useEffect(() => {
     if (subscription?.current_period_end) {
@@ -41,6 +42,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       setFormattedExpiryDate(null);
     }
   }, [subscription]);
+
+  console.log("SubscriptionCard state:", { loading, initialized, subscription });
 
   if (loading) {
     return (

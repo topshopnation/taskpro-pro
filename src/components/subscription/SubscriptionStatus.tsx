@@ -5,14 +5,15 @@ import { Clock, CheckCircle } from "lucide-react";
 import { useEffect } from "react";
 
 export function SubscriptionStatus() {
-  const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription } = useSubscription();
+  const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription, initialized } = useSubscription();
 
   // Ensure subscription data is loaded
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !initialized) {
+      console.log("SubscriptionStatus: Fetching subscription data");
       fetchSubscription();
     }
-  }, [fetchSubscription, loading]);
+  }, [fetchSubscription, loading, initialized]);
 
   if (loading) {
     return (
