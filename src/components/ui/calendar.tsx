@@ -41,8 +41,11 @@ function Calendar({
               onClick={() => handleQuickOptionClick(option.date)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
-                props.selected && props.selected === option.date && "bg-primary/10"
+                props.selected && 
+                props.selected.getTime() === (option.date?.getTime() ?? 0) && 
+                "bg-primary/10"
               )}
+              type="button"
             >
               <div className="flex items-center space-x-2">
                 {option.value === "today" && (

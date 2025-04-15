@@ -23,6 +23,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const [timeInput, setTimeInput] = useState<string>("")
   const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const [open, setOpen] = useState(false)
   
   // Initialize timeInput when dueDate changes, but only if hours/minutes are not zero
   useEffect(() => {
@@ -63,6 +64,9 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       dateWithoutTime.setHours(0, 0, 0, 0);
       onDateChange(dateWithoutTime);
     }
+    
+    // Close popover after selection
+    setOpen(false);
   };
 
   // Handle setting time for a date
@@ -117,7 +121,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const timeString = shouldShowTime ? format(dueDate, "HH:mm") : "";
   
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>

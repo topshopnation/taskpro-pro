@@ -18,6 +18,7 @@ interface TaskFormDueDateProps {
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const [timeInput, setTimeInput] = useState<string>("");
   const [timeInputFocused, setTimeInputFocused] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
   
   // Initialize timeInput when dueDate changes, but only if it has hours/minutes set
   useEffect(() => {
@@ -59,6 +60,9 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
       dateWithoutTime.setHours(0, 0, 0, 0);
       onChange(dateWithoutTime);
     }
+    
+    // Close popover after selection
+    setOpen(false);
   };
 
   // Handle setting time for a date
@@ -112,7 +116,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
     <div className="grid gap-2">
       <Label>Due Date</Label>
       
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
