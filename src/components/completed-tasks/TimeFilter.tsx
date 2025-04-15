@@ -18,11 +18,13 @@ interface TimeFilterProps {
 
 export function TimeFilter({ value, onChange }: TimeFilterProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [open, setOpen] = useState(false);
   const quickOptions = getQuickDateOptions();
 
   const handleQuickOptionSelect = (date: Date | undefined, optionValue: string) => {
     setDate(date);
     onChange(optionValue);
+    setOpen(false);
   };
   
   // Direct handler for quick option selection from Calendar component
@@ -34,7 +36,10 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     
     // Map the date to the corresponding filter value based on quick options
     const option = quickOptions.find(opt => 
-      opt.date && date && opt.date.getTime() === date.getTime()
+      opt.date && date && 
+      opt.date.getFullYear() === date.getFullYear() &&
+      opt.date.getMonth() === date.getMonth() &&
+      opt.date.getDate() === date.getDate()
     );
     
     if (option) {
@@ -49,12 +54,13 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     } else {
       // Handle custom date if needed
       setDate(date);
+      setOpen(false);
       // For a custom date, we don't change the filter value
     }
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button 
           variant="outline"
@@ -65,7 +71,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
           <span>{getTimeFilterLabel(value)}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-2" side="bottom">
+      <PopoverContent align="end" className="w-auto p-2 z-50" side="bottom">
         <div className="flex flex-col space-y-2">
           <div className="flex flex-col divide-y border rounded-md bg-background">
             {quickOptions.map((option) => (
@@ -112,7 +118,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
             }}
             showQuickOptions={true}
             onQuickOptionSelect={handleCalendarQuickOptionSelect}
-            className="rounded-md border shadow-sm bg-background"
+            className="rounded-md border shadow-sm bg-background pointer-events-auto"
           />
         </div>
       </PopoverContent>

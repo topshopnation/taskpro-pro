@@ -14,6 +14,7 @@ interface SubscriptionProviderProps {
 export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [initialized, setInitialized] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const {
     subscription,
     loading,
@@ -33,7 +34,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       return;
     }
 
+    // Prevent multiple simultaneous fetches
+    if (isFetching) {
+      console.log("Already fetching subscription, skipping");
+      return;
+    }
+
     try {
+      setIsFetching(true);
       setLoading(true);
       console.log("Fetching subscription for user:", user.id);
       const data = await subscriptionService.fetchSubscription(user.id);
@@ -44,26 +52,28 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     } finally {
       setLoading(false);
       setInitialized(true);
+      setIsFetching(false);
     }
-  }, [user, setLoading, updateState]);
+  }, [user, setLoading, updateState, isFetching]);
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
-    if (initialized) {
-      // If already initialized, reset the state
-      setInitialized(false);
-    }
-    
-    if (user) {
+    if (user && !isFetching) {
       console.log("User authenticated, fetching subscription");
+      
+      // Reset initialized state before fetching
+      if (initialized) {
+        setInitialized(false);
+      }
+      
       fetchSubscription();
-    } else {
+    } else if (!user) {
       console.log("No user authenticated, resetting subscription state");
       updateState(null);
       setLoading(false);
       setInitialized(true);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchSubscription, isFetching, initialized]);
 
   const updateSubscription = useCallback(async (update: SubscriptionUpdate) => {
     if (!user?.id) {
@@ -71,9 +81,17 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       throw new Error("You must be signed in to update your subscription.");
     }
 
-    const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
-    updateState(updatedSubscription);
-  }, [user, updateState]);
+    try {
+      setLoading(true);
+      const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
+      updateState(updatedSubscription);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, updateState, setLoading]);
 
   // Setup realtime subscription updates
   useSubscriptionRealtime(user?.id, updateState);

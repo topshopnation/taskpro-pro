@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { getQuickDateOptions } from "@/utils/dateUtils";
+import { useState } from "react";
 
 interface DateConditionValueProps {
   conditionValue: string;
@@ -21,6 +22,8 @@ export function DateConditionValue({
   selectedDate,
   handleDateSelect
 }: DateConditionValueProps) {
+  const [open, setOpen] = useState(false);
+
   // Function to format date to required string format
   const formatDateToValue = (date: Date): string => {
     return format(date, "yyyy-MM-dd");
@@ -34,18 +37,21 @@ export function DateConditionValue({
     } else {
       setConditionValue("");
     }
+    setOpen(false);
   };
   
   // Handle quick date selection - also sets condition value to appropriate predefined option
   const handleQuickDateSelect = (date: Date | undefined) => {
-    handleDateSelect(date);
-    
-    // Set the appropriate condition value based on the quick option selected
     if (!date) {
+      handleDateSelect(undefined);
       setConditionValue("");
+      setOpen(false);
       return;
     }
     
+    handleDateSelect(date);
+    
+    // Set the appropriate condition value based on the quick option selected
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -68,14 +74,56 @@ export function DateConditionValue({
       // For other dates, use the formatted date
       setConditionValue(formatDateToValue(date));
     }
+    
+    setOpen(false);
   };
 
   // Get quick date options for consistency
   const quickOptions = getQuickDateOptions();
 
+  const handleSelectChange = (value: string) => {
+    setConditionValue(value);
+    
+    // If a predefined option is selected, update the selected date accordingly
+    switch (value) {
+      case "today": {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        handleDateSelect(today);
+        break;
+      }
+      case "tomorrow": {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        handleDateSelect(tomorrow);
+        break;
+      }
+      case "this_week": {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        handleDateSelect(today);
+        break;
+      }
+      case "next_week": {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+        const nextMonday = new Date(today);
+        nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+        nextMonday.setHours(0, 0, 0, 0);
+        handleDateSelect(nextMonday);
+        break;
+      }
+      default:
+        // Don't change the date for custom option
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      <Select value={conditionValue} onValueChange={setConditionValue}>
+      <Select value={conditionValue} onValueChange={handleSelectChange}>
         <SelectTrigger id="condition-value-select">
           <SelectValue placeholder="Select value" />
         </SelectTrigger>
@@ -89,7 +137,7 @@ export function DateConditionValue({
       </Select>
       
       {conditionValue === "custom" && (
-        <Popover>
+        <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -103,7 +151,7 @@ export function DateConditionValue({
             </Button>
           </PopoverTrigger>
           <PopoverContent 
-            className="w-auto p-0" 
+            className="w-auto p-0 z-50" 
             align="start"
             avoidCollisions={true}
             side="right"

@@ -2,10 +2,11 @@
 import { useSubscription } from "@/contexts/subscription";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function SubscriptionStatus() {
   const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription, initialized } = useSubscription();
+  const [hasRendered, setHasRendered] = useState(false);
 
   // Ensure subscription data is loaded - only fetch once
   useEffect(() => {
@@ -14,10 +15,17 @@ export function SubscriptionStatus() {
       fetchSubscription();
     }
   }, [fetchSubscription, loading, initialized]);
+  
+  // Use this effect to prevent flashing during initial load
+  useEffect(() => {
+    if (!loading && initialized) {
+      setHasRendered(true);
+    }
+  }, [loading, initialized]);
 
-  // Don't show anything while loading to prevent flickering
-  if (loading || !initialized) {
-    return null; // Hide completely during loading instead of showing "Loading..."
+  // Don't show anything during initial loading to prevent flickering
+  if (!hasRendered || loading || !initialized) {
+    return null;
   }
 
   if (!isActive && !isTrialActive) return null;

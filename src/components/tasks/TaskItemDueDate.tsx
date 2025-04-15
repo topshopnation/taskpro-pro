@@ -73,6 +73,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
   const handleQuickDateSelection = (date: Date | undefined) => {
     if (!date) {
       onDateChange(undefined);
+      setOpen(false);
       return;
     }
     
@@ -154,7 +155,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       
       <PopoverContent 
         align="end" 
-        className="w-auto p-2" 
+        className="w-auto p-2 z-50" 
         side={isMobile ? "bottom" : "right"}
         alignOffset={isMobile ? -40 : 0}
         sideOffset={5}

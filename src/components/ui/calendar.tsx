@@ -25,16 +25,23 @@ function Calendar({
   const currentDate = new Date();
   const currentMonth = `${format(props.month || currentDate, "MMM yyyy")}`;
 
-  const handleQuickOptionClick = (date: Date | undefined) => {
+  const handleQuickOptionClick = (date: Date | undefined, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (onQuickOptionSelect) {
       onQuickOptionSelect(date);
     }
   };
 
-  // Helper function to compare dates safely
+  // Helper function to compare dates safely (day comparison only, ignores time)
   const areDatesEqual = (date1: Date | undefined, date2: Date | undefined): boolean => {
     if (!date1 || !date2) return false;
-    return date1.getTime() === date2.getTime();
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
   };
 
   // Helper function to check if a date is in the selected array
@@ -59,12 +66,10 @@ function Calendar({
           {quickOptions.map((option) => (
             <button
               key={option.value}
-              onClick={() => handleQuickOptionClick(option.date)}
+              onClick={(e) => handleQuickOptionClick(option.date, e)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
-                // Fix the TypeScript error by ensuring we're comparing dates only
-                option.date && props.selected instanceof Date && 
-                isDateSelected(option.date, props.selected) && "bg-primary/10"
+                option.date && props.selected && isDateSelected(option.date, props.selected) && "bg-primary/10"
               )}
               type="button"
             >

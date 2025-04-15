@@ -69,6 +69,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const handleQuickDateSelection = (date: Date | undefined) => {
     if (!date) {
       onChange(undefined);
+      setOpen(false);
       return;
     }
     
@@ -139,7 +140,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-auto p-2" 
+          className="w-auto p-2 z-50" 
           align="start" 
           side="bottom" 
           sideOffset={5}
