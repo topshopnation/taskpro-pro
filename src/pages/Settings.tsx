@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -138,12 +139,12 @@ export default function Settings() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-xl font-bold tracking-tight">Settings</h1>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           <ProfileCard onEditProfile={() => setIsProfileDialogOpen(true)} />
           <SubscriptionCard onUpgrade={() => setIsUpgradeDialogOpen(true)} />
           <AppearanceCard />

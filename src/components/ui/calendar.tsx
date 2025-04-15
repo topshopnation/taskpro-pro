@@ -42,7 +42,9 @@ function Calendar({
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
                 props.selected && 
-                props.selected.getTime() === (option.date?.getTime() ?? 0) && 
+                typeof props.selected === 'object' &&
+                option.date && 
+                props.selected.getTime() === option.date.getTime() && 
                 "bg-primary/10"
               )}
               type="button"

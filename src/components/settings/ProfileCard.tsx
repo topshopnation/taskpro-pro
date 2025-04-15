@@ -20,35 +20,35 @@ export default function ProfileCard({ onEditProfile }: ProfileCardProps) {
       : "U"
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>User Profile</CardTitle>
-        <CardDescription>
+    <Card className="overflow-hidden">
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="text-sm">User Profile</CardTitle>
+        <CardDescription className="text-xs">
           Manage your personal information
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
+      <CardContent className="py-2 px-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
             <AvatarImage src={user?.avatarUrl} />
-            <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
+            <AvatarFallback className="text-sm">{userInitials}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="text-lg font-medium">
+            <h3 className="text-sm font-medium">
               {user?.firstName && user?.lastName 
                 ? `${user.firstName} ${user.lastName}`
                 : user?.email?.split("@")[0] || "User"}
             </h3>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button onClick={onEditProfile}>
-          <User className="mr-2 h-4 w-4" />
+      <CardFooter className="py-2 px-4">
+        <Button onClick={onEditProfile} size="sm" className="text-xs h-8">
+          <User className="mr-1.5 h-3.5 w-3.5" />
           Edit Profile
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

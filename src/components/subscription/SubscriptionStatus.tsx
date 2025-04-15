@@ -17,13 +17,7 @@ export function SubscriptionStatus() {
 
   // Don't show anything while loading to prevent flickering
   if (loading || !initialized) {
-    return (
-      <div className="flex items-center space-x-1">
-        <Badge variant="outline" className="text-xs">
-          Loading...
-        </Badge>
-      </div>
-    );
+    return null; // Hide completely during loading instead of showing "Loading..."
   }
 
   if (!isActive && !isTrialActive) return null;
