@@ -25,6 +25,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   
   const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
+  const [isStable, setIsStable] = useState(false);
   
   // Make sure subscription data is loaded - only fetch once
   useEffect(() => {
@@ -48,11 +49,18 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   useEffect(() => {
     if (!loading && initialized) {
       setHasRendered(true);
+      
+      // Add a small delay before considering the component stable
+      const timer = setTimeout(() => {
+        setIsStable(true);
+      }, 150);
+      
+      return () => clearTimeout(timer);
     }
   }, [loading, initialized]);
 
-  // Display loading state until we have finished initializing
-  if (!hasRendered || loading || !initialized) {
+  // Display loading state until we have finished initializing and the component is stable
+  if (!hasRendered || !isStable) {
     return (
       <Card className="overflow-hidden">
         <CardHeader className="py-3 px-4">

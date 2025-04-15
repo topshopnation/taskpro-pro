@@ -46,12 +46,17 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       console.log("Fetching subscription for user:", user.id);
       const data = await subscriptionService.fetchSubscription(user.id);
       console.log("Subscription data fetched:", data);
-      updateState(data);
-      setInitialized(true);
+      
+      // Small delay before updating state to ensure stable rendering
+      setTimeout(() => {
+        updateState(data);
+        setInitialized(true);
+        setLoading(false);
+        setIsFetching(false);
+      }, 50);
     } catch (error) {
       console.error("Error fetching subscription:", error);
       setInitialized(true);
-    } finally {
       setLoading(false);
       setIsFetching(false);
     }
@@ -59,7 +64,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
-    if (user && !isFetching) {
+    if (user && !isFetching && !initialized) {
       console.log("User authenticated, fetching subscription");
       fetchSubscription();
     } else if (!user) {
@@ -68,7 +73,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       setInitialized(true);
     }
-  }, [user?.id, fetchSubscription, isFetching]);
+  }, [user?.id, fetchSubscription, isFetching, initialized]);
 
   const updateSubscription = useCallback(async (update: SubscriptionUpdate) => {
     if (!user?.id) {
@@ -79,12 +84,16 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     try {
       setLoading(true);
       const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
-      updateState(updatedSubscription);
+      
+      // Small delay before updating state to ensure stable rendering
+      setTimeout(() => {
+        updateState(updatedSubscription);
+        setLoading(false);
+      }, 50);
     } catch (error) {
       console.error("Error updating subscription:", error);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   }, [user, updateState, setLoading]);
 
