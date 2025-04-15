@@ -65,6 +65,11 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
     setOpen(false);
   };
 
+  // Handle quick date selection (Today, Tomorrow, etc.)
+  const handleQuickDateSelection = (date: Date | undefined) => {
+    handleDateTimeSelection(date);
+  };
+
   // Handle setting time for a date
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTimeInput = e.target.value;
@@ -174,7 +179,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
               onSelect={handleDateTimeSelection}
               initialFocus
               showQuickOptions={true}
-              onQuickOptionSelect={handleDateTimeSelection}
+              onQuickOptionSelect={handleQuickDateSelection}
               className="rounded-md border shadow-sm bg-background pointer-events-auto"
             />
           </div>

@@ -31,6 +31,27 @@ function Calendar({
     }
   };
 
+  // Helper function to compare dates safely
+  const areDatesEqual = (date1: Date | undefined, date2: Date | undefined): boolean => {
+    if (!date1 || !date2) return false;
+    return date1.getTime() === date2.getTime();
+  };
+
+  // Helper function to check if a date is in the selected array
+  const isDateSelected = (date: Date | undefined, selected: Date | Date[] | undefined): boolean => {
+    if (!date || !selected) return false;
+    
+    if (selected instanceof Date) {
+      return areDatesEqual(date, selected);
+    }
+    
+    if (Array.isArray(selected)) {
+      return selected.some(selectedDate => areDatesEqual(date, selectedDate));
+    }
+    
+    return false;
+  };
+
   return (
     <div className="flex flex-col space-y-1">
       {showQuickOptions && (
@@ -41,18 +62,14 @@ function Calendar({
               onClick={() => handleQuickOptionClick(option.date)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
-                props.selected && 
-                typeof props.selected === 'object' &&
-                option.date && 
-                props.selected.getTime() === option.date.getTime() && 
-                "bg-primary/10"
+                option.date && isDateSelected(option.date, props.selected) && "bg-primary/10"
               )}
               type="button"
             >
               <div className="flex items-center space-x-2">
                 {option.value === "today" && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-md border text-xs">
-                    {format(option.date!, "d")}
+                    {option.date ? format(option.date, "d") : ""}
                   </span>
                 )}
                 {option.value === "tomorrow" && (

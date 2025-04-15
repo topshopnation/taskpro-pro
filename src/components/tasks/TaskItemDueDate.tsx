@@ -69,6 +69,11 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     setOpen(false);
   };
 
+  // Handle quick date selection
+  const handleQuickDateSelection = (date: Date | undefined) => {
+    handleDateTimeSelection(date);
+  };
+
   // Handle setting time for a date
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTimeInput = e.target.value;
@@ -189,7 +194,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             showQuickOptions={true}
-            onQuickOptionSelect={handleDateTimeSelection}
+            onQuickOptionSelect={handleQuickDateSelection}
             className="rounded-md border shadow-sm bg-background pointer-events-auto"
           />
         </div>

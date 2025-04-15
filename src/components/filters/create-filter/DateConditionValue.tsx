@@ -35,6 +35,11 @@ export function DateConditionValue({
       setConditionValue("");
     }
   };
+  
+  // Handle quick date selection
+  const handleQuickDateSelect = (date: Date | undefined) => {
+    handleCalendarSelect(date);
+  };
 
   // Get quick date options for consistency
   const quickOptions = getQuickDateOptions();
@@ -81,7 +86,7 @@ export function DateConditionValue({
               onSelect={handleCalendarSelect}
               initialFocus
               showQuickOptions={true}
-              onQuickOptionSelect={handleCalendarSelect}
+              onQuickOptionSelect={handleQuickDateSelect}
               className="p-3 pointer-events-auto"
             />
           </PopoverContent>

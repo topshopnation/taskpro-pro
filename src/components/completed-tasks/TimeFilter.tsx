@@ -24,6 +24,28 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     setDate(date);
     onChange(optionValue);
   };
+  
+  // Direct handler for quick option selection from Calendar component
+  const handleCalendarQuickOptionSelect = (date: Date | undefined) => {
+    // Map the date to the corresponding filter value based on quick options
+    const option = quickOptions.find(opt => 
+      opt.date && date && opt.date.getTime() === date.getTime()
+    );
+    
+    if (option) {
+      const filterValue = 
+        option.value === "today" ? "today" : 
+        option.value === "tomorrow" ? "tomorrow" : 
+        option.value === "next-week" ? "next-week" : 
+        option.value === "weekend" ? "weekend" : 
+        option.value === "no-date" ? "all" : "all";
+      
+      handleQuickOptionSelect(date, filterValue);
+    } else {
+      // Handle custom date if needed
+      setDate(date);
+    }
+  };
 
   return (
     <Popover>
@@ -84,6 +106,8 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
                 // Custom date handling if needed
               }
             }}
+            showQuickOptions={true}
+            onQuickOptionSelect={handleCalendarQuickOptionSelect}
             className="rounded-md border shadow-sm bg-background"
           />
         </div>
