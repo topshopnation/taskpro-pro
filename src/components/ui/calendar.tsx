@@ -45,15 +45,15 @@ function Calendar({
   };
 
   // Helper function to check if a date is in the selected array
-  const isDateSelected = (date: Date | undefined, selected: Date | Date[] | undefined): boolean => {
-    if (!date || !selected) return false;
+  const isDateSelected = (date: Date | undefined): boolean => {
+    if (!date || !props.selected) return false;
     
-    if (selected instanceof Date) {
-      return areDatesEqual(date, selected);
+    if (props.selected instanceof Date) {
+      return areDatesEqual(date, props.selected);
     }
     
-    if (Array.isArray(selected)) {
-      return selected.some(selectedDate => areDatesEqual(date, selectedDate));
+    if (Array.isArray(props.selected)) {
+      return props.selected.some(selectedDate => areDatesEqual(date, selectedDate));
     }
     
     return false;
@@ -69,7 +69,7 @@ function Calendar({
               onClick={(e) => handleQuickOptionClick(option.date, e)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
-                option.date && props.selected && isDateSelected(option.date, props.selected) && "bg-primary/10"
+                option.date && isDateSelected(option.date) && "bg-primary/10"
               )}
               type="button"
             >

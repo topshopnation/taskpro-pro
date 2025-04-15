@@ -47,11 +47,12 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       const data = await subscriptionService.fetchSubscription(user.id);
       console.log("Subscription data fetched:", data);
       updateState(data);
+      setInitialized(true);
     } catch (error) {
       console.error("Error fetching subscription:", error);
+      setInitialized(true);
     } finally {
       setLoading(false);
-      setInitialized(true);
       setIsFetching(false);
     }
   }, [user, setLoading, updateState, isFetching]);
@@ -60,12 +61,6 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   useEffect(() => {
     if (user && !isFetching) {
       console.log("User authenticated, fetching subscription");
-      
-      // Reset initialized state before fetching
-      if (initialized) {
-        setInitialized(false);
-      }
-      
       fetchSubscription();
     } else if (!user) {
       console.log("No user authenticated, resetting subscription state");
@@ -73,7 +68,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       setInitialized(true);
     }
-  }, [user?.id, fetchSubscription, isFetching, initialized]);
+  }, [user?.id, fetchSubscription, isFetching]);
 
   const updateSubscription = useCallback(async (update: SubscriptionUpdate) => {
     if (!user?.id) {

@@ -32,11 +32,13 @@ export function SearchTaskItem({ task, onOpenChange }: SearchTaskItemProps) {
         className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-accent cursor-pointer"
         onClick={handleEdit}
       >
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Checkbox 
-            checked={task.completed} 
-            onCheckedChange={handleComplete}
-          />
+        <div className="flex items-center gap-2">
+          <div onClick={(e) => e.stopPropagation()}>
+            <Checkbox 
+              checked={task.completed} 
+              onCheckedChange={handleComplete}
+            />
+          </div>
           <div className="flex flex-col">
             <div>{task.title}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-2">

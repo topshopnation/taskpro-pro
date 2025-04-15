@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { useQuery } from "@tanstack/react-query"
+import { IconPicker } from "@/components/ui/color-picker"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -19,12 +20,22 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
   const [isNameError, setIsNameError] = useState(false)
+  const [projectColor, setProjectColor] = useState("")
+  
+  // Define project colors
+  const projectColors = [
+    "#FF6B6B", "#FF9E7D", "#FFCA80", "#FFEC8A", "#BADA55", 
+    "#7ED957", "#4ECDC4", "#45B7D1", "#4F86C6", "#5E60CE", 
+    "#7950F2", "#9775FA", "#C77DFF", "#E77FF3", "#F26ABC", 
+    "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
+  ]
   
   // Reset form state when dialog opens/closes
   useEffect(() => {
     if (open) {
       setName("")
       setIsNameError(false)
+      setProjectColor("")
     }
   }, [open])
 
@@ -88,6 +99,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
         .insert({
           name: name.trim(),
           favorite: false,
+          color: projectColor || null,
           user_id: user.id
         })
 
@@ -95,6 +107,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
 
       toast.success("Project created successfully")
       setName("")
+      setProjectColor("")
       onOpenChange(false)
     } catch (error: any) {
       toast.error(`Error creating project: ${error.message}`)
@@ -128,6 +141,15 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
                 Please enter a unique project name
               </p>
             )}
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="project-color">Project Color</Label>
+            <IconPicker 
+              colors={projectColors} 
+              selectedColor={projectColor}
+              onChange={setProjectColor}
+            />
           </div>
         </div>
         <DialogFooter>

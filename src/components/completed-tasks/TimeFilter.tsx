@@ -43,19 +43,11 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     );
     
     if (option) {
-      const filterValue = 
-        option.value === "today" ? "today" : 
-        option.value === "tomorrow" ? "tomorrow" : 
-        option.value === "next-week" ? "next-week" : 
-        option.value === "weekend" ? "weekend" : 
-        option.value === "no-date" ? "all" : "all";
-      
-      handleQuickOptionSelect(date, filterValue);
+      handleQuickOptionSelect(date, option.value);
     } else {
       // Handle custom date if needed
       setDate(date);
       setOpen(false);
-      // For a custom date, we don't change the filter value
     }
   };
 
@@ -77,17 +69,10 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
             {quickOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={() => handleQuickOptionSelect(option.date, option.value === "today" ? "today" : 
-                                                       option.value === "tomorrow" ? "tomorrow" : 
-                                                       option.value === "next-week" ? "next-week" : 
-                                                       option.value === "weekend" ? "weekend" : "all")}
+                onClick={() => handleQuickOptionSelect(option.date, option.value)}
                 className={cn(
                   "flex items-center justify-between p-2 text-sm hover:bg-muted transition-colors",
-                  (option.value === "today" && value === "today") ||
-                  (option.value === "tomorrow" && value === "tomorrow") ||
-                  (option.value === "next-week" && value === "next-week") ||
-                  (option.value === "weekend" && value === "weekend") ||
-                  (option.value === "no-date" && value === "all") ? "bg-primary/10" : ""
+                  option.value === value ? "bg-primary/10" : ""
                 )}
               >
                 <div className="flex items-center space-x-2">
@@ -114,7 +99,6 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
             selected={date}
             onSelect={(newDate) => {
               setDate(newDate);
-              // We don't change filter value on custom date selection
             }}
             showQuickOptions={true}
             onQuickOptionSelect={handleCalendarQuickOptionSelect}
