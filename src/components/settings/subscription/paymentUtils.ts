@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,16 +6,36 @@ import { supabase } from "@/integrations/supabase/client";
 // Payment mode for testing vs production
 const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
 
-// Test mode PayPal links - these just redirect back to the app for testing
-const TEST_LINKS = {
-  monthly: "https://www.paypal.com/sdk/js?client-id=test",
-  yearly: "https://www.paypal.com/sdk/js?client-id=test"
-};
+// Get subscription plan IDs from database
+async function getSubscriptionPlanIds(planType: "monthly" | "yearly"): Promise<string | null> {
+  try {
+    const priceField = planType === "monthly" ? "price_monthly" : "price_yearly";
+    const { data, error } = await supabase
+      .from("subscription_plans")
+      .select("id, paypal_plan_id")
+      .gt(priceField, 0)
+      .eq("is_active", true)
+      .order(priceField, { ascending: true })
+      .limit(1)
+      .single();
+    
+    if (error || !data) {
+      console.error("Error fetching subscription plan:", error);
+      return null;
+    }
+    
+    // Return the PayPal plan ID if available, otherwise fallback to defaults
+    return data.paypal_plan_id || null;
+  } catch (error) {
+    console.error("Error fetching subscription plan:", error);
+    return null;
+  }
+}
 
-// Production PayPal subscription links
-const PRODUCTION_LINKS = {
-  monthly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-65H54700W12667836M7423DA",
-  yearly: "https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-80L22294MH2379142M7422KA"
+// Fallback default PayPal links if database doesn't have plan IDs
+const DEFAULT_PAYPAL_PLANS = {
+  monthly: "P-65H54700W12667836M7423DA",
+  yearly: "P-80L22294MH2379142M7422KA"
 };
 
 // Check if user can renew (within 14 days of expiry or already expired)
@@ -89,10 +110,10 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
   }
 }
 
-export function createPaymentUrl(
+export async function createPaymentUrl(
   planType: "monthly" | "yearly", 
   userId: string | undefined
-): string {
+): Promise<string> {
   if (!userId) {
     toast.error("User ID is missing. Please sign in again.");
     return "";
@@ -107,7 +128,7 @@ export function createPaymentUrl(
   let paymentUrl = "";
   
   if (PAYMENT_MODE === "test") {
-    paymentUrl = TEST_LINKS[planType];
+    paymentUrl = `https://www.paypal.com/sdk/js?client-id=test&plan_type=${planType}`;
     
     console.log("TEST MODE: Initiating payment simulation for:", {
       userId, 
@@ -126,7 +147,11 @@ export function createPaymentUrl(
     return paymentUrl;
   }
   
-  paymentUrl = PRODUCTION_LINKS[planType];
+  // Try to get plan ID from database first
+  const databasePlanId = await getSubscriptionPlanIds(planType);
+  const planId = databasePlanId || DEFAULT_PAYPAL_PLANS[planType];
+  
+  paymentUrl = `https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${planId}`;
   paymentUrl += `&custom_id=${encodedCustomData}`;
   
   // Always return to settings page in production too

@@ -13,8 +13,8 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { Button } from "@/components/ui/button";
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
 import { Task } from "@/components/tasks/TaskItem";
-import { SubscriptionBanner } from "@/components/SubscriptionBanner";
-import { SubscriptionRestriction } from "@/components/SubscriptionRestriction";
+import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
+import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction";
 
 export default function FilterView() {
   const navigate = useNavigate();

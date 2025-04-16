@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import { SubscriptionBanner } from "@/components/SubscriptionBanner"
-import { SubscriptionRestriction } from "@/components/SubscriptionRestriction"
+import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner"
+import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)

@@ -1,68 +1,74 @@
-
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { AuthProvider } from "@/contexts/auth-context";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import Stats from "./pages/Stats";
-import ProjectView from "./pages/ProjectView";
-import ProjectsPage from "./pages/ProjectsPage";
-import FilterView from "./pages/FilterView";
-import FiltersPage from "./pages/FiltersPage";
-import InboxView from "./pages/InboxView";
-import TodayView from "./pages/TodayView";
-import OverdueView from "./pages/OverdueView";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
-import { AuthProvider } from "@/providers/auth-provider";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Index from "./pages/Index";
+import TodayView from "./pages/TodayView";
+import ProjectsPage from "./pages/ProjectsPage";
+import ProjectView from "./pages/ProjectView";
+import FiltersPage from "./pages/FiltersPage";
+import FilterView from "./pages/FilterView";
+import InboxView from "./pages/InboxView";
 import CompletedTasks from "./pages/CompletedTasks";
-import { queryClient } from "./lib/react-query";
-import { SubscriptionProvider } from "@/contexts/subscription";
+import OverdueView from "./pages/OverdueView";
+import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
+import Stats from "./pages/Stats";
+import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SubscriptionProvider } from "@/contexts/subscription-context";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="taskpro-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <SubscriptionProvider>
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UsersAdmin from "./pages/admin/UsersAdmin";
+import SubscriptionsAdmin from "./pages/admin/SubscriptionsAdmin";
+import ActivityAdmin from "./pages/admin/ActivityAdmin";
+
+const queryClient = new QueryClient();
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <ThemeProvider defaultTheme="light">
+            <Toaster />
+            <Router>
               <Routes>
-                {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
-                
-                {/* Protected Routes */}
-                <Route path="/dashboard" element={<Navigate to="/today" replace />} />
-                <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
-                <Route path="/inbox" element={<ProtectedRoute><InboxView /></ProtectedRoute>} />
-                <Route path="/today" element={<ProtectedRoute><TodayView /></ProtectedRoute>} />
-                <Route path="/overdue" element={<ProtectedRoute><OverdueView /></ProtectedRoute>} />
-                <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-                <Route path="/projects/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
-                <Route path="/projects/:id/:name" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
-                <Route path="/filters" element={<ProtectedRoute><FiltersPage /></ProtectedRoute>} />
-                <Route path="/filters/:id" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
-                <Route path="/filters/:id/:name" element={<ProtectedRoute><FilterView /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/completed" element={<ProtectedRoute><CompletedTasks /></ProtectedRoute>} />
-                
-                {/* 404 Route */}
+                <Route path="*" element={<ProtectedRoute />}>
+                  <Route path="today" element={<TodayView />} />
+                  <Route path="projects" element={<ProjectsPage />} />
+                  <Route path="projects/:id/:name" element={<ProjectView />} />
+                  <Route path="filters" element={<FiltersPage />} />
+                  <Route path="filters/:id/:name" element={<FilterView />} />
+                  <Route path="inbox" element={<InboxView />} />
+                  <Route path="completed" element={<CompletedTasks />} />
+                  <Route path="overdue" element={<OverdueView />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="stats" element={<Stats />} />
+                  
+                  {/* Admin Routes */}
+                  <Route path="admin" element={<AdminDashboard />} />
+                  <Route path="admin/users" element={<UsersAdmin />} />
+                  <Route path="admin/subscriptions" element={<SubscriptionsAdmin />} />
+                  <Route path="admin/activity" element={<ActivityAdmin />} />
+                </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </SubscriptionProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+            </Router>
+          </ThemeProvider>
+        </SubscriptionProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
