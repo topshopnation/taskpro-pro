@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, BadgeCheck } from "lucide-react";
@@ -34,9 +35,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               Manage your TaskPro subscription
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={onUpgrade}>
-            Manage
-          </Button>
+          {/* Removed manage button */}
         </div>
       </CardHeader>
       <CardContent className="py-2 px-4 space-y-3">
@@ -69,7 +68,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       </CardContent>
       <CardFooter className="py-2 px-4">
         <Button 
-          onClick={onUpgrade} 
+          onClick={() => {}} // Removed onUpgrade prop
           disabled={subscription?.status === 'active' && !showRenewButton}
           size="sm"
           className="text-xs h-8"
