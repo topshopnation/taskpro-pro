@@ -2,27 +2,28 @@
 import { useSubscription } from "@/contexts/subscription";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function SubscriptionStatus() {
   const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription, initialized } = useSubscription();
   const [isLoaded, setIsLoaded] = useState(false);
+  const fetchAttempted = useRef(false);
 
   // Ensure subscription data is loaded - only fetch once
   useEffect(() => {
-    if (!loading && !initialized) {
+    if (!loading && !initialized && !fetchAttempted.current) {
       console.log("SubscriptionStatus: Fetching subscription data");
+      fetchAttempted.current = true;
       fetchSubscription();
     }
   }, [fetchSubscription, loading, initialized]);
   
-  // Add a small delay before showing subscription status to prevent flickering
+  // Add a longer delay before showing subscription status to prevent flickering
   useEffect(() => {
     if (!loading && initialized) {
-      // Small delay to ensure stable rendering
       const timer = setTimeout(() => {
         setIsLoaded(true);
-      }, 200); // Increased delay for more stability
+      }, 500); // Increased delay for more stability
       
       return () => clearTimeout(timer);
     }

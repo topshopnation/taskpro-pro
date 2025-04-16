@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { SubscriptionContext } from "./context";
 import { SubscriptionUpdate } from "./types";
@@ -15,6 +15,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const { user } = useAuth();
   const [initialized, setInitialized] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const fetchLock = useRef(false);
+  
   const {
     subscription,
     loading,
@@ -34,37 +36,38 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       return;
     }
 
-    // Prevent multiple simultaneous fetches
-    if (isFetching) {
+    // Use a ref-based lock to prevent concurrent fetches
+    if (isFetching || fetchLock.current) {
       console.log("Already fetching subscription, skipping");
       return;
     }
 
     try {
+      fetchLock.current = true;
       setIsFetching(true);
       setLoading(true);
       console.log("Fetching subscription for user:", user.id);
       const data = await subscriptionService.fetchSubscription(user.id);
       console.log("Subscription data fetched:", data);
       
-      // Small delay before updating state to ensure stable rendering
-      setTimeout(() => {
-        updateState(data);
-        setInitialized(true);
-        setLoading(false);
-        setIsFetching(false);
-      }, 100); // Increased delay for more stability
+      // Apply the subscription update once without delays to prevent flickering
+      updateState(data);
+      setInitialized(true);
+      setLoading(false);
+      setIsFetching(false);
     } catch (error) {
       console.error("Error fetching subscription:", error);
       setInitialized(true);
       setLoading(false);
       setIsFetching(false);
+    } finally {
+      fetchLock.current = false;
     }
   }, [user, setLoading, updateState, isFetching]);
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
-    if (user && !isFetching && !initialized) {
+    if (user && !isFetching && !initialized && !fetchLock.current) {
       console.log("User authenticated, fetching subscription");
       fetchSubscription();
     } else if (!user) {
@@ -85,11 +88,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(true);
       const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
       
-      // Small delay before updating state to ensure stable rendering
-      setTimeout(() => {
-        updateState(updatedSubscription);
-        setLoading(false);
-      }, 100); // Increased delay for more stability
+      // Update immediately without artificial delays
+      updateState(updatedSubscription);
+      setLoading(false);
     } catch (error) {
       console.error("Error updating subscription:", error);
       setLoading(false);

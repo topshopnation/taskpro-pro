@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { BadgeCheck, Clock, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -20,28 +21,44 @@ export function SubscriptionStatus({
     );
   }
 
-  let planName = "";
-  let statusBadge;
+  // Determine proper plan name and status badge based on subscription state
+  let planName: string;
+  let statusElement: React.ReactNode;
   
   if (isTrialActive) {
     planName = "Trial Subscription";
-    statusBadge = (
-      <Badge variant="outline" className="ml-auto">
-        <Clock className="h-3 w-3 mr-1 text-amber-500" /> Trial
-      </Badge>
+    statusElement = (
+      <div className="flex flex-col items-end">
+        <span className="text-xs text-amber-600 font-medium mb-0.5">{daysRemaining} days left</span>
+        <Progress value={(daysRemaining / 14) * 100} className="h-1.5 w-20" />
+      </div>
     );
   } else if (subscription?.status === 'active') {
     planName = subscription.plan_type === 'monthly' ? "Monthly Subscription" : "Annual Subscription";
-    statusBadge = (
-      <Badge variant="outline" className="ml-auto">
-        <BadgeCheck className="h-3 w-3 mr-1 text-green-500" /> Active
+    statusElement = (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+        Active
+      </Badge>
+    );
+  } else if (subscription?.status === 'expired') {
+    planName = "Expired Subscription";
+    statusElement = (
+      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
+        Expired
+      </Badge>
+    );
+  } else if (subscription?.status === 'canceled') {
+    planName = "Canceled Subscription";
+    statusElement = (
+      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
+        Canceled
       </Badge>
     );
   } else {
     planName = "No Active Subscription";
-    statusBadge = (
-      <Badge variant="outline" className="ml-auto">
-        <Clock className="h-3 w-3 mr-1" /> Inactive
+    statusElement = (
+      <Badge variant="outline" className="text-muted-foreground text-xs">
+        Inactive
       </Badge>
     );
   }
@@ -57,22 +74,7 @@ export function SubscriptionStatus({
           </p>
         )}
       </div>
-      {isTrialActive && (
-        <div className="flex flex-col items-end">
-          <span className="text-xs text-amber-600 font-medium mb-0.5">{daysRemaining} days left</span>
-          <Progress value={(daysRemaining / 14) * 100} className="h-1.5 w-20" />
-        </div>
-      )}
-      {subscription?.status === 'active' && (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-          Active
-        </Badge>
-      )}
-      {subscription?.status === 'expired' && (
-        <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
-          Expired
-        </Badge>
-      )}
+      {statusElement}
     </div>
   );
 }

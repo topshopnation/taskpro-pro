@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useSubscription } from "@/contexts/subscription";
 import { UseSubscriptionCardReturn } from "@/types/subscriptionTypes";
@@ -18,6 +19,7 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
   const [hasRendered, setHasRendered] = useState(false);
   const [isStable, setIsStable] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fetchAttempted = useRef(false);
   
   // Format expiry date
   useEffect(() => {
@@ -35,23 +37,26 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
     }
   }, [subscription]);
   
-  // Handle loading state
+  // Handle loading state with a longer stabilization period
   useEffect(() => {
     if (!loading && initialized) {
+      // Set hasRendered immediately to show content
       setHasRendered(true);
       
+      // Use a longer timeout to ensure subscription state is stable
       const timer = setTimeout(() => {
         setIsStable(true);
-      }, 250);
+      }, 500); // Increased delay for more stability
       
       return () => clearTimeout(timer);
     }
   }, [loading, initialized]);
 
-  // Make sure subscription data is loaded
+  // Make sure subscription data is loaded only once
   useEffect(() => {
-    if (!loading && !initialized) {
+    if (!loading && !initialized && !fetchAttempted.current) {
       console.log("SubscriptionCard: Fetching subscription data");
+      fetchAttempted.current = true;
       fetchSubscription().catch((err) => {
         console.error("Error fetching subscription:", err);
         setError("Unable to load subscription data");

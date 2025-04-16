@@ -1,4 +1,6 @@
 
+import { Subscription } from "@/contexts/subscription/types";
+
 export type SubscriptionPlanType = 'monthly' | 'yearly';
 
 export interface SubscriptionCardProps {
