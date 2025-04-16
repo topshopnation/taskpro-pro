@@ -1,10 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { PlanSelectorProps } from "@/types/subscriptionTypes";
-import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPlan } from "@/types/adminTypes";
 
 export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelectorProps) {
@@ -15,55 +14,46 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          .eq('is_active', true)
-          .order('price_monthly', { ascending: true });
-          
-        if (error) throw error;
+        // Instead of fetching from Supabase, we'll use default plans until the table is created
+        // Later this will fetch from 'subscription_plans' table
+        const defaultPlans: SubscriptionPlan[] = [
+          {
+            id: 'default-monthly',
+            name: 'TaskPro Pro',
+            description: 'All TaskPro features for monthly billing',
+            price_monthly: 3,
+            price_yearly: 0,
+            features: [
+              'Unlimited projects and tasks',
+              'Advanced filtering capabilities',
+              'Priority support',
+              'All premium features'
+            ],
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: 'default-yearly',
+            name: 'TaskPro Pro (Yearly)',
+            description: 'All TaskPro features for yearly billing',
+            price_monthly: 0,
+            price_yearly: 30,
+            features: [
+              'All monthly features',
+              'Save 16% compared to monthly',
+              'Priority support',
+              'All premium features'
+            ],
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ];
         
-        if (data && data.length > 0) {
-          setPlans(data);
-        } else {
-          // Fallback to default plans if none are in the database
-          setPlans([
-            {
-              id: 'default-monthly',
-              name: 'TaskPro Pro',
-              description: 'All TaskPro features for monthly billing',
-              price_monthly: 3,
-              price_yearly: 0,
-              features: [
-                'Unlimited projects and tasks',
-                'Advanced filtering capabilities',
-                'Priority support',
-                'All premium features'
-              ],
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              id: 'default-yearly',
-              name: 'TaskPro Pro (Yearly)',
-              description: 'All TaskPro features for yearly billing',
-              price_monthly: 0,
-              price_yearly: 30,
-              features: [
-                'All monthly features',
-                'Save 16% compared to monthly',
-                'Priority support',
-                'All premium features'
-              ],
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ]);
-        }
+        setPlans(defaultPlans);
       } catch (error) {
-        console.error('Error fetching subscription plans:', error);
+        console.error('Error loading subscription plans:', error);
         // Fallback to defaults
         setPlans([]);
       } finally {

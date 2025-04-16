@@ -33,7 +33,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
   }, [open]);
   
-  const openPaymentLink = () => {
+  const openPaymentLink = async () => {
     if (!user) {
       toast.error("You must be signed in to subscribe");
       return;
@@ -44,7 +44,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     console.log("Creating payment URL for user:", user.id, "plan type:", planType);
     
     try {
-      const paymentUrl = createPaymentUrl(planType, user.id);
+      const paymentUrl = await createPaymentUrl(planType, user.id);
       
       // Only open if we got a valid URL (user ID was present)
       if (paymentUrl) {

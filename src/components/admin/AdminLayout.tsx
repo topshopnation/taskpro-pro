@@ -25,15 +25,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       }
 
       try {
-        // Check if the user is an admin
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error || !data) {
-          console.error('Not authorized as admin:', error);
+        // For initial implementation, we'll use a hardcoded admin check
+        // In a real implementation, this would check against the admin_users table
+        const hardcodedAdminIds = ['your-user-id-here']; // Replace with actual user ID
+        const isUserAdmin = hardcodedAdminIds.includes(user.id);
+        
+        if (!isUserAdmin) {
+          console.error('Not authorized as admin');
           navigate('/');
           return;
         }

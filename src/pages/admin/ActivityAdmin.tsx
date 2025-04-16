@@ -1,6 +1,12 @@
 
-import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { 
   Table, 
   TableBody, 
@@ -9,218 +15,315 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { 
+  ArrowUpDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  RefreshCw, 
+  Search, 
+  Filter, 
+  Eye, 
+  AlertTriangle, 
+  Settings, 
+  LogIn, 
+  LogOut
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { UserActivity } from "@/types/adminTypes";
 import { format } from "date-fns";
-import { Search, Download, RefreshCw } from "lucide-react";
 
-interface ActivityLog {
-  id: string;
-  user_id: string;
-  email: string;
-  action: string;
-  details: string;
-  created_at: string;
-}
+// Sample data for activity logs
+const sampleActivities: UserActivity[] = [
+  {
+    id: "1",
+    user_id: "user123",
+    email: "user@example.com",
+    action: "login",
+    details: "User logged in successfully",
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: "2",
+    user_id: "user456",
+    email: "anotheruser@example.com",
+    action: "subscription_updated",
+    details: "Changed from monthly to yearly plan",
+    timestamp: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: "3",
+    user_id: "user789",
+    email: "thirduser@example.com",
+    action: "task_created",
+    details: "Created new task 'Review project proposal'",
+    timestamp: new Date(Date.now() - 7200000).toISOString()
+  },
+  {
+    id: "4",
+    user_id: "user123",
+    email: "user@example.com",
+    action: "logout",
+    details: "User logged out",
+    timestamp: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: "5",
+    user_id: "user456",
+    email: "anotheruser@example.com",
+    action: "payment_failed",
+    details: "Monthly subscription payment failed",
+    timestamp: new Date(Date.now() - 172800000).toISOString()
+  }
+];
+
+// Activity action to badge variant mapping
+const getActionBadgeVariant = (action: string) => {
+  switch (action) {
+    case "login":
+    case "register":
+      return "default";
+    case "logout":
+      return "secondary";
+    case "payment_failed":
+    case "subscription_cancelled":
+      return "destructive";
+    case "subscription_updated":
+    case "subscription_created":
+    case "task_created":
+    case "project_created":
+      return "outline";
+    default:
+      return "secondary";
+  }
+};
+
+// Activity action to icon mapping
+const getActionIcon = (action: string) => {
+  switch (action) {
+    case "login":
+      return <LogIn className="h-4 w-4" />;
+    case "logout":
+      return <LogOut className="h-4 w-4" />;
+    case "payment_failed":
+    case "subscription_cancelled":
+      return <AlertTriangle className="h-4 w-4" />;
+    case "subscription_updated":
+    case "subscription_created":
+      return <Settings className="h-4 w-4" />;
+    case "task_viewed":
+    case "project_viewed":
+      return <Eye className="h-4 w-4" />;
+    default:
+      return null;
+  }
+};
 
 export default function ActivityAdmin() {
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("");
+  const [actionFilter, setActionFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+  
   useEffect(() => {
-    fetchActivityLogs();
+    // In a real implementation, this would fetch data from Supabase
+    // For now, we'll use the sample data
+    const loadActivities = async () => {
+      setLoading(true);
+      try {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setActivities(sampleActivities);
+      } catch (error) {
+        console.error("Error loading activity logs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadActivities();
   }, []);
-
-  const fetchActivityLogs = async () => {
-    try {
-      setIsLoading(true);
+  
+  // Filter activities based on search and action type
+  const filteredActivities = activities.filter(activity => {
+    const matchesSearch = filter === "" || 
+      activity.email.toLowerCase().includes(filter.toLowerCase()) ||
+      activity.details.toLowerCase().includes(filter.toLowerCase());
       
-      // In a production environment, you would have an activity_logs table
-      // Here we'll generate dummy data for demonstration
-      const dummyLogs: ActivityLog[] = [
-        {
-          id: '1',
-          user_id: 'user-123',
-          email: 'user1@example.com',
-          action: 'login',
-          details: 'User logged in successfully',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          user_id: 'user-456',
-          email: 'user2@example.com',
-          action: 'subscription_created',
-          details: 'User subscribed to monthly plan',
-          created_at: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: '3',
-          user_id: 'user-789',
-          email: 'user3@example.com',
-          action: 'task_created',
-          details: 'User created a new task',
-          created_at: new Date(Date.now() - 7200000).toISOString()
-        },
-        {
-          id: '4',
-          user_id: 'user-123',
-          email: 'user1@example.com',
-          action: 'project_created',
-          details: 'User created a new project',
-          created_at: new Date(Date.now() - 10800000).toISOString()
-        },
-        {
-          id: '5',
-          user_id: 'user-456',
-          email: 'user2@example.com',
-          action: 'password_reset',
-          details: 'User requested password reset',
-          created_at: new Date(Date.now() - 14400000).toISOString()
-        }
-      ];
-      
-      setLogs(dummyLogs);
-    } catch (error) {
-      console.error('Error fetching activity logs:', error);
-      toast.error('Failed to load activity logs');
-    } finally {
-      setIsLoading(false);
-    }
+    const matchesAction = actionFilter === "" || activity.action === actionFilter;
+    
+    return matchesSearch && matchesAction;
+  });
+  
+  // Paginate activities
+  const startIdx = (page - 1) * itemsPerPage;
+  const endIdx = page * itemsPerPage;
+  const paginatedActivities = filteredActivities.slice(startIdx, endIdx);
+  const totalPages = Math.ceil(filteredActivities.length / itemsPerPage);
+  
+  // Get unique action types for filter dropdown
+  const actionTypes = Array.from(new Set(activities.map(a => a.action)));
+  
+  const refreshActivities = () => {
+    setLoading(true);
+    // Simulate refresh delay
+    setTimeout(() => {
+      setActivities(sampleActivities);
+      setLoading(false);
+    }, 500);
   };
-
-  const handleExportLogs = () => {
-    try {
-      // Create CSV content
-      const csvContent = [
-        ['ID', 'User ID', 'Email', 'Action', 'Details', 'Timestamp'].join(','),
-        ...logs.map(log => [
-          log.id,
-          log.user_id,
-          log.email,
-          log.action,
-          `"${log.details.replace(/"/g, '""')}"`,
-          format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')
-        ].join(','))
-      ].join('\n');
-      
-      // Create download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `activity-logs-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Logs exported successfully');
-    } catch (error) {
-      console.error('Error exporting logs:', error);
-      toast.error('Failed to export logs');
-    }
-  };
-
-  const filteredLogs = logs.filter(log => 
-    log.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.details.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex h-[80vh] items-center justify-center">
-          <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  const getActionBadgeVariant = (action: string) => {
-    switch (action) {
-      case 'login':
-        return 'default';
-      case 'subscription_created':
-        return 'success';
-      case 'password_reset':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
-  };
-
+  
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Activity Logs</h1>
-          <div className="flex space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search logs..."
-                className="w-[250px] pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Activity Logs</h1>
+          <p className="text-muted-foreground">
+            Monitor user activities and system events
+          </p>
+        </div>
+        <Button onClick={refreshActivities} variant="outline" disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+      
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Activity History</CardTitle>
+          <CardDescription>
+            View detailed logs of user actions and system events
+          </CardDescription>
+          
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search by email or details..." 
+                className="pl-10"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
               />
             </div>
-            <Button variant="outline" onClick={fetchActivityLogs}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            <Button onClick={handleExportLogs}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+            
+            <div className="flex-shrink-0 w-full sm:w-48">
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger>
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by action" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All actions</SelectItem>
+                  {actionTypes.map(action => (
+                    <SelectItem key={action} value={action}>
+                      {action.replace("_", " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    No activity logs found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      {format(new Date(log.created_at), 'MMM d, yyyy HH:mm:ss')}
-                    </TableCell>
-                    <TableCell>{log.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={getActionBadgeVariant(log.action)}>
-                        {log.action.replace('_', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-md truncate">
-                      {log.details}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+            </div>
+          ) : activities.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No activity logs found.</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <div className="flex items-center cursor-pointer">
+                          Time
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div className="flex items-center cursor-pointer">
+                          User
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Details</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActivities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {format(new Date(activity.timestamp), "MMM dd, yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell>
+                          {activity.email}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={getActionBadgeVariant(activity.action)} 
+                            className="flex items-center gap-1 w-fit"
+                          >
+                            {getActionIcon(activity.action)}
+                            {activity.action.replace("_", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {activity.details}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {Math.min(filteredActivities.length, startIdx + 1)} to {Math.min(filteredActivities.length, endIdx)} of {filteredActivities.length} entries
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={page === totalPages || totalPages === 0}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </AdminLayout>
   );
 }

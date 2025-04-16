@@ -6,26 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 // Payment mode for testing vs production
 const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
 
-// Get subscription plan IDs from database
+// Get subscription plan IDs - simplified version until database is set up
 async function getSubscriptionPlanIds(planType: "monthly" | "yearly"): Promise<string | null> {
   try {
-    const priceField = planType === "monthly" ? "price_monthly" : "price_yearly";
-    const { data, error } = await supabase
-      .from("subscription_plans")
-      .select("id, paypal_plan_id")
-      .gt(priceField, 0)
-      .eq("is_active", true)
-      .order(priceField, { ascending: true })
-      .limit(1)
-      .single();
-    
-    if (error || !data) {
-      console.error("Error fetching subscription plan:", error);
-      return null;
-    }
-    
-    // Return the PayPal plan ID if available, otherwise fallback to defaults
-    return data.paypal_plan_id || null;
+    // Hardcoded values for now - will fetch from subscription_plans table later
+    return null;
   } catch (error) {
     console.error("Error fetching subscription plan:", error);
     return null;
@@ -147,9 +132,8 @@ export async function createPaymentUrl(
     return paymentUrl;
   }
   
-  // Try to get plan ID from database first
-  const databasePlanId = await getSubscriptionPlanIds(planType);
-  const planId = databasePlanId || DEFAULT_PAYPAL_PLANS[planType];
+  // Use default plan IDs for now
+  const planId = DEFAULT_PAYPAL_PLANS[planType];
   
   paymentUrl = `https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${planId}`;
   paymentUrl += `&custom_id=${encodedCustomData}`;

@@ -1,7 +1,12 @@
 
-import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { 
   Table, 
   TableBody, 
@@ -10,16 +15,25 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { 
   Select, 
   SelectContent, 
@@ -27,290 +41,361 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  MoreHorizontal, 
+  Search, 
+  RefreshCw, 
+  ChevronLeft, 
+  ChevronRight, 
+  UserCog, 
+  UserCheck
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { AdminRole } from "@/types/adminTypes";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Eye, UserCog, Search } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface User {
-  id: string;
-  email: string;
-  created_at: string;
-  subscription_status: string;
-  subscription_type: string;
-  last_sign_in: string | null;
-}
+// Sample data for users list
+const sampleUsers = [
+  {
+    id: "user123",
+    email: "johndoe@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    role: "user",
+    subscription_status: "active",
+    plan_type: "monthly",
+    last_login: new Date().toISOString(),
+    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: "user456",
+    email: "janedoe@example.com",
+    firstName: "Jane",
+    lastName: "Doe",
+    role: "user",
+    subscription_status: "trial",
+    plan_type: "monthly",
+    last_login: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: "user789",
+    email: "admin@example.com",
+    firstName: "Admin",
+    lastName: "User",
+    role: "admin",
+    subscription_status: "active",
+    plan_type: "yearly",
+    last_login: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: "user101",
+    email: "support@example.com",
+    firstName: "Support",
+    lastName: "Team",
+    role: "support",
+    subscription_status: "active",
+    plan_type: "yearly",
+    last_login: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString()
+  }
+];
 
 export default function UsersAdmin() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [userDetailsOpen, setUserDetailsOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-
+  const [users, setUsers] = useState(sampleUsers);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [newRole, setNewRole] = useState<AdminRole>("admin");
+  const itemsPerPage = 10;
+  
   useEffect(() => {
+    // In a real implementation, this would fetch data from the backend
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Just using our sample data for now
+        setUsers(sampleUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchUsers();
   }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Join users with their subscription information
-      const { data, error } = await supabase
-        .from('auth.users')
-        .select(`
-          id,
-          email,
-          created_at,
-          last_sign_in_at,
-          subscriptions (
-            status,
-            plan_type
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Format data for our UI
-      const formattedUsers = data?.map(user => ({
-        id: user.id,
-        email: user.email,
-        created_at: user.created_at,
-        subscription_status: user.subscriptions?.status || 'none',
-        subscription_type: user.subscriptions?.plan_type || 'none',
-        last_sign_in: user.last_sign_in_at
-      })) || [];
-      
-      setUsers(formattedUsers);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
-    } finally {
-      setIsLoading(false);
-    }
+  
+  // Filter users based on search query
+  const filteredUsers = users.filter(user => 
+    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  // Paginate users
+  const startIdx = (page - 1) * itemsPerPage;
+  const endIdx = page * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIdx, endIdx);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  
+  const handleRefresh = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 500);
   };
-
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user);
-    setUserDetailsOpen(true);
-  };
-
-  const handleUpdateUser = async () => {
-    if (!selectedUser) return;
+  
+  const handleRoleChange = async () => {
+    if (!selectedUser || !newRole) return;
     
     try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          status: selectedUser.subscription_status,
-          plan_type: selectedUser.subscription_type
-        })
-        .eq('user_id', selectedUser.id);
-        
-      if (error) throw error;
+      // Update user role (in a real implementation, this would call the backend)
+      setUsers(prev => 
+        prev.map(user => 
+          user.id === selectedUser.id ? { ...user, role: newRole } : user
+        )
+      );
       
-      toast.success('User updated successfully');
-      setUserDetailsOpen(false);
-      fetchUsers();
+      toast.success(`Updated ${selectedUser.email} role to ${newRole}`);
+      setShowRoleDialog(false);
     } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      console.error("Error updating user role:", error);
+      toast.error("Failed to update user role");
     }
   };
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || user.subscription_status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex h-[80vh] items-center justify-center">
-          <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
+  
+  const getSubscriptionBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-600">Active</Badge>;
+      case "trial":
+        return <Badge variant="outline" className="border-blue-500 text-blue-500">Trial</Badge>;
+      case "expired":
+        return <Badge variant="destructive">Expired</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+  
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "admin":
+      case "super_admin":
+        return <Badge className="bg-purple-600">Admin</Badge>;
+      case "support":
+        return <Badge variant="outline" className="border-orange-500 text-orange-500">Support</Badge>;
+      default:
+        return <Badge variant="secondary">User</Badge>;
+    }
+  };
+  
+  const getUserInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+  
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <div className="flex space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search by email..."
-                className="w-[250px] pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="trial">Trial</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-                <SelectItem value="none">No Subscription</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">User Management</h1>
+          <p className="text-muted-foreground">
+            View and manage user accounts
+          </p>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+      
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Users</CardTitle>
+          <CardDescription>
+            Manage user accounts and access permissions
+          </CardDescription>
+          
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search users by name or email..." 
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Sign In</TableHead>
-                <TableHead>Subscription</TableHead>
-                <TableHead>Plan Type</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    No users found with the current filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>{format(new Date(user.created_at), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>
-                      {user.last_sign_in 
-                        ? format(new Date(user.last_sign_in), 'MMM d, yyyy') 
-                        : 'Never'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.subscription_status === 'active' ? 'default' : 
-                          user.subscription_status === 'trial' ? 'secondary' :
-                          'outline'
-                        }
-                      >
-                        {user.subscription_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{user.subscription_type}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleViewUser(user)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <UserCog className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>User Details</DialogTitle>
-            </DialogHeader>
-            {selectedUser && (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">User ID</Label>
-                    <p className="text-sm font-medium">{selectedUser.id}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Email</Label>
-                    <p className="text-sm font-medium">{selectedUser.email}</p>
-                  </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+            </div>
+          ) : paginatedUsers.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No users found.</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Subscription</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src="" />
+                              <AvatarFallback>
+                                {getUserInitials(user.firstName, user.lastName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{user.firstName} {user.lastName}</div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {getSubscriptionBadge(user.subscription_status)}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)} plan
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getRoleBadge(user.role)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {format(new Date(user.last_login), "MMM dd, yyyy HH:mm")}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Joined {format(new Date(user.created_at), "MMM yyyy")}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewRole(user.role as AdminRole);
+                                  setShowRoleDialog(true);
+                                }}
+                              >
+                                <UserCog className="h-4 w-4 mr-2" />
+                                Change Role
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {Math.min(filteredUsers.length, startIdx + 1)} to {Math.min(filteredUsers.length, endIdx)} of {filteredUsers.length} users
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Created</Label>
-                    <p className="text-sm font-medium">
-                      {format(new Date(selectedUser.created_at), 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Last Sign In</Label>
-                    <p className="text-sm font-medium">
-                      {selectedUser.last_sign_in 
-                        ? format(new Date(selectedUser.last_sign_in), 'MMM d, yyyy') 
-                        : 'Never'}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Subscription Status</Label>
-                  <Select 
-                    value={selectedUser.subscription_status}
-                    onValueChange={(value) => 
-                      setSelectedUser({...selectedUser, subscription_status: value})
-                    }
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                    disabled={page === 1}
                   >
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="expired">Expired</SelectItem>
-                      <SelectItem value="canceled">Canceled</SelectItem>
-                      <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="plan_type">Plan Type</Label>
-                  <Select 
-                    value={selectedUser.subscription_type}
-                    onValueChange={(value) => 
-                      setSelectedUser({...selectedUser, subscription_type: value})
-                    }
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={page === totalPages || totalPages === 0}
                   >
-                    <SelectTrigger id="plan_type">
-                      <SelectValue placeholder="Select plan type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                      <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setUserDetailsOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateUser}>Save Changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Change Role Dialog */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Update the role for {selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Select Role</label>
+                <Select value={newRole} onValueChange={(value: AdminRole) => setNewRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
+                    <SelectItem value="user">Regular User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRoleChange}>
+              Update Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
