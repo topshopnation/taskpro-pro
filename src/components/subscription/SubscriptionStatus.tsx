@@ -22,7 +22,7 @@ export function SubscriptionStatus() {
       // Small delay to ensure stable rendering
       const timer = setTimeout(() => {
         setIsLoaded(true);
-      }, 100);
+      }, 200); // Increased delay for more stability
       
       return () => clearTimeout(timer);
     }

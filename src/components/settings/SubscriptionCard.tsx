@@ -53,7 +53,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       // Add a small delay before considering the component stable
       const timer = setTimeout(() => {
         setIsStable(true);
-      }, 150);
+      }, 250); // Increased delay for more stability
       
       return () => clearTimeout(timer);
     }

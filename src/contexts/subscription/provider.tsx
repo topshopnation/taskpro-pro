@@ -53,7 +53,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         setInitialized(true);
         setLoading(false);
         setIsFetching(false);
-      }, 50);
+      }, 100); // Increased delay for more stability
     } catch (error) {
       console.error("Error fetching subscription:", error);
       setInitialized(true);
@@ -89,7 +89,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setTimeout(() => {
         updateState(updatedSubscription);
         setLoading(false);
-      }, 50);
+      }, 100); // Increased delay for more stability
     } catch (error) {
       console.error("Error updating subscription:", error);
       setLoading(false);
