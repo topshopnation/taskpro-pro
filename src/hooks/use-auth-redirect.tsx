@@ -14,7 +14,17 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
     const isHomePage = location.pathname === '/';
     
-    // Redirect logic for authenticated users
+    // Special case for payment returns
+    const isPaymentReturn = location.search.includes('payment_success') || 
+                           location.search.includes('payment_cancelled');
+    
+    // If it's a payment return, always go to settings regardless of current page
+    if (user && isPaymentReturn) {
+      navigate('/settings');
+      return;
+    }
+    
+    // Redirect authenticated users from auth/home to today page
     if (user && (isAuthPage || isHomePage)) {
       console.log("User authenticated, redirecting to today page from auth/home page");
       navigate('/today');
@@ -25,13 +35,10 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
       navigate('/today');
     }
     
-    // Redirect logic for unauthenticated users - only for protected routes
-    // Don't redirect from the home page (/) when not authenticated
+    // Redirect unauthenticated users to home page, except from auth pages
     if (!user && !isAuthPage && !isHomePage) {
       console.log("No user, redirecting to / from protected page");
       navigate('/');
     }
-
-    // IMPORTANT: Do NOT add any other redirects that would trigger on regular page loads
-  }, [user, loading, location.pathname, navigate]);
+  }, [user, loading, location.pathname, location.search, navigate]);
 }
