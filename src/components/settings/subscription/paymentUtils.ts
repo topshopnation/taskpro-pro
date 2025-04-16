@@ -129,7 +129,7 @@ export function createPaymentUrl(
     // Auto-process the payment immediately in test mode - no need to visit the PayPal page
     console.log("TEST MODE: Auto-processing payment after delay");
     
-    // Redirect to settings page with success parameters for both plans
+    // Always redirect to settings page with success parameters for test mode
     window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType;
     
     return paymentUrl;
