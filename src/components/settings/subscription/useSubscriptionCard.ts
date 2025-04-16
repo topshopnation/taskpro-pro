@@ -17,15 +17,21 @@ export function useSubscriptionCard() {
   const [formattedExpiryDate, setFormattedExpiryDate] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
   const [isStable, setIsStable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Format expiry date
   useEffect(() => {
-    if (subscription?.current_period_end) {
-      setFormattedExpiryDate(format(new Date(subscription.current_period_end), 'MMM d, yyyy'));
-    } else if (subscription?.trial_end_date) {
-      setFormattedExpiryDate(format(new Date(subscription.trial_end_date), 'MMM d, yyyy'));
-    } else {
-      setFormattedExpiryDate(null);
+    try {
+      if (subscription?.current_period_end) {
+        setFormattedExpiryDate(format(new Date(subscription.current_period_end), 'MMM d, yyyy'));
+      } else if (subscription?.trial_end_date) {
+        setFormattedExpiryDate(format(new Date(subscription.trial_end_date), 'MMM d, yyyy'));
+      } else {
+        setFormattedExpiryDate(null);
+      }
+    } catch (err) {
+      console.error("Error formatting date:", err);
+      setError("Unable to format subscription date");
     }
   }, [subscription]);
   
@@ -46,15 +52,23 @@ export function useSubscriptionCard() {
   useEffect(() => {
     if (!loading && !initialized) {
       console.log("SubscriptionCard: Fetching subscription data");
-      fetchSubscription();
+      fetchSubscription().catch((err) => {
+        console.error("Error fetching subscription:", err);
+        setError("Unable to load subscription data");
+      });
     }
   }, [loading, initialized, fetchSubscription]);
 
   const showRenewButton = subscription?.status === 'active' && (() => {
-    const endDate = new Date(subscription.current_period_end);
-    const now = new Date();
-    const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 14;
+    try {
+      const endDate = new Date(subscription.current_period_end);
+      const now = new Date();
+      const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 14;
+    } catch (err) {
+      console.error("Error calculating renewal status:", err);
+      return false;
+    }
   })();
 
   return {
@@ -64,6 +78,7 @@ export function useSubscriptionCard() {
     formattedExpiryDate,
     hasRendered,
     isStable,
-    showRenewButton
+    showRenewButton,
+    error
   };
 }

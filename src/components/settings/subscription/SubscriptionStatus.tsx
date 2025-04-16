@@ -1,22 +1,33 @@
-
 import { Badge } from "@/components/ui/badge";
-import { BadgeCheck, Clock } from "lucide-react";
+import { BadgeCheck, Clock, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Subscription } from "@/contexts/subscription";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionStatusProps {
   subscription: Subscription | null;
   isTrialActive: boolean;
   daysRemaining: number;
   formattedExpiryDate: string | null;
+  error?: string | null;
 }
 
 export function SubscriptionStatus({ 
   subscription, 
   isTrialActive, 
   daysRemaining, 
-  formattedExpiryDate 
+  formattedExpiryDate,
+  error
 }: SubscriptionStatusProps) {
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-2">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   let planName = "";
   let statusBadge;
   
