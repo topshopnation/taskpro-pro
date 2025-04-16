@@ -9,6 +9,8 @@ import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { EmptyTodayState } from "@/components/today/EmptyTodayState";
 import { groupTasks } from "@/utils/todayViewUtils";
+import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction";
+import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
 
 export default function TodayView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
@@ -46,39 +48,43 @@ export default function TodayView() {
   return (
     <AppLayout>
       <div className="space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <TodayViewHeader onAddTask={handleAddTask} />
-          <TodaySortControls 
-            sortBy={sortField}
-            setSortBy={setSortField}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-            groupBy={groupBy}
-            setGroupBy={setGroupBy}
-          />
-        </div>
+        <SubscriptionBanner />
+        
+        <SubscriptionRestriction>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <TodayViewHeader onAddTask={handleAddTask} />
+            <TodaySortControls 
+              sortBy={sortField}
+              setSortBy={setSortField}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+            />
+          </div>
 
-        {tasks.length === 0 ? (
-          <EmptyTodayState onAddTask={handleAddTask} />
-        ) : groupBy ? (
-          <GroupedTaskLists
-            groupedTasks={groupedTasks}
-            groupBy={groupBy}
-            isLoadingTasks={isLoading}
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-            onFavoriteToggle={handleFavoriteToggle}
-            onAddTask={handleAddTask}
-          />
-        ) : (
-          <TaskList
-            title="Today's Tasks"
-            tasks={tasks}
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-            onFavoriteToggle={handleFavoriteToggle}
-          />
-        )}
+          {tasks.length === 0 ? (
+            <EmptyTodayState onAddTask={handleAddTask} />
+          ) : groupBy ? (
+            <GroupedTaskLists
+              groupedTasks={groupedTasks}
+              groupBy={groupBy}
+              isLoadingTasks={isLoading}
+              onComplete={handleComplete}
+              onDelete={handleDelete}
+              onFavoriteToggle={handleFavoriteToggle}
+              onAddTask={handleAddTask}
+            />
+          ) : (
+            <TaskList
+              title="Today's Tasks"
+              tasks={tasks}
+              onComplete={handleComplete}
+              onDelete={handleDelete}
+              onFavoriteToggle={handleFavoriteToggle}
+            />
+          )}
+        </SubscriptionRestriction>
 
         <CreateTaskDialog
           open={isCreateTaskOpen}
