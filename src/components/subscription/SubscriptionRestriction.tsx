@@ -35,23 +35,23 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
       
       {/* Subscription alert */}
       <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-full max-w-md">
-        <Alert variant="destructive" className="bg-background border-2 shadow-lg">
-          <AlertTriangle className="h-5 w-5" />
-          <AlertTitle className="text-xl">Subscription Required</AlertTitle>
-          <AlertDescription className="mt-2">
+        <Alert className="bg-white/95 border border-purple-200 shadow-lg">
+          <AlertTriangle className="h-5 w-5 text-purple-500" />
+          <AlertTitle className="text-xl text-purple-700">Subscription Required</AlertTitle>
+          <AlertDescription className="mt-2 text-gray-600">
             {subscription?.status === 'trial' && daysRemaining <= 0 ? (
-              <span>Your free trial has expired. Upgrade now to continue using TaskPro for only $3/month.</span>
+              <span>Your free trial has expired. Subscribe now to continue using all TaskPro features.</span>
             ) : subscription?.status === 'expired' ? (
-              <span>Your subscription has expired. Please renew for only $3/month to continue using TaskPro.</span>
+              <span>Your subscription has expired. Please renew to continue using TaskPro.</span>
             ) : subscription?.status === 'canceled' ? (
-              <span>Your subscription has been canceled. Reactivate your subscription for $3/month to continue using TaskPro.</span>
+              <span>Your subscription has been canceled. Reactivate your subscription to continue using TaskPro.</span>
             ) : (
-              <span>A subscription is required to use this feature. Subscribe for just $3/month.</span>
+              <span>A subscription is required to use this feature.</span>
             )}
             <div className="mt-4">
               <Button 
                 onClick={() => navigate('/settings')} 
-                className="w-full"
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white"
                 variant="default"
               >
                 View Subscription Options

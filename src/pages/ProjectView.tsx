@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom" 
 import { AppLayout } from "@/components/layout/AppLayout"
@@ -15,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { SubscriptionBanner } from "@/components/SubscriptionBanner"
+import { SubscriptionRestriction } from "@/components/SubscriptionRestriction"
 
 export default function ProjectView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -41,7 +42,6 @@ export default function ProjectView() {
     handleProjectColorChange
   } = useProject();
 
-  // Update URL if project name changes
   useEffect(() => {
     if (currentProject && !isLoadingProject) {
       const currentSlug = name;
@@ -71,7 +71,6 @@ export default function ProjectView() {
 
   const groupedTasks = groupTasks(unsectionedTasks, groupBy, sortBy, sortDirection);
 
-  // Handle project change from task list
   const handleProjectChange = async (taskId: string, projectId: string | null) => {
     try {
       const { error } = await supabase
@@ -81,7 +80,6 @@ export default function ProjectView() {
       
       if (error) throw error;
       
-      // Refetch tasks to update the list
       refetch();
       
       toast.success(projectId ? "Task moved to project" : "Task moved to inbox");
@@ -105,7 +103,6 @@ export default function ProjectView() {
     "#F868B3", "#FF66A3", "#A1A09E", "#6D6A75", "#6C757D"
   ];
 
-  // Redirect to Today page instead of Home after project deletion
   const handleProjectDeleteWithRedirect = async () => {
     await handleProjectDelete();
     navigate('/today');
@@ -114,79 +111,82 @@ export default function ProjectView() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <ProjectHeader
-            name={currentProject.name}
-            favorite={currentProject.favorite}
-            color={currentProject.color}
-            onFavoriteToggle={handleProjectFavoriteToggle}
-            onRenameClick={() => {
-              setNewProjectName(currentProject.name)
-              setProjectColor(currentProject.color || "")
-              setIsEditProjectOpen(true)
-            }}
-            onDeleteClick={() => setIsDeleteProjectOpen(true)}
-          />
-        </div>
+        <SubscriptionBanner />
+        <SubscriptionRestriction>
+          <div>
+            <ProjectHeader
+              name={currentProject.name}
+              favorite={currentProject.favorite}
+              color={currentProject.color}
+              onFavoriteToggle={handleProjectFavoriteToggle}
+              onRenameClick={() => {
+                setNewProjectName(currentProject.name)
+                setProjectColor(currentProject.color || "")
+                setIsEditProjectOpen(true)
+              }}
+              onDeleteClick={() => setIsDeleteProjectOpen(true)}
+            />
+          </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <TaskSortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
+          <div className="flex items-center justify-end gap-2">
+            <TaskSortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+            />
+            
+            <Button 
+              size="sm" 
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </Button>
+          </div>
+
+          <GroupedTaskLists
+            groupedTasks={groupedTasks}
             groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            hideAddTaskButton={true}
+            isLoadingTasks={isLoadingTasks}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onAddTask={() => setIsCreateTaskOpen(true)}
+            hideTitle={!groupBy}
+            onProjectChange={handleProjectChange}
           />
-          
-          <Button 
-            size="sm" 
-            onClick={() => setIsCreateTaskOpen(true)}
-            className="flex items-center gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Task</span>
-          </Button>
-        </div>
 
-        <GroupedTaskLists
-          groupedTasks={groupedTasks}
-          groupBy={groupBy}
-          isLoadingTasks={isLoadingTasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onAddTask={() => setIsCreateTaskOpen(true)}
-          hideTitle={!groupBy}
-          onProjectChange={handleProjectChange}
-        />
+          <CreateTaskDialog
+            open={isCreateTaskOpen}
+            onOpenChange={setIsCreateTaskOpen}
+            defaultProjectId={id}
+          />
 
-        <CreateTaskDialog
-          open={isCreateTaskOpen}
-          onOpenChange={setIsCreateTaskOpen}
-          defaultProjectId={id}
-        />
-
-        <ProjectDialogs
-          projectId={id || ''}
-          isCreateTaskOpen={isCreateTaskOpen}
-          setIsCreateTaskOpen={setIsCreateTaskOpen}
-          isEditProjectOpen={isEditProjectOpen}
-          setIsEditProjectOpen={setIsEditProjectOpen}
-          isDeleteProjectOpen={isDeleteProjectOpen}
-          setIsDeleteProjectOpen={setIsDeleteProjectOpen}
-          isCreateSectionOpen={false}
-          setIsCreateSectionOpen={() => {}}
-          newSectionName=""
-          setNewSectionName={() => {}}
-          newProjectName={newProjectName}
-          setNewProjectName={setNewProjectName}
-          projectColor={projectColor}
-          setProjectColor={setProjectColor}
-          projectColors={projectColors}
-          handleProjectRename={handleProjectRename}
-          handleProjectDelete={handleProjectDeleteWithRedirect}
-        />
+          <ProjectDialogs
+            projectId={id || ''}
+            isCreateTaskOpen={isCreateTaskOpen}
+            setIsCreateTaskOpen={setIsCreateTaskOpen}
+            isEditProjectOpen={isEditProjectOpen}
+            setIsEditProjectOpen={setIsEditProjectOpen}
+            isDeleteProjectOpen={isDeleteProjectOpen}
+            setIsDeleteProjectOpen={setIsDeleteProjectOpen}
+            isCreateSectionOpen={false}
+            setIsCreateSectionOpen={() => {}}
+            newSectionName=""
+            setNewSectionName={() => {}}
+            newProjectName={newProjectName}
+            setNewProjectName={setNewProjectName}
+            projectColor={projectColor}
+            setProjectColor={setProjectColor}
+            projectColors={projectColors}
+            handleProjectRename={handleProjectRename}
+            handleProjectDelete={handleProjectDeleteWithRedirect}
+          />
+        </SubscriptionRestriction>
       </div>
     </AppLayout>
   );

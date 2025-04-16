@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -14,6 +13,8 @@ import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { Button } from "@/components/ui/button";
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
 import { Task } from "@/components/tasks/TaskItem";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { SubscriptionRestriction } from "@/components/SubscriptionRestriction";
 
 export default function FilterView() {
   const navigate = useNavigate();
@@ -44,7 +45,6 @@ export default function FilterView() {
     handleFilterColorChange
   } = useFilter();
 
-  // Update URL if filter name changes
   useEffect(() => {
     if (currentFilter && !isLoading) {
       const currentSlug = name;
@@ -104,40 +104,43 @@ export default function FilterView() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-screen-xl mx-auto">
-        <div className="space-y-2">
-          <FilterHeader
-            filter={currentFilter}
-            onFavoriteToggle={handleFilterFavoriteToggle}
-            onRenameClick={() => {
-              setNewFilterName(currentFilter.name);
-              setFilterColor(currentFilter.color || "");
-              setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
-              setIsEditFilterOpen(true);
-            }}
-            onDeleteClick={() => setIsDeleteFilterOpen(true)}
-            onColorChange={handleFilterColorChange}
-          />
-          
-          <div className="mt-1">
-            <FilterConditionsDisplay 
-              conditions={currentFilter.conditions || []} 
-              logic={currentFilter.logic}
+        <SubscriptionBanner />
+        <SubscriptionRestriction>
+          <div className="space-y-2">
+            <FilterHeader
+              filter={currentFilter}
+              onFavoriteToggle={handleFilterFavoriteToggle}
+              onRenameClick={() => {
+                setNewFilterName(currentFilter.name);
+                setFilterColor(currentFilter.color || "");
+                setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
+                setIsEditFilterOpen(true);
+              }}
+              onDeleteClick={() => setIsDeleteFilterOpen(true)}
+              onColorChange={handleFilterColorChange}
             />
+            
+            <div className="mt-1">
+              <FilterConditionsDisplay 
+                conditions={currentFilter.conditions || []} 
+                logic={currentFilter.logic}
+              />
+            </div>
+            
+            <div className="flex items-center justify-end mt-4">
+              <TaskSortControls
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                groupBy={groupBy}
+                setGroupBy={setGroupBy}
+                hideAddTaskButton={true}
+                showProjectSort={true}
+              />
+            </div>
           </div>
-          
-          <div className="flex items-center justify-end mt-4">
-            <TaskSortControls
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-              hideAddTaskButton={true}
-              showProjectSort={true}
-            />
-          </div>
-        </div>
+        </SubscriptionRestriction>
 
         <div className="space-y-6">
           {Object.keys(groupedTasks).length === 0 ? (
