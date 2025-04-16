@@ -1,13 +1,8 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Check } from "lucide-react";
-
-interface PlanSelectorProps {
-  planType: "monthly" | "yearly";
-  onPlanTypeChange: (value: "monthly" | "yearly") => void;
-}
+import { PlanSelectorProps, SubscriptionPlanType } from "@/types/subscriptionTypes";
 
 export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelectorProps) {
   return (

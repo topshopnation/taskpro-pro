@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useSubscription } from "@/contexts/subscription";
+import { UseSubscriptionCardReturn } from "@/types/subscriptionTypes";
 
-export function useSubscriptionCard() {
+export function useSubscriptionCard(): UseSubscriptionCardReturn {
   const { 
     subscription, 
     loading, 

@@ -1,16 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { BadgeCheck, Clock, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Subscription } from "@/contexts/subscription";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface SubscriptionStatusProps {
-  subscription: Subscription | null;
-  isTrialActive: boolean;
-  daysRemaining: number;
-  formattedExpiryDate: string | null;
-  error?: string | null;
-}
+import { SubscriptionStatusProps } from "@/types/subscriptionTypes";
 
 export function SubscriptionStatus({ 
   subscription, 

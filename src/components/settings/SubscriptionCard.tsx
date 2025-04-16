@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, BadgeCheck } from "lucide-react";
@@ -6,10 +5,7 @@ import { useSubscriptionCard } from "./subscription/useSubscriptionCard";
 import { SubscriptionCardSkeleton } from "./subscription/SubscriptionCardSkeleton";
 import { SubscriptionStatus } from "./subscription/SubscriptionStatus";
 import { SubscriptionFeatures } from "./subscription/SubscriptionFeatures";
-
-interface SubscriptionCardProps {
-  onUpgrade: () => void;
-}
+import { SubscriptionCardProps } from "@/types/subscriptionTypes";
 
 export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   const {
@@ -19,7 +15,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     formattedExpiryDate,
     hasRendered,
     isStable,
-    showRenewButton
+    showRenewButton,
+    error
   } = useSubscriptionCard();
 
   // Display loading state until we have finished initializing and the component is stable

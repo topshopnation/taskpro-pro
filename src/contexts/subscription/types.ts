@@ -1,4 +1,3 @@
-
 // Types for subscription status
 export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'canceled';
 export type SubscriptionPlanType = 'monthly' | 'yearly';
