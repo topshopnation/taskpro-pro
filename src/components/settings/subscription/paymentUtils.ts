@@ -37,23 +37,31 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
   }
   
   try {
+    console.log("Checking if user already has a subscription:", userId);
+    
+    // First, check if the user already has any subscription
+    const { data: existingSubscription, error: checkError } = await supabase
+      .from("subscriptions")
+      .select("id, status, trial_end_date")
+      .eq("user_id", userId)
+      .maybeSingle();
+      
+    if (checkError) {
+      console.error("Error checking existing subscription:", checkError);
+      return false;
+    }
+    
+    // If user already has a subscription, don't create a trial
+    if (existingSubscription) {
+      console.log("User already has a subscription, not creating trial:", existingSubscription);
+      return false;
+    }
+    
     console.log("Creating trial subscription for user:", userId);
     
     const now = new Date();
     const trialEnd = new Date(now);
     trialEnd.setDate(trialEnd.getDate() + 14); // 14 day trial
-    
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-      
-    // If user already has a subscription, don't create a trial
-    if (data) {
-      console.log("User already has a subscription, not creating trial");
-      return false;
-    }
     
     // Create trial subscription
     const { error: insertError } = await supabase

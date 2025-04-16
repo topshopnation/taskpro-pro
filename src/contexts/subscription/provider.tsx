@@ -86,8 +86,10 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
     try {
       setLoading(true);
+      console.log("Starting subscription update for user:", user.id, "with data:", update);
       const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
       
+      console.log("Subscription updated successfully:", updatedSubscription);
       // Update immediately without artificial delays
       updateState(updatedSubscription);
       setLoading(false);
