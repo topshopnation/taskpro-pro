@@ -1,5 +1,6 @@
 
 import { FC } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface TaskProLogoProps {
   className?: string;
@@ -14,6 +15,8 @@ export const TaskProLogo: FC<TaskProLogoProps> = ({
   withText = true,
   textClassName = "",
 }) => {
+  const navigate = useNavigate();
+
   // Size mapping for the logo
   const sizeMap = {
     small: "h-8 w-8",
@@ -28,8 +31,12 @@ export const TaskProLogo: FC<TaskProLogoProps> = ({
     large: "text-2xl",
   };
 
+  const handleLogoClick = () => {
+    navigate("/");
+  };
+
   return (
-    <div className={`flex items-center ${className}`}>
+    <div className={`flex items-center cursor-pointer ${className}`} onClick={handleLogoClick}>
       <div className={`${sizeMap[size]} rounded-md bg-gradient-to-r from-primary to-purple-500 flex items-center justify-center`}>
         <span className="text-white font-bold">T</span>
       </div>
