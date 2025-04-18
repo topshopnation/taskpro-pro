@@ -1,37 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPlan, AdminRole } from "@/types/adminTypes";
-
-// Mock data for development until tables are created
-const mockAdminUsers = [
-  { id: "1", user_id: "123", email: "admin@example.com", role: "admin" as AdminRole },
-  { id: "2", user_id: "456", email: "support@example.com", role: "support" as AdminRole }
-];
-
-const mockSubscriptionPlans = [
-  {
-    id: "1",
-    name: "Basic",
-    description: "Basic plan with essential features",
-    price_monthly: 3.00,
-    price_yearly: 30.00,
-    features: ["Unlimited tasks", "5 projects", "Basic reporting"],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2",
-    name: "Pro",
-    description: "Professional plan with advanced features",
-    price_monthly: 8.00,
-    price_yearly: 80.00,
-    features: ["Unlimited tasks", "Unlimited projects", "Advanced reporting", "Priority support"],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { toast } from "sonner";
 
 export const adminService = {
   // Admin users
@@ -157,6 +126,46 @@ export const adminService = {
       return true;
     } catch (error) {
       console.error('Error updating user subscription:', error);
+      return false;
+    }
+  },
+  
+  async loginAdmin(email: string, password: string): Promise<boolean> {
+    try {
+      // First, check if the user is an admin
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (adminError || !adminUser) {
+        toast.error('Invalid admin credentials');
+        return false;
+      }
+
+      // Verify credentials (replace with a more secure method in production)
+      const { data, error } = await supabase.rpc('verify_admin_credentials', {
+        input_email: email,
+        input_password: password
+      });
+
+      if (error || !data) {
+        toast.error('Authentication failed');
+        return false;
+      }
+
+      // Update last login timestamp
+      await supabase
+        .from('admin_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', adminUser.id);
+
+      toast.success('Admin login successful');
+      return true;
+    } catch (error) {
+      console.error('Admin login error:', error);
+      toast.error('An unexpected error occurred');
       return false;
     }
   }
