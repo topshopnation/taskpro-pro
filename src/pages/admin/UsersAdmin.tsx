@@ -1,61 +1,15 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  MoreHorizontal, 
-  Search, 
-  RefreshCw, 
-  ChevronLeft, 
-  ChevronRight, 
-  UserCog, 
-  UserCheck
-} from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AdminRole } from "@/types/adminTypes";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserSearch } from "@/components/admin/users/UserSearch";
+import { UserTable } from "@/components/admin/users/UserTable";
+import { UserRoleDialog } from "@/components/admin/users/UserRoleDialog";
+import { UserPagination } from "@/components/admin/users/UserPagination";
 
-// Sample data for users list
 const sampleUsers = [
   {
     id: "user123",
@@ -164,36 +118,7 @@ export default function UsersAdmin() {
       toast.error("Failed to update user role");
     }
   };
-  
-  const getSubscriptionBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-600">Active</Badge>;
-      case "trial":
-        return <Badge variant="outline" className="border-blue-500 text-blue-500">Trial</Badge>;
-      case "expired":
-        return <Badge variant="destructive">Expired</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-  
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "admin":
-      case "super_admin":
-        return <Badge className="bg-purple-600">Admin</Badge>;
-      case "support":
-        return <Badge variant="outline" className="border-orange-500 text-orange-500">Support</Badge>;
-      default:
-        return <Badge variant="secondary">User</Badge>;
-    }
-  };
-  
-  const getUserInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  };
-  
+
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
@@ -215,16 +140,7 @@ export default function UsersAdmin() {
           <CardDescription>
             Manage user accounts and access permissions
           </CardDescription>
-          
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search users by name or email..." 
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <UserSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -237,154 +153,36 @@ export default function UsersAdmin() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Subscription</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src="" />
-                              <AvatarFallback>
-                                {getUserInitials(user.firstName, user.lastName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{user.firstName} {user.lastName}</div>
-                              <div className="text-sm text-muted-foreground">{user.email}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {getSubscriptionBadge(user.subscription_status)}
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)} plan
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getRoleBadge(user.role)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {format(new Date(user.last_login), "MMM dd, yyyy HH:mm")}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Joined {format(new Date(user.created_at), "MMM yyyy")}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setNewRole(user.role as AdminRole);
-                                  setShowRoleDialog(true);
-                                }}
-                              >
-                                <UserCog className="h-4 w-4 mr-2" />
-                                Change Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <UserTable 
+                users={paginatedUsers} 
+                onRoleChange={(user) => {
+                  setSelectedUser(user);
+                  setNewRole(user.role as AdminRole);
+                  setShowRoleDialog(true);
+                }}
+              />
               
-              <div className="flex items-center justify-between py-4">
-                <div className="text-sm text-muted-foreground">
-                  Showing {Math.min(filteredUsers.length, startIdx + 1)} to {Math.min(filteredUsers.length, endIdx)} of {filteredUsers.length} users
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                    disabled={page === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={page === totalPages || totalPages === 0}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <UserPagination
+                page={page}
+                setPage={setPage}
+                totalPages={totalPages}
+                startIdx={startIdx}
+                endIdx={endIdx}
+                totalItems={filteredUsers.length}
+              />
             </>
           )}
         </CardContent>
       </Card>
       
-      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change User Role</DialogTitle>
-            <DialogDescription>
-              Update the role for {selectedUser?.email}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Select Role</label>
-                <Select value={newRole} onValueChange={(value: AdminRole) => setNewRole(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                    <SelectItem value="support">Support</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRoleChange}>
-              Update Role
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserRoleDialog
+        isOpen={showRoleDialog}
+        onOpenChange={setShowRoleDialog}
+        selectedUser={selectedUser}
+        newRole={newRole}
+        setNewRole={setNewRole}
+        onUpdate={handleRoleChange}
+      />
     </AdminLayout>
   );
 }
