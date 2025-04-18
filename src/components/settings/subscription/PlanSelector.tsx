@@ -1,10 +1,16 @@
 
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
-import { PlanSelectorProps } from "@/types/subscriptionTypes";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Sparkles } from "lucide-react";
+import { adminService } from "@/services/admin-service";
 import { SubscriptionPlan } from "@/types/adminTypes";
+
+interface PlanSelectorProps {
+  planType: "monthly" | "yearly";
+  onPlanTypeChange: (planType: "monthly" | "yearly") => void;
+}
 
 export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelectorProps) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -13,49 +19,10 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        setLoading(true);
-        // Instead of fetching from Supabase, we'll use default plans until the table is created
-        // Later this will fetch from 'subscription_plans' table
-        const defaultPlans: SubscriptionPlan[] = [
-          {
-            id: 'default-monthly',
-            name: 'TaskPro Pro',
-            description: 'All TaskPro features for monthly billing',
-            price_monthly: 3,
-            price_yearly: 0,
-            features: [
-              'Unlimited projects and tasks',
-              'Advanced filtering capabilities',
-              'Priority support',
-              'All premium features'
-            ],
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: 'default-yearly',
-            name: 'TaskPro Pro (Yearly)',
-            description: 'All TaskPro features for yearly billing',
-            price_monthly: 0,
-            price_yearly: 30,
-            features: [
-              'All monthly features',
-              'Save 16% compared to monthly',
-              'Priority support',
-              'All premium features'
-            ],
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ];
-        
-        setPlans(defaultPlans);
+        const availablePlans = await adminService.getSubscriptionPlans();
+        setPlans(availablePlans);
       } catch (error) {
-        console.error('Error loading subscription plans:', error);
-        // Fallback to defaults
-        setPlans([]);
+        console.error("Error fetching subscription plans:", error);
       } finally {
         setLoading(false);
       }
@@ -63,138 +30,76 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
     
     fetchPlans();
   }, []);
-
-  // Find plans appropriate for selected type
-  const getRelevantPlans = () => {
-    if (planType === 'monthly') {
-      return plans.filter(plan => plan.price_monthly > 0);
-    } else {
-      return plans.filter(plan => plan.price_yearly > 0);
+  
+  // Get pricing based on current plans
+  const getPriceByPlanType = (type: "monthly" | "yearly") => {
+    // If we have plans from the database, use those prices
+    if (plans.length > 0) {
+      const plan = plans[0]; // Just use the first plan for now
+      return type === "monthly" ? plan.price_monthly : plan.price_yearly;
     }
+    
+    // Fallback to default pricing
+    return type === "monthly" ? 3.00 : 30.00;
   };
-
-  const relevantPlans = getRelevantPlans();
+  
+  const yearlyDiscount = Math.round(((getPriceByPlanType("monthly") * 12) - getPriceByPlanType("yearly")) / (getPriceByPlanType("monthly") * 12) * 100);
   
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-      </div>
+      <Card className="animate-pulse">
+        <CardContent className="p-4 space-y-3">
+          <div className="h-6 w-1/3 bg-muted rounded"></div>
+          <div className="h-16 w-full bg-muted rounded"></div>
+          <div className="h-16 w-full bg-muted rounded"></div>
+        </CardContent>
+      </Card>
     );
   }
-
+  
   return (
-    <div>
-      <Tabs defaultValue="monthly" value={planType} onValueChange={onPlanTypeChange as any}>
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="yearly">Yearly (Save 16%)</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="monthly" className="space-y-4">
-          {relevantPlans.length > 0 ? (
-            relevantPlans.map(plan => (
-              <Card key={plan.id} className="border-primary/20">
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-2 text-2xl font-bold">${plan.price_monthly.toFixed(2)}<span className="text-sm font-normal">/month</span></div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="mr-2 h-4 w-4 text-primary" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>TaskPro Pro</CardTitle>
-                <CardDescription>All the essential features you need</CardDescription>
-                <div className="mt-2 text-2xl font-bold">$3.00<span className="text-sm font-normal">/month</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">Unlimited projects and tasks</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">Advanced filtering capabilities</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">Priority support</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">All premium features</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="yearly" className="space-y-4">
-          {relevantPlans.length > 0 ? (
-            relevantPlans.map(plan => (
-              <Card key={plan.id} className="border-primary/20">
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-2 text-2xl font-bold">${plan.price_yearly.toFixed(2)}<span className="text-sm font-normal">/year</span></div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="mr-2 h-4 w-4 text-primary" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>TaskPro Pro (Yearly)</CardTitle>
-                <CardDescription>Save with yearly billing</CardDescription>
-                <div className="mt-2 text-2xl font-bold">$30.00<span className="text-sm font-normal">/year</span></div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">All monthly features</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">Save 16% compared to monthly</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">Priority support</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">All premium features</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Card className="border-primary/20">
+      <CardContent className="p-4">
+        <RadioGroup value={planType} onValueChange={(value) => onPlanTypeChange(value as "monthly" | "yearly")} className="space-y-2">
+          <div className="flex flex-col space-y-3">
+            <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "monthly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("monthly")}>
+              <RadioGroupItem value="monthly" id="monthly" className="absolute right-3 top-3" />
+              <div className="pr-7">
+                <div className="flex items-center">
+                  <Label htmlFor="monthly" className="font-medium text-sm">Monthly</Label>
+                </div>
+                <div className="mt-1 flex items-baseline">
+                  <span className="text-2xl font-bold">${getPriceByPlanType("monthly").toFixed(2)}</span>
+                  <span className="ml-1 text-muted-foreground text-sm">/ month</span>
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">Billed monthly. Cancel anytime.</div>
+              </div>
+            </div>
+            
+            <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "yearly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("yearly")}>
+              <RadioGroupItem value="yearly" id="yearly" className="absolute right-3 top-3" />
+              {yearlyDiscount > 0 && (
+                <div className="absolute -right-1 -top-3">
+                  <div className="bg-primary flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white shadow-sm">
+                    <Sparkles className="mr-0.5 h-3 w-3" />
+                    Save {yearlyDiscount}%
+                  </div>
+                </div>
+              )}
+              <div className="pr-7">
+                <div className="flex items-center">
+                  <Label htmlFor="yearly" className="font-medium text-sm">Yearly</Label>
+                </div>
+                <div className="mt-1 flex items-baseline">
+                  <span className="text-2xl font-bold">${getPriceByPlanType("yearly").toFixed(2)}</span>
+                  <span className="ml-1 text-muted-foreground text-sm">/ year</span>
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">Billed annually. Only ${(getPriceByPlanType("yearly") / 12).toFixed(2)} per month.</div>
+              </div>
+            </div>
+          </div>
+        </RadioGroup>
+      </CardContent>
+    </Card>
   );
 }

@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { adminService } from "@/services/admin-service";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -25,10 +25,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       }
 
       try {
-        // For initial implementation, we'll use a hardcoded admin check
-        // In a real implementation, this would check against the admin_users table
-        const hardcodedAdminIds = ['your-user-id-here']; // Replace with actual user ID
-        const isUserAdmin = hardcodedAdminIds.includes(user.id);
+        // Check if the current user is an admin
+        const isUserAdmin = await adminService.isUserAdmin(user.id);
         
         if (!isUserAdmin) {
           console.error('Not authorized as admin');

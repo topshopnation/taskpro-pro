@@ -1,8 +1,8 @@
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Table, 
   TableBody, 
@@ -17,145 +17,83 @@ import {
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle 
 } from "@/components/ui/dialog";
 import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { 
-  PlusCircle, 
-  Pencil, 
-  Trash2, 
-  CreditCard, 
-  Check, 
-  RefreshCw, 
-  Users, 
-  Calendar 
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { SubscriptionPlan, UserSubscriptionData } from "@/types/adminTypes";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { SubscriptionPlan } from "@/types/adminTypes";
+import { adminService } from "@/services/admin-service";
+import { Loader2, PlusCircle, Search, RefreshCw, Edit, Trash2, Copy, MoreHorizontal, CheckCircle, Sparkles } from "lucide-react";
+import { format } from "date-fns";
 
 export default function SubscriptionsAdmin() {
-  const [activeTab, setActiveTab] = useState("plans");
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [userSubscriptions, setUserSubscriptions] = useState<UserSubscriptionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<Partial<SubscriptionPlan>>({
+    name: "",
+    description: "",
+    price_monthly: 0,
+    price_yearly: 0,
+    features: [],
+    is_active: true
+  });
+  const [newFeature, setNewFeature] = useState("");
   
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
+    const fetchPlans = async () => {
       try {
-        // For now, use sample data until we set up the actual backend tables
-        const samplePlans: SubscriptionPlan[] = [
-          {
-            id: "1",
-            name: "TaskPro Pro Monthly",
-            description: "All TaskPro features with monthly billing",
-            price_monthly: 3,
-            price_yearly: 0,
-            features: [
-              "Unlimited projects and tasks",
-              "Advanced filtering capabilities",
-              "Priority support",
-              "All premium features"
-            ],
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "2",
-            name: "TaskPro Pro Yearly",
-            description: "All TaskPro features with yearly billing (Save 16%)",
-            price_monthly: 0,
-            price_yearly: 30,
-            features: [
-              "All monthly features",
-              "Save 16% compared to monthly",
-              "Priority support",
-              "All premium features"
-            ],
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ];
-        
-        const sampleUserSubscriptions: UserSubscriptionData[] = [
-          {
-            id: "1",
-            user_id: "user123",
-            email: "user@example.com",
-            subscription_status: "active",
-            plan_type: "monthly",
-            start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            is_trial: false
-          },
-          {
-            id: "2",
-            user_id: "user456",
-            email: "anotheruser@example.com",
-            subscription_status: "trial",
-            plan_type: "monthly",
-            start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            is_trial: true
-          },
-          {
-            id: "3",
-            user_id: "user789",
-            email: "thirduser@example.com",
-            subscription_status: "expired",
-            plan_type: "yearly",
-            start_date: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
-            end_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-            is_trial: false
-          },
-        ];
-        
-        setPlans(samplePlans);
-        setUserSubscriptions(sampleUserSubscriptions);
+        setLoading(true);
+        const subscriptionPlans = await adminService.getSubscriptionPlans();
+        setPlans(subscriptionPlans);
       } catch (error) {
-        console.error("Error loading subscription data:", error);
-        toast.error("Failed to load subscription data");
+        console.error("Error fetching subscription plans:", error);
+        toast.error("Failed to load subscription plans");
       } finally {
         setLoading(false);
       }
     };
     
-    loadData();
+    fetchPlans();
   }, []);
   
-  const form = useForm<SubscriptionPlan>({
-    defaultValues: {
-      name: "",
-      description: "",
-      price_monthly: 0,
-      price_yearly: 0,
-      features: [],
-      is_active: true
-    }
-  });
+  const filteredPlans = plans.filter(
+    plan => plan.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    plan.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   
-  const resetForm = () => {
-    form.reset({
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const refreshedPlans = await adminService.getSubscriptionPlans();
+      setPlans(refreshedPlans);
+      toast.success("Subscription plans refreshed");
+    } catch (error) {
+      console.error("Error refreshing plans:", error);
+      toast.error("Failed to refresh plans");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleCreate = () => {
+    setIsEditing(false);
+    setCurrentPlan({
       name: "",
       description: "",
       price_monthly: 0,
@@ -163,439 +101,376 @@ export default function SubscriptionsAdmin() {
       features: [],
       is_active: true
     });
-    setEditingPlan(null);
+    setDialogOpen(true);
   };
   
-  useEffect(() => {
-    if (editingPlan) {
-      form.reset({
-        ...editingPlan,
-        features: editingPlan.features
-      });
-    }
-  }, [editingPlan, form]);
+  const handleEdit = (plan: SubscriptionPlan) => {
+    setIsEditing(true);
+    setCurrentPlan({...plan});
+    setDialogOpen(true);
+  };
   
-  const onSubmit = async (data: SubscriptionPlan) => {
+  const handleAddFeature = () => {
+    if (!newFeature.trim()) return;
+    
+    setCurrentPlan(prev => ({
+      ...prev,
+      features: [...(prev.features || []), newFeature.trim()]
+    }));
+    
+    setNewFeature("");
+  };
+  
+  const handleRemoveFeature = (index: number) => {
+    setCurrentPlan(prev => ({
+      ...prev,
+      features: prev.features?.filter((_, i) => i !== index)
+    }));
+  };
+  
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentPlan.name) {
+      toast.error("Plan name is required");
+      return;
+    }
+    
     try {
-      if (editingPlan) {
-        // Update existing plan
-        // For now, we'll just update the state
-        setPlans(prev => prev.map(p => p.id === editingPlan.id ? { ...data, id: p.id, created_at: p.created_at, updated_at: new Date().toISOString() } : p));
-        toast.success("Subscription plan updated successfully");
+      if (isEditing && currentPlan.id) {
+        await adminService.updateSubscriptionPlan(currentPlan.id, currentPlan);
+        
+        // Update the plan in the local state
+        setPlans(prev => prev.map(plan => 
+          plan.id === currentPlan.id ? {...plan, ...currentPlan} as SubscriptionPlan : plan
+        ));
+        
+        toast.success("Subscription plan updated");
       } else {
-        // Create new plan
-        const newPlan: SubscriptionPlan = {
-          ...data,
-          id: Date.now().toString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        setPlans(prev => [...prev, newPlan]);
-        toast.success("Subscription plan created successfully");
+        const newPlan = await adminService.createSubscriptionPlan(currentPlan);
+        
+        if (newPlan) {
+          setPlans(prev => [...prev, newPlan]);
+          toast.success("Subscription plan created");
+        }
       }
-      resetForm();
+      
+      setDialogOpen(false);
     } catch (error) {
-      console.error("Error saving subscription plan:", error);
+      console.error("Error saving plan:", error);
       toast.error("Failed to save subscription plan");
     }
   };
   
-  const handleDeletePlan = () => {
-    if (editingPlan) {
-      setPlans(prev => prev.filter(p => p.id !== editingPlan.id));
-      toast.success("Subscription plan deleted successfully");
-      setShowDeleteDialog(false);
-      resetForm();
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    
+    try {
+      await adminService.deleteSubscriptionPlan(deleteId);
+      
+      // Remove the plan from the local state
+      setPlans(prev => prev.filter(plan => plan.id !== deleteId));
+      
+      toast.success("Subscription plan deleted");
+      setDeleteDialogOpen(false);
+      setDeleteId(null);
+    } catch (error) {
+      console.error("Error deleting plan:", error);
+      toast.error("Failed to delete subscription plan");
     }
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-600">Active</Badge>;
-      case "trial":
-        return <Badge variant="outline" className="border-blue-500 text-blue-500">Trial</Badge>;
-      case "expired":
-        return <Badge variant="destructive">Expired</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-  
-  const refreshData = () => {
-    setLoading(true);
-    // Simulate refresh delay
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
+  const initiateDelete = (id: string) => {
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
   };
   
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Subscription Management</h1>
+          <h1 className="text-2xl font-bold">Subscription Plans</h1>
           <p className="text-muted-foreground">
-            Manage subscription plans and user subscriptions
+            Manage subscription plans and pricing
           </p>
         </div>
-        <Button onClick={refreshData} variant="outline" disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={handleCreate}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create Plan
+          </Button>
+        </div>
       </div>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="plans" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="plans" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Subscription Plans
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            User Subscriptions
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="plans">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Subscription Plans</CardTitle>
-                  <CardDescription>Manage and configure subscription plans</CardDescription>
-                </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button onClick={resetForm} size="sm" className="h-8">
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Add Plan
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[650px]">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingPlan ? "Edit Subscription Plan" : "Create Subscription Plan"}
-                      </DialogTitle>
-                      <DialogDescription>
-                        {editingPlan 
-                          ? "Update the details of this subscription plan" 
-                          : "Configure a new subscription plan for your users"}
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Plan Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="e.g. TaskPro Pro Monthly" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="is_active"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-end space-x-3 space-y-0 pt-4">
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <FormLabel>Active</FormLabel>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle>Plans</CardTitle>
+          <CardDescription>
+            Manage subscription plans and pricing tiers
+          </CardDescription>
+          
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search plans..." 
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredPlans.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No subscription plans found.</p>
+              <Button variant="outline" className="mt-4" onClick={handleCreate}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Create a new plan
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Monthly Price</TableHead>
+                  <TableHead>Yearly Price</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPlans.map(plan => (
+                  <TableRow key={plan.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{plan.name}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">
+                          {plan.description}
                         </div>
-                        
-                        <FormField
-                          control={form.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Description</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Describe the features of this plan" 
-                                  className="resize-none" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="price_monthly"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Monthly Price ($)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="0.01" 
-                                    min="0" 
-                                    {...field} 
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                  />
-                                </FormControl>
-                                <FormDescription>Set to 0 if not offering monthly</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="price_yearly"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Yearly Price ($)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="0.01" 
-                                    min="0" 
-                                    {...field} 
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                  />
-                                </FormControl>
-                                <FormDescription>Set to 0 if not offering yearly</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <FormField
-                          control={form.control}
-                          name="features"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>Features (one per line)</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Unlimited projects and tasks&#10;Advanced filtering&#10;Priority support" 
-                                  value={form.watch("features")?.join("\n") || ""}
-                                  onChange={(e) => form.setValue("features", e.target.value.split("\n"))}
-                                  className="min-h-24"
-                                />
-                              </FormControl>
-                              <FormDescription>Enter each feature on a new line</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <DialogFooter>
-                          {editingPlan && (
-                            <Button 
-                              type="button" 
-                              variant="destructive" 
-                              onClick={() => setShowDeleteDialog(true)}
-                              className="mr-auto"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Plan
-                            </Button>
-                          )}
-                          <Button type="submit">
-                            <Check className="h-4 w-4 mr-2" />
-                            {editingPlan ? "Update Plan" : "Create Plan"}
+                      </div>
+                    </TableCell>
+                    <TableCell>${plan.price_monthly.toFixed(2)}</TableCell>
+                    <TableCell>${plan.price_yearly.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {plan.is_active ? (
+                        <Badge variant="outline" className="border-green-500 text-green-500">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-muted-foreground text-muted-foreground">
+                          Inactive
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{format(new Date(plan.created_at), "MMM dd, yyyy")}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
                           </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                </div>
-              ) : plans.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <p>No subscription plans found.</p>
-                  <p>Click "Add Plan" to create your first subscription plan.</p>
-                </div>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Pricing</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {plans.map((plan) => (
-                        <TableRow key={plan.id}>
-                          <TableCell className="font-medium">
-                            <div>
-                              <div>{plan.name}</div>
-                              <div className="text-sm text-muted-foreground">{plan.description}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {plan.price_monthly > 0 && (
-                                <div className="text-sm">Monthly: ${plan.price_monthly.toFixed(2)}</div>
-                              )}
-                              {plan.price_yearly > 0 && (
-                                <div className="text-sm">Yearly: ${plan.price_yearly.toFixed(2)}</div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {plan.is_active ? (
-                              <Badge variant="outline" className="border-green-500 text-green-500">Active</Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-gray-500 text-gray-500">Inactive</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => setEditingPlan(plan)}
-                                >
-                                  <Pencil className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[650px]">
-                                <DialogHeader>
-                                  <DialogTitle>Edit Subscription Plan</DialogTitle>
-                                  <DialogDescription>
-                                    Update the details of this subscription plan
-                                  </DialogDescription>
-                                </DialogHeader>
-                                
-                                <Form {...form}>
-                                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                                    {/* Same form fields as in Add Plan dialog */}
-                                    {/* ...form fields rendered here... */}
-                                  </form>
-                                </Form>
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="users">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>User Subscriptions</CardTitle>
-              <CardDescription>View and manage user subscription status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                </div>
-              ) : userSubscriptions.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <p>No user subscriptions found.</p>
-                </div>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Period</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {userSubscriptions.map((subscription) => (
-                        <TableRow key={subscription.id}>
-                          <TableCell className="font-medium">
-                            {subscription.email}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(subscription.subscription_status)}
-                            {subscription.is_trial && (
-                              <Badge variant="outline" className="ml-2 border-blue-500 text-blue-500">Trial</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>{subscription.plan_type}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <div className="text-sm">
-                                <div>
-                                  {new Date(subscription.start_date).toLocaleDateString()} to
-                                </div>
-                                <div>
-                                  {new Date(subscription.end_date).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(plan)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const duplicate = {...plan, name: `${plan.name} (Copy)`, id: undefined};
+                            setCurrentPlan(duplicate);
+                            setIsEditing(false);
+                            setDialogOpen(true);
+                          }}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => initiateDelete(plan.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
       
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+      {/* Create/Edit Plan Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Delete Subscription Plan</DialogTitle>
+            <DialogTitle>{isEditing ? "Edit Subscription Plan" : "Create Subscription Plan"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this subscription plan?
-              This action cannot be undone.
+              {isEditing ? "Update the details of this subscription plan." : "Create a new subscription plan for your users."}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+          
+          <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Plan Name</Label>
+                <Input 
+                  id="name" 
+                  value={currentPlan.name || ""} 
+                  onChange={(e) => setCurrentPlan({...currentPlan, name: e.target.value})}
+                  placeholder="Pro Plan"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={currentPlan.description || ""} 
+                  onChange={(e) => setCurrentPlan({...currentPlan, description: e.target.value})}
+                  placeholder="Advanced features for power users"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price_monthly">Monthly Price ($)</Label>
+                  <Input 
+                    id="price_monthly" 
+                    type="number" 
+                    min="0" 
+                    step="0.01"
+                    value={currentPlan.price_monthly || 0} 
+                    onChange={(e) => setCurrentPlan({...currentPlan, price_monthly: parseFloat(e.target.value)})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="price_yearly">Yearly Price ($)</Label>
+                  <Input 
+                    id="price_yearly" 
+                    type="number" 
+                    min="0" 
+                    step="0.01"
+                    value={currentPlan.price_yearly || 0} 
+                    onChange={(e) => setCurrentPlan({...currentPlan, price_yearly: parseFloat(e.target.value)})}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Features</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={newFeature} 
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    placeholder="Add a feature"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddFeature();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddFeature}>Add</Button>
+                </div>
+                
+                <div className="mt-2 space-y-2">
+                  {currentPlan.features?.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="flex-1 text-sm">{feature}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFeature(index)}
+                      >
+                        <Trash2 className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  {(currentPlan.features?.length || 0) === 0 && (
+                    <div className="text-sm text-muted-foreground italic py-2">
+                      No features added yet
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="is_active"
+                  checked={currentPlan.is_active}
+                  onCheckedChange={(checked) => setCurrentPlan({...currentPlan, is_active: checked})}
+                />
+                <Label htmlFor="is_active">Active</Label>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                {isEditing ? "Update Plan" : "Create Plan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this subscription plan? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-destructive">
+              Warning: Users with this plan will not have their subscription changed automatically.
+              You may need to migrate them to a different plan manually.
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeletePlan}>
-              <Trash2 className="h-4 w-4 mr-2" />
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete}
+            >
               Delete Plan
             </Button>
           </DialogFooter>

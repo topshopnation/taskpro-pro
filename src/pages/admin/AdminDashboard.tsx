@@ -1,302 +1,243 @@
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminStats } from "@/types/adminTypes";
-import { Users, CreditCard, UserPlus, ArrowUpRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Legend 
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { ArrowUpRight, Users, CreditCard, Activity, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
-const revenueData = [
-  { name: "Jan", monthly: 420, yearly: 1200 },
-  { name: "Feb", monthly: 450, yearly: 1250 },
-  { name: "Mar", monthly: 480, yearly: 1300 },
-  { name: "Apr", monthly: 520, yearly: 1400 },
-  { name: "May", monthly: 550, yearly: 1450 },
-  { name: "Jun", monthly: 590, yearly: 1500 },
-  { name: "Jul", monthly: 620, yearly: 1550 },
-  { name: "Aug", monthly: 650, yearly: 1600 },
-  { name: "Sep", monthly: 680, yearly: 1650 },
-  { name: "Oct", monthly: 710, yearly: 1700 },
-  { name: "Nov", monthly: 750, yearly: 1750 },
-  { name: "Dec", monthly: 790, yearly: 1800 }
+// Mock data for dashboard
+const mockRevenueData = [
+  { month: 'Jan', revenue: 3500 },
+  { month: 'Feb', revenue: 4200 },
+  { month: 'Mar', revenue: 3800 },
+  { month: 'Apr', revenue: 4000 },
+  { month: 'May', revenue: 4800 },
+  { month: 'Jun', revenue: 5300 },
 ];
 
-const userGrowthData = [
-  { name: "Jan", users: 112 },
-  { name: "Feb", users: 145 },
-  { name: "Mar", users: 189 },
-  { name: "Apr", users: 256 },
-  { name: "May", users: 345 },
-  { name: "Jun", users: 443 },
-  { name: "Jul", users: 529 },
-  { name: "Aug", users: 602 },
-  { name: "Sep", users: 689 },
-  { name: "Oct", users: 754 },
-  { name: "Nov", users: 823 },
-  { name: "Dec", users: 915 }
+const mockUserData = [
+  { month: 'Jan', users: 120 },
+  { month: 'Feb', users: 150 },
+  { month: 'Mar', users: 200 },
+  { month: 'Apr', users: 320 },
+  { month: 'May', users: 350 },
+  { month: 'Jun', users: 410 },
 ];
 
-const subscriptionsData = [
-  { name: "Jan", active: 95, trial: 25, expired: 15 },
-  { name: "Feb", active: 100, trial: 30, expired: 18 },
-  { name: "Mar", active: 110, trial: 35, expired: 20 },
-  { name: "Apr", active: 120, trial: 40, expired: 22 },
-  { name: "May", active: 130, trial: 45, expired: 25 },
-  { name: "Jun", active: 140, trial: 50, expired: 28 },
-  { name: "Jul", active: 150, trial: 55, expired: 32 },
-  { name: "Aug", active: 160, trial: 60, expired: 35 },
-  { name: "Sep", active: 170, trial: 65, expired: 38 },
-  { name: "Oct", active: 180, trial: 70, expired: 42 },
-  { name: "Nov", active: 190, trial: 75, expired: 45 },
-  { name: "Dec", active: 200, trial: 80, expired: 48 }
-];
+// Mock admin stats
+const mockAdminStats = {
+  total_users: 413,
+  active_subscriptions: 287,
+  trial_users: 95,
+  expired_subscriptions: 31,
+  revenue_monthly: 940,
+  revenue_yearly: 8600,
+};
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats>({
-    total_users: 915,
-    active_subscriptions: 200,
-    trial_users: 80,
-    expired_subscriptions: 48,
-    revenue_monthly: 2370,
-    revenue_yearly: 5400
-  });
-  
-  const [timeRange, setTimeRange] = useState("year");
+  const [stats, setStats] = useState(mockAdminStats);
+  const [revenueData, setRevenueData] = useState(mockRevenueData);
+  const [userData, setUserData] = useState(mockUserData);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setStats({
-          total_users: 915,
-          active_subscriptions: 200,
-          trial_users: 80,
-          expired_subscriptions: 48,
-          revenue_monthly: 2370,
-          revenue_yearly: 5400
-        });
-      } catch (error) {
-        console.error("Error loading admin stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
     
-    loadStats();
-  }, [timeRange]);
-  
-  const getTimeRangeData = (data: any[]) => {
-    if (timeRange === "month") {
-      return data.slice(-3);
-    } else if (timeRange === "quarter") {
-      return data.slice(-3);
-    } else {
-      return data;
-    }
-  };
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of subscription status and user activity
+            Overview of system metrics and performance
           </p>
         </div>
-        <Select defaultValue={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Select Range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Last Month</SelectItem>
-            <SelectItem value="quarter">Last Quarter</SelectItem>
-            <SelectItem value="year">Last Year</SelectItem>
-          </SelectContent>
-        </Select>
+        <Button 
+          variant="outline"
+          onClick={() => {
+            setLoading(true);
+            setTimeout(() => setLoading(false), 800);
+          }}
+        >
+          <RefreshIcon className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
       </div>
       
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total_users}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              <span className="text-green-500 flex items-center mr-1">
-                <ArrowUpRight className="h-3 w-3" />
-                12%
-              </span> 
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.active_subscriptions}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              <span className="text-green-500 flex items-center mr-1">
-                <ArrowUpRight className="h-3 w-3" />
-                8%
-              </span> 
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Trial Users</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.trial_users}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              <span className="text-green-500 flex items-center mr-1">
-                <ArrowUpRight className="h-3 w-3" />
-                15%
-              </span> 
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.revenue_monthly + stats.revenue_yearly}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              <span className="text-green-500 flex items-center mr-1">
-                <ArrowUpRight className="h-3 w-3" />
-                10%
-              </span> 
-              from last month
-            </p>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <StatsCard
+          title="Total Users"
+          value={stats.total_users}
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          description="Total registered users"
+          trend={"+12% from last month"}
+          loading={loading}
+        />
+        <StatsCard
+          title="Active Subscriptions"
+          value={stats.active_subscriptions}
+          icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+          description="Current paid subscribers"
+          trend={"+8% from last month"}
+          loading={loading}
+        />
+        <StatsCard
+          title="Trial Users"
+          value={stats.trial_users}
+          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+          description="Users in trial period"
+          trend={"+5% from last month"}
+          loading={loading}
+        />
+        <StatsCard
+          title="Monthly Revenue"
+          value={`$${stats.revenue_monthly}`}
+          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+          description="Revenue from monthly plans"
+          trend={"+15% from last month"}
+          loading={loading}
+        />
       </div>
       
-      <Tabs defaultValue="revenue" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+      {/* Charts */}
+      <Tabs defaultValue="revenue" className="space-y-4">
+        <TabsList>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="users">User Growth</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="revenue">
+        <TabsContent value="revenue" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Revenue Overview</CardTitle>
               <CardDescription>
-                Monthly vs. Yearly subscription revenue
+                Monthly revenue from all subscription types
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
-              {loading ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getTimeRangeData(revenueData)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, undefined]} />
-                    <Legend />
-                    <Bar dataKey="monthly" name="Monthly Plans" fill="#8884d8" />
-                    <Bar dataKey="yearly" name="Yearly Plans" fill="#82ca9d" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+            <CardContent>
+              <div className="h-[300px]">
+                {loading ? (
+                  <div className="h-full w-full bg-muted/20 animate-pulse rounded-md flex items-center justify-center">
+                    <p className="text-muted-foreground">Loading chart data...</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="revenue" fill="#8884d8" name="Revenue ($)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="users">
+        <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>User Growth</CardTitle>
               <CardDescription>
-                User registration over time
+                Monthly active user count
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
-              {loading ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={getTimeRangeData(userGrowthData)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="users" name="Total Users" stroke="#8884d8" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="subscriptions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscription Status</CardTitle>
-              <CardDescription>
-                Active, trial, and expired subscriptions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-80">
-              {loading ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getTimeRangeData(subscriptionsData)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="active" name="Active" fill="#82ca9d" />
-                    <Bar dataKey="trial" name="Trial" fill="#8884d8" />
-                    <Bar dataKey="expired" name="Expired" fill="#ff8042" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+            <CardContent>
+              <div className="h-[300px]">
+                {loading ? (
+                  <div className="h-full w-full bg-muted/20 animate-pulse rounded-md flex items-center justify-center">
+                    <p className="text-muted-foreground">Loading chart data...</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={userData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="users" stroke="#8884d8" activeDot={{ r: 8 }} name="Users" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </AdminLayout>
+  );
+}
+
+// Stats Card Component
+function StatsCard({ title, value, description, icon, trend, loading }: { 
+  title: string;
+  value: number | string;
+  description: string;
+  icon: React.ReactNode;
+  trend: string;
+  loading: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          {title}
+        </CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-7 w-1/2 bg-muted animate-pulse rounded"></div>
+            <div className="h-4 w-full bg-muted animate-pulse rounded"></div>
+          </div>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-xs text-muted-foreground">
+              {description}
+            </p>
+            <div className="mt-2 flex items-center text-xs text-green-600">
+              <ArrowUpRight className="mr-1 h-3 w-3" />
+              {trend}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Simple refresh icon component
+function RefreshIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
   );
 }

@@ -2,14 +2,24 @@
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 import { supabase } from "@/integrations/supabase/client";
+import { adminService } from "@/services/admin-service";
 
 // Payment mode for testing vs production
 const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
 
-// Get subscription plan IDs - simplified version until database is set up
+// Get subscription plan IDs - now uses our admin service
 async function getSubscriptionPlanIds(planType: "monthly" | "yearly"): Promise<string | null> {
   try {
-    // Hardcoded values for now - will fetch from subscription_plans table later
+    // Get plans from our admin service (which currently returns mock data)
+    const plans = await adminService.getSubscriptionPlans();
+    const plan = plans.find(p => p.is_active);
+    
+    if (plan) {
+      // In a real implementation, this would return the PayPal plan ID
+      // For now, just return a mock ID
+      return planType === "monthly" ? "monthly-plan-id" : "yearly-plan-id";
+    }
+    
     return null;
   } catch (error) {
     console.error("Error fetching subscription plan:", error);
