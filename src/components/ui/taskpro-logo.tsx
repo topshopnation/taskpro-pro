@@ -1,6 +1,5 @@
 
 import { FC } from "react";
-import { useNavigate } from "react-router-dom";
 
 interface TaskProLogoProps {
   className?: string;
@@ -15,8 +14,6 @@ export const TaskProLogo: FC<TaskProLogoProps> = ({
   withText = true,
   textClassName = "",
 }) => {
-  const navigate = useNavigate();
-
   // Size mapping for the logo
   const sizeMap = {
     small: "h-8 w-8",
@@ -32,7 +29,7 @@ export const TaskProLogo: FC<TaskProLogoProps> = ({
   };
 
   const handleLogoClick = () => {
-    navigate("/");
+    window.location.href = "/";
   };
 
   return (

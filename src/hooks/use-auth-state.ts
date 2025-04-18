@@ -2,13 +2,11 @@
 import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "./use-user-profile";
 
 export const useAuthState = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
   const { user, setUser, updateUserFromSession } = useUserProfile();
 
   useEffect(() => {
@@ -27,14 +25,14 @@ export const useAuthState = () => {
           }, 0);
           
           if (event === 'SIGNED_IN') {
-            navigate('/today');
+            window.location.href = '/today';
           }
         } else {
           setUser(null);
           setSession(null);
           
           if (event === 'SIGNED_OUT') {
-            navigate('/auth');
+            window.location.href = '/auth';
           }
         }
         setIsLoading(false);
@@ -72,7 +70,7 @@ export const useAuthState = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, setUser, updateUserFromSession]);
+  }, [setUser, updateUserFromSession]);
 
   return { user, setUser, session, loading };
 };

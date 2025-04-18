@@ -1,17 +1,15 @@
 
-import { useNavigate } from "react-router-dom";
 import { AuthContext, AuthContextType } from "@/contexts/auth-context";
 import { useAuthState } from "@/hooks/use-auth-state";
 import { signUp, signIn, signOut, signInWithProvider, updateUserProfile } from "@/services/auth-service";
 
 export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   const { user, setUser, session, loading } = useAuthState();
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/auth');
+      // Remove navigate dependency - we'll let the auth state change redirect instead
     } catch (error) {
       // Error is already handled in the service
       console.error('Error in handleSignOut:', error);

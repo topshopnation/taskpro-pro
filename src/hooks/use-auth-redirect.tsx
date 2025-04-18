@@ -8,7 +8,8 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
   const location = useLocation();
 
   useEffect(() => {
-    if (loading) return;
+    // Only run this effect if we're in a browser environment with access to React Router
+    if (typeof window === 'undefined' || !navigate || loading) return;
 
     // Check if we're already on the auth page or callback page
     const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
