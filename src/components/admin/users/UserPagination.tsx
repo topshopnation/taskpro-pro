@@ -28,7 +28,7 @@ export function UserPagination({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+          onClick={() => setPage(Math.max(page - 1, 1))}
           disabled={page === 1}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -37,7 +37,7 @@ export function UserPagination({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+          onClick={() => setPage(Math.min(page + 1, totalPages))}
           disabled={page === totalPages || totalPages === 0}
         >
           Next
