@@ -1,4 +1,3 @@
-
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { 
   Card, 
@@ -115,14 +114,10 @@ export default function UsersAdmin() {
   const itemsPerPage = 10;
   
   useEffect(() => {
-    // In a real implementation, this would fetch data from the backend
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Just using our sample data for now
         setUsers(sampleUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -135,13 +130,11 @@ export default function UsersAdmin() {
     fetchUsers();
   }, []);
   
-  // Filter users based on search query
   const filteredUsers = users.filter(user => 
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  // Paginate users
   const startIdx = (page - 1) * itemsPerPage;
   const endIdx = page * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIdx, endIdx);
@@ -158,7 +151,6 @@ export default function UsersAdmin() {
     if (!selectedUser || !newRole) return;
     
     try {
-      // Update user role (in a real implementation, this would call the backend)
       setUsers(prev => 
         prev.map(user => 
           user.id === selectedUser.id ? { ...user, role: newRole } : user
@@ -326,7 +318,6 @@ export default function UsersAdmin() {
                 </Table>
               </div>
               
-              {/* Pagination */}
               <div className="flex items-center justify-between py-4">
                 <div className="text-sm text-muted-foreground">
                   Showing {Math.min(filteredUsers.length, startIdx + 1)} to {Math.min(filteredUsers.length, endIdx)} of {filteredUsers.length} users
@@ -357,7 +348,6 @@ export default function UsersAdmin() {
         </CardContent>
       </Card>
       
-      {/* Change Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
         <DialogContent>
           <DialogHeader>
@@ -379,7 +369,6 @@ export default function UsersAdmin() {
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                     <SelectItem value="support">Support</SelectItem>
-                    <SelectItem value="user">Regular User</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

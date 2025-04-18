@@ -1,6 +1,6 @@
 
 // Define admin role types
-export type AdminRole = 'super_admin' | 'admin' | 'support' | 'user';
+export type AdminRole = 'super_admin' | 'admin' | 'support';
 
 // Define admin user interface
 export interface AdminUser {

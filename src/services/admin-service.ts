@@ -22,6 +22,12 @@ export const adminService = {
   
   async addAdminUser(userId: string, email: string, role: AdminRole): Promise<boolean> {
     try {
+      // Make sure role is a valid enum value
+      if (role !== 'super_admin' && role !== 'admin' && role !== 'support') {
+        console.error('Invalid admin role:', role);
+        return false;
+      }
+
       const { error } = await supabase
         .from('admin_users')
         .insert({
