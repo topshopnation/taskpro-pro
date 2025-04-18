@@ -1,11 +1,11 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
@@ -41,7 +41,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // User is authenticated, render the protected content
-  return <>{children}</>;
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;

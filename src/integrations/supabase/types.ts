@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_login: string | null
+          password_hash: string
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          last_login?: string | null
+          password_hash: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_login?: string | null
+          password_hash?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       filters: {
         Row: {
           color: string | null
@@ -268,10 +298,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_admin_password: {
+        Args: {
+          admin_email: string
+          old_password: string
+          new_password: string
+        }
+        Returns: boolean
+      }
+      verify_admin_credentials: {
+        Args: { input_email: string; input_password: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      admin_role: "super_admin" | "admin" | "support"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -386,6 +427,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      admin_role: ["super_admin", "admin", "support"],
+    },
   },
 } as const

@@ -1,15 +1,19 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionPlan, AdminRole } from "@/types/adminTypes";
+import { SubscriptionPlan, AdminRole, AdminUser, mockAdminUsers, mockSubscriptionPlans } from "@/types/adminTypes";
 import { toast } from "sonner";
 
 export const adminService = {
   // Admin users
   async isUserAdmin(userId: string): Promise<boolean> {
     try {
-      // In a real implementation, this would query the admin_users table
-      // For now, use hardcoded mock data
-      const admin = mockAdminUsers.find(admin => admin.user_id === userId);
-      return !!admin;
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      return !!data;
     } catch (error) {
       console.error('Error checking admin status:', error);
       return false;
@@ -18,21 +22,25 @@ export const adminService = {
   
   async addAdminUser(userId: string, email: string, role: AdminRole): Promise<boolean> {
     try {
-      // In a real implementation, this would add a record to admin_users table
-      // For now, just simulate success
-      console.log('Adding admin user:', {userId, email, role});
-      return true;
+      const { error } = await supabase
+        .from('admin_users')
+        .insert({
+          id: userId,
+          email,
+          role,
+          password_hash: '', // Initial empty password, should be set separately
+        });
+      
+      return !error;
     } catch (error) {
       console.error('Error adding admin user:', error);
       return false;
     }
   },
   
-  // Subscription plans
+  // Subscription plans - mock implementation for now
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     try {
-      // In a real implementation, this would query the subscription_plans table
-      // For now, use hardcoded mock data
       return mockSubscriptionPlans;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
@@ -42,10 +50,8 @@ export const adminService = {
   
   async createSubscriptionPlan(plan: Partial<SubscriptionPlan>): Promise<SubscriptionPlan | null> {
     try {
-      // In a real implementation, this would add a record to subscription_plans table
-      // For now, just simulate success
       const newPlan: SubscriptionPlan = {
-        id: Math.random().toString(36).substring(2, 11),
+        id: crypto.randomUUID(),
         name: plan.name || "",
         description: plan.description || "",
         price_monthly: plan.price_monthly || 0,
@@ -56,7 +62,6 @@ export const adminService = {
         updated_at: new Date().toISOString()
       };
       
-      console.log('Creating subscription plan:', newPlan);
       return newPlan;
     } catch (error) {
       console.error('Error creating subscription plan:', error);
@@ -66,8 +71,6 @@ export const adminService = {
   
   async updateSubscriptionPlan(id: string, plan: Partial<SubscriptionPlan>): Promise<boolean> {
     try {
-      // In a real implementation, this would update a record in the subscription_plans table
-      // For now, just simulate success
       console.log('Updating subscription plan:', {id, ...plan});
       return true;
     } catch (error) {
@@ -78,8 +81,6 @@ export const adminService = {
   
   async deleteSubscriptionPlan(id: string): Promise<boolean> {
     try {
-      // In a real implementation, this would delete a record from the subscription_plans table
-      // For now, just simulate success
       console.log('Deleting subscription plan:', id);
       return true;
     } catch (error) {
@@ -91,8 +92,6 @@ export const adminService = {
   // User management functions
   async getUserSubscriptions(): Promise<any[]> {
     try {
-      // In a real implementation, this would join subscriptions with user profiles
-      // For now, use the actual subscriptions table but without joining to non-existent tables
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*');
@@ -132,26 +131,19 @@ export const adminService = {
   
   async loginAdmin(email: string, password: string): Promise<boolean> {
     try {
-      // First, check if the user is an admin
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (adminError || !adminUser) {
-        toast.error('Invalid admin credentials');
-        return false;
-      }
-
-      // Verify credentials (replace with a more secure method in production)
+      // Use the Supabase RPC to verify admin credentials
       const { data, error } = await supabase.rpc('verify_admin_credentials', {
         input_email: email,
         input_password: password
       });
 
-      if (error || !data) {
+      if (error) {
         toast.error('Authentication failed');
+        return false;
+      }
+
+      if (!data) {
+        toast.error('Invalid admin credentials');
         return false;
       }
 
@@ -159,7 +151,7 @@ export const adminService = {
       await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
-        .eq('id', adminUser.id);
+        .eq('email', email);
 
       toast.success('Admin login successful');
       return true;

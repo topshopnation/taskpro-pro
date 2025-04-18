@@ -1,51 +1,25 @@
 
-export type AdminRole = 'super_admin' | 'admin' | 'support';
+// Extend existing adminTypes.ts
+export const mockAdminUsers: AdminUser[] = [
+  {
+    id: 'admin-uuid-1',
+    email: 'admin@taskpro.pro',
+    role: 'super_admin',
+    created_at: new Date().toISOString(),
+    last_login: undefined
+  }
+];
 
-export interface AdminUser {
-  id: string;
-  email: string;
-  role: AdminRole;
-  created_at: string;
-  last_login?: string;
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price_monthly: number;
-  price_yearly: number;
-  features: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserSubscriptionData {
-  id: string;
-  user_id: string;
-  email: string;
-  subscription_status: string;
-  plan_type: string;
-  start_date: string;
-  end_date: string;
-  is_trial: boolean;
-}
-
-export interface UserActivity {
-  id: string;
-  user_id: string;
-  email: string;
-  action: string;
-  details: string;
-  timestamp: string;
-}
-
-export interface AdminStats {
-  total_users: number;
-  active_subscriptions: number;
-  trial_users: number;
-  expired_subscriptions: number;
-  revenue_monthly: number;
-  revenue_yearly: number;
-}
+export const mockSubscriptionPlans: SubscriptionPlan[] = [
+  {
+    id: 'plan-uuid-1',
+    name: 'Free Tier',
+    description: 'Basic plan for new users',
+    price_monthly: 0,
+    price_yearly: 0,
+    features: ['Basic task management'],
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
