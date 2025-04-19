@@ -46,7 +46,7 @@ export default function Settings() {
     const checkForTestPayment = async () => {
       try {
         const testPaymentData = localStorage.getItem('taskpro_test_payment');
-        if (testPaymentData) {
+        if (testPaymentData && !paymentProcessed.current) {
           const { userId, planType, timestamp } = JSON.parse(testPaymentData);
           console.log("Found test payment data:", { userId, planType, timestamp });
           
@@ -56,7 +56,7 @@ export default function Settings() {
           // Make sure this is for the current user and not too old (5 minutes max)
           const isRecent = Date.now() - timestamp < 5 * 60 * 1000;
           
-          if (user && user.id === userId && isRecent && !paymentProcessed.current) {
+          if (user && user.id === userId && isRecent) {
             console.log("Processing test payment for plan:", planType);
             paymentProcessed.current = true;
             toast.loading("Processing your subscription...");
@@ -64,6 +64,9 @@ export default function Settings() {
             try {
               await processPaymentConfirmation(planType, updateSubscription);
               toast.success(`Subscription processed successfully!`);
+              
+              // Refresh subscription data after successful payment
+              await fetchSubscription();
             } catch (error) {
               console.error("Error processing test payment:", error);
               toast.error("Failed to process test payment. Please try again.");
@@ -83,7 +86,7 @@ export default function Settings() {
     if (user) {
       checkForTestPayment();
     }
-  }, [user, updateSubscription]);
+  }, [user, updateSubscription, fetchSubscription]);
 
   // Check for payment success in URL params when component mounts
   useEffect(() => {
@@ -109,6 +112,9 @@ export default function Settings() {
           
           await processPaymentConfirmation(planType, updateSubscription);
           console.log("Subscription updated successfully");
+          
+          // Refresh subscription data after successful payment
+          await fetchSubscription();
           
           toast.success(`Successfully subscribed to ${planType} plan!`);
         } catch (error) {
@@ -140,7 +146,7 @@ export default function Settings() {
       url.searchParams.delete('payment_cancelled');
       window.history.replaceState({}, document.title, url.toString());
     }
-  }, [location, updateSubscription, user, subscription]);
+  }, [location, updateSubscription, user, subscription, fetchSubscription]);
 
   // Reset the payment processed flag when the component unmounts
   useEffect(() => {

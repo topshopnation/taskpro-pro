@@ -170,6 +170,13 @@ export async function processPaymentConfirmation(
   }
   
   try {
+    console.log("Updating subscription with the following details:", {
+      status: "active",
+      planType: paymentType,
+      currentPeriodStart: currentDate.toISOString(),
+      currentPeriodEnd: periodEnd.toISOString()
+    });
+    
     await updateSubscription({
       status: "active",
       planType: paymentType,
@@ -177,7 +184,7 @@ export async function processPaymentConfirmation(
       currentPeriodEnd: periodEnd.toISOString()
     });
     
-    toast.success(`Successfully upgraded to ${paymentType} plan`);
+    console.log("Successfully updated subscription in database");
   } catch (error) {
     console.error("Error processing payment confirmation:", error);
     toast.error(`Failed to upgrade to ${paymentType} plan`);

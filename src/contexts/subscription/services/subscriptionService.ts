@@ -14,7 +14,7 @@ export const subscriptionService = {
       // First check if a subscription already exists for this user
       const { data: existingSubscription, error: checkError } = await supabase
         .from("subscriptions")
-        .select("id")
+        .select("id, status, plan_type, current_period_end")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -23,22 +23,31 @@ export const subscriptionService = {
         throw checkError;
       }
 
+      console.log("Existing subscription check result:", existingSubscription);
+      
       let updateResult;
       
       if (existingSubscription) {
         console.log("Updating existing subscription for user:", userId);
+        
+        // Create an update object with only the fields that have values
+        const updateData: Record<string, any> = {
+          updated_at: new Date().toISOString()
+        };
+        
+        if (status) updateData.status = status;
+        if (planType) updateData.plan_type = planType;
+        if (trialStartDate) updateData.trial_start_date = trialStartDate;
+        if (trialEndDate) updateData.trial_end_date = trialEndDate;
+        if (currentPeriodStart) updateData.current_period_start = currentPeriodStart;
+        if (currentPeriodEnd) updateData.current_period_end = currentPeriodEnd;
+        
+        console.log("Updating with data:", updateData);
+        
         // Update existing subscription
         updateResult = await supabase
           .from("subscriptions")
-          .update({
-            status,
-            plan_type: planType,
-            trial_start_date: trialStartDate,
-            trial_end_date: trialEndDate,
-            current_period_start: currentPeriodStart,
-            current_period_end: currentPeriodEnd,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq("user_id", userId)
           .select();
       } else {
@@ -48,12 +57,12 @@ export const subscriptionService = {
           .from("subscriptions")
           .insert({
             user_id: userId,
-            status,
-            plan_type: planType,
-            trial_start_date: trialStartDate,
-            trial_end_date: trialEndDate,
-            current_period_start: currentPeriodStart,
-            current_period_end: currentPeriodEnd,
+            status: status || 'active',
+            plan_type: planType || 'monthly',
+            trial_start_date: trialStartDate || null,
+            trial_end_date: trialEndDate || null,
+            current_period_start: currentPeriodStart || new Date().toISOString(),
+            current_period_end: currentPeriodEnd || null,
             updated_at: new Date().toISOString()
           })
           .select();

@@ -92,13 +92,17 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       console.log("Subscription updated successfully:", updatedSubscription);
       // Update immediately without artificial delays
       updateState(updatedSubscription);
+      
+      // Refresh the subscription data to ensure we have the latest
+      await fetchSubscription();
+      
       setLoading(false);
     } catch (error) {
       console.error("Error updating subscription:", error);
       setLoading(false);
       throw error;
     }
-  }, [user, updateState, setLoading]);
+  }, [user, updateState, setLoading, fetchSubscription]);
 
   // Setup realtime subscription updates
   useSubscriptionRealtime(user?.id, updateState);
