@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
-import { adminService } from "@/services/admin-service";
-import { SubscriptionPlan } from "@/types/adminTypes";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PlanSelectorProps {
   planType: "monthly" | "yearly";
@@ -13,37 +12,35 @@ interface PlanSelectorProps {
 }
 
 export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelectorProps) {
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [plan, setPlan] = useState<{
+    price_monthly: number;
+    price_yearly: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchPlan = async () => {
       try {
-        const availablePlans = await adminService.getSubscriptionPlans();
-        setPlans(availablePlans);
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('price_monthly, price_yearly')
+          .eq('is_active', true)
+          .single();
+        
+        if (error) throw error;
+        setPlan(data);
       } catch (error) {
-        console.error("Error fetching subscription plans:", error);
+        console.error("Error fetching subscription plan:", error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchPlans();
+    fetchPlan();
   }, []);
   
-  // Get pricing based on current plans
-  const getPriceByPlanType = (type: "monthly" | "yearly") => {
-    // If we have plans from the database, use those prices
-    if (plans.length > 0) {
-      const plan = plans[0]; // Just use the first plan for now
-      return type === "monthly" ? plan.price_monthly : plan.price_yearly;
-    }
-    
-    // Fallback to default pricing
-    return type === "monthly" ? 3.00 : 30.00;
-  };
-  
-  const yearlyDiscount = Math.round(((getPriceByPlanType("monthly") * 12) - getPriceByPlanType("yearly")) / (getPriceByPlanType("monthly") * 12) * 100);
+  const yearlyDiscount = plan ? 
+    Math.round(((plan.price_monthly * 12) - plan.price_yearly) / (plan.price_monthly * 12) * 100) : 0;
   
   if (loading) {
     return (
@@ -55,6 +52,10 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
         </CardContent>
       </Card>
     );
+  }
+  
+  if (!plan) {
+    return null;
   }
   
   return (
@@ -69,7 +70,7 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
                   <Label htmlFor="monthly" className="font-medium text-sm">Monthly</Label>
                 </div>
                 <div className="mt-1 flex items-baseline">
-                  <span className="text-2xl font-bold">${getPriceByPlanType("monthly").toFixed(2)}</span>
+                  <span className="text-2xl font-bold">${plan.price_monthly.toFixed(2)}</span>
                   <span className="ml-1 text-muted-foreground text-sm">/ month</span>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">Billed monthly. Cancel anytime.</div>
@@ -91,10 +92,12 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
                   <Label htmlFor="yearly" className="font-medium text-sm">Yearly</Label>
                 </div>
                 <div className="mt-1 flex items-baseline">
-                  <span className="text-2xl font-bold">${getPriceByPlanType("yearly").toFixed(2)}</span>
+                  <span className="text-2xl font-bold">${plan.price_yearly.toFixed(2)}</span>
                   <span className="ml-1 text-muted-foreground text-sm">/ year</span>
                 </div>
-                <div className="mt-1 text-xs text-muted-foreground">Billed annually. Only ${(getPriceByPlanType("yearly") / 12).toFixed(2)} per month.</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Billed annually. Only ${(plan.price_yearly / 12).toFixed(2)} per month.
+                </div>
               </div>
             </div>
           </div>
