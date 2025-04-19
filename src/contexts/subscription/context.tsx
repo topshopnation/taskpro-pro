@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useContext } from "react";
 import { Subscription, SubscriptionUpdate } from "./types";
 
 export interface SubscriptionContextType {
@@ -27,3 +27,12 @@ export const SubscriptionContext = React.createContext<SubscriptionContextType>(
     throw new Error("fetchSubscription not implemented");
   },
 });
+
+// Create and export the useSubscription hook
+export const useSubscription = () => {
+  const context = useContext(SubscriptionContext);
+  if (!context) {
+    throw new Error("useSubscription must be used within a SubscriptionProvider");
+  }
+  return context;
+};
