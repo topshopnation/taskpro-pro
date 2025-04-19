@@ -46,6 +46,7 @@ export interface UserProfile {
   role?: string;
   subscription_status?: string;
   plan_type?: string;
+  last_login?: string;
 }
 
 // Define user subscription interface

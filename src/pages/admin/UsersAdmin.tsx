@@ -41,18 +41,22 @@ export default function UsersAdmin() {
 
       // Match subscriptions to profiles
       const formattedUsers: UserProfile[] = profiles.map(profile => {
-        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {};
+        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {
+          status: 'none',
+          plan_type: 'none'
+        };
         
         return {
           id: profile.id,
           email: profile.email || '',
           first_name: profile.first_name || '',
           last_name: profile.last_name || '',
-          subscription_status: userSubscription.status || 'none',
-          plan_type: userSubscription.plan_type || 'none',
+          subscription_status: userSubscription.status,
+          plan_type: userSubscription.plan_type,
           role: profile.role || 'user',
           created_at: profile.created_at,
-          updated_at: profile.updated_at
+          updated_at: profile.updated_at,
+          last_login: profile.updated_at // Using updated_at as fallback for last_login
         };
       });
 

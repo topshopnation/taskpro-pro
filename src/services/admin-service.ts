@@ -66,12 +66,21 @@ export const adminService = {
   
   async createSubscriptionPlan(plan: Partial<SubscriptionPlan>) {
     try {
+      // Ensure required fields are present
+      if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
+        console.error('Missing required fields for subscription plan');
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('subscription_plans')
         .insert({
-          ...plan,
+          name: plan.name,
+          price_monthly: plan.price_monthly,
+          price_yearly: plan.price_yearly,
           description: plan.description || '',
-          features: Array.isArray(plan.features) ? plan.features : []
+          features: Array.isArray(plan.features) ? plan.features : [],
+          is_active: plan.is_active !== undefined ? plan.is_active : true
         })
         .select()
         .single();

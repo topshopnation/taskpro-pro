@@ -6,10 +6,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, UserCheck, UserCog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { UserProfile } from "@/types/adminTypes";
 
 interface UserTableProps {
-  users: any[];
-  onRoleChange: (user: any) => void;
+  users: UserProfile[];
+  onRoleChange: (user: UserProfile) => void;
 }
 
 export function UserTable({ users, onRoleChange }: UserTableProps) {
@@ -38,8 +39,17 @@ export function UserTable({ users, onRoleChange }: UserTableProps) {
     }
   };
 
-  const getUserInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  const getUserInitials = (firstName: string = '', lastName: string = '') => {
+    return `${firstName.charAt(0) || ''}${lastName.charAt(0) || ''}`.toUpperCase() || 'U';
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy HH:mm");
+    } catch (e) {
+      return 'Invalid Date';
+    }
   };
 
   return (
@@ -62,32 +72,34 @@ export function UserTable({ users, onRoleChange }: UserTableProps) {
                   <Avatar>
                     <AvatarImage src="" />
                     <AvatarFallback>
-                      {getUserInitials(user.firstName, user.lastName)}
+                      {getUserInitials(user.first_name, user.last_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium">{user.firstName} {user.lastName}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                    <div className="font-medium">{user.first_name || ''} {user.last_name || ''}</div>
+                    <div className="text-sm text-muted-foreground">{user.email || 'No email'}</div>
                   </div>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {getSubscriptionBadge(user.subscription_status)}
+                  {getSubscriptionBadge(user.subscription_status || 'none')}
                   <div className="text-xs text-muted-foreground mt-1">
-                    {user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)} plan
+                    {user.plan_type
+                      ? `${user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)} plan`
+                      : 'No plan'}
                   </div>
                 </div>
               </TableCell>
               <TableCell>
-                {getRoleBadge(user.role)}
+                {getRoleBadge(user.role || 'user')}
               </TableCell>
               <TableCell>
                 <div className="text-sm">
-                  {format(new Date(user.last_login), "MMM dd, yyyy HH:mm")}
+                  {formatDate(user.last_login)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Joined {format(new Date(user.created_at), "MMM yyyy")}
+                  Joined {formatDate(user.created_at)}
                 </div>
               </TableCell>
               <TableCell className="text-right">
