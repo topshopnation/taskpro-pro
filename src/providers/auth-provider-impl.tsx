@@ -8,12 +8,18 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      
-      // Force user state to null regardless of API success
+      // Clear user state first to prevent UI flicker with wrong data
       setUser(null);
       
-      // The navigation will be handled in the SignOutCard component
+      // Then perform the actual signout
+      await signOut();
+      
+      // Ensure user state is null regardless of API success
+      setUser(null);
+      
+      console.log("User signed out successfully, user state cleared");
+      
+      // Navigation will be handled in the SignOutCard component
     } catch (error) {
       console.error('Error in handleSignOut:', error);
       

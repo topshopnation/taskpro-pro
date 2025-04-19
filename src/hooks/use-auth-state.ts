@@ -17,7 +17,15 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        if (newSession?.user && isSubscribed) {
+        if (event === 'SIGNED_OUT') {
+          if (isSubscribed) {
+            // Make sure we fully clear user data on sign out
+            setUser(null);
+            setSession(null);
+            setIsLoading(false);
+            console.log("User signed out, all user data cleared");
+          }
+        } else if (newSession?.user && isSubscribed) {
           setSession(newSession);
           
           // Use setTimeout to avoid potential auth deadlocks

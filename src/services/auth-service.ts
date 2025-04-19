@@ -54,6 +54,9 @@ export const signInWithProvider = async (provider: Provider): Promise<void> => {
 
 export const signOut = async (): Promise<void> => {
   try {
+    // Clear all localStorage items related to Supabase auth
+    localStorage.removeItem('supabase.auth.token');
+    
     // Get the current session first to check if it exists
     const { data: sessionData } = await supabase.auth.getSession();
     
@@ -61,12 +64,13 @@ export const signOut = async (): Promise<void> => {
     if (!sessionData?.session) {
       console.log('No active session found, clearing local state only');
       // We'll handle this case gracefully - no need to throw an error
-      localStorage.removeItem('supabase.auth.token');
       return;
     }
     
     // Proceed with sign out if session exists
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({
+      scope: 'global' // Ensure we sign out completely
+    });
     
     if (error) {
       console.error('Error signing out:', error);

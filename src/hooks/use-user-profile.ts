@@ -12,6 +12,12 @@ export const useUserProfile = () => {
     avatarUrl?: string
   ) => {
     try {
+      // If userId is not provided, reset the user state
+      if (!userId) {
+        setUser(null);
+        return;
+      }
+      
       const profile = await fetchUserProfile(userId);
       const mappedUser = mapProfileToUser(userId, email, profile, avatarUrl);
       
@@ -24,11 +30,16 @@ export const useUserProfile = () => {
     } catch (error) {
       console.error("Failed to fetch profile:", error);
       // If profile fetch fails, set basic user with email as first name
-      setUser({
-        id: userId,
-        email: email,
-        firstName: email ? email.split('@')[0] : undefined
-      });
+      if (userId && email) {
+        setUser({
+          id: userId,
+          email: email,
+          firstName: email ? email.split('@')[0] : undefined
+        });
+      } else {
+        // If we don't have minimal user data, reset the user state
+        setUser(null);
+      }
     }
   }, []);
 

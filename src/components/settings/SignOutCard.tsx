@@ -17,18 +17,17 @@ export default function SignOutCard() {
       setIsLoggingOut(true);
       await signOut();
       
-      // Force a clean navigation to auth regardless of success or failure
+      // Force a clean navigation to auth page
       localStorage.removeItem('supabase.auth.token');
-      navigate('/auth', { replace: true });
+      window.location.href = '/auth'; // Use window.location for a complete page reload
     } catch (error: any) {
       console.error("Sign out error:", error);
       
       // Even if there's an error, we want to attempt to navigate to auth
-      // This ensures users can get back to the login screen
       toast.error("Error signing out", { 
         description: "Redirecting to login page" 
       });
-      navigate('/auth', { replace: true });
+      window.location.href = '/auth';
     } finally {
       setIsLoggingOut(false);
     }
