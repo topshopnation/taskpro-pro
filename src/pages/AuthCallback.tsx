@@ -8,9 +8,14 @@ import { toast } from "sonner";
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
+    if (redirecting) return; // Prevent multiple runs
+    
     console.log("AuthCallback: Processing OAuth callback");
+    setRedirecting(true);
+    
     // Process the OAuth callback
     const processCallback = async () => {
       try {
@@ -22,7 +27,7 @@ export default function AuthCallback() {
         console.log("Hash params:", Object.fromEntries(hashParams.entries()));
         console.log("Query params:", Object.fromEntries(queryParams.entries()));
         
-        // The core issue: we need to handle the session that's already being set by Supabase's auto-handling
+        // Check for existing session
         const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -38,7 +43,7 @@ export default function AuthCallback() {
           return;
         }
         
-        // If we don't have a session yet, we need to handle error cases
+        // If we don't have a session yet, check for error cases
         const error = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
         
@@ -75,7 +80,7 @@ export default function AuthCallback() {
     };
 
     processCallback();
-  }, [navigate]);
+  }, [navigate, redirecting]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">

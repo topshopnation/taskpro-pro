@@ -8,12 +8,15 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
   const location = useLocation();
 
   useEffect(() => {
-    // Only run this effect if we're in a browser environment with access to React Router
+    // Skip if still loading or no navigation available
     if (typeof window === 'undefined' || !navigate || loading) return;
 
-    // Check if we're already on the auth page or callback page
-    const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
-    const isHomePage = location.pathname === '/';
+    // Store the current path to avoid unnecessary redirects
+    const currentPath = location.pathname;
+    
+    // Check if we're on authentication pages
+    const isAuthPage = currentPath === '/auth' || currentPath.startsWith('/auth/');
+    const isHomePage = currentPath === '/';
     
     // Special case for payment returns
     const isPaymentReturn = location.search.includes('payment_success') || 
@@ -21,22 +24,23 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     
     // If it's a payment return, always go to settings regardless of current page
     if (user && isPaymentReturn) {
-      navigate('/settings');
+      console.log("Payment return detected, redirecting to settings");
+      navigate('/settings', { replace: true });
       return;
     }
     
     // Redirect authenticated users from auth/home to today page
     if (user && (isAuthPage || isHomePage)) {
-      console.log("User authenticated, redirecting to today page from auth/home page");
-      navigate('/today');
-      return; // Add return to prevent further processing
+      console.log("User authenticated, redirecting to today page from:", currentPath);
+      navigate('/today', { replace: true });
+      return;
     }
     
-    // Redirect unauthenticated users to home page, except from auth pages
+    // Redirect unauthenticated users from protected pages to home page
     if (!user && !isAuthPage && !isHomePage) {
-      console.log("No user, redirecting to / from protected page");
-      navigate('/');
-      return; // Add return to prevent further processing
+      console.log("No user, redirecting to / from protected page:", currentPath);
+      navigate('/', { replace: true });
+      return;
     }
   }, [user, loading, location.pathname, location.search, navigate]);
 }

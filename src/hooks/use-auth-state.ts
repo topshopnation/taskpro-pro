@@ -10,40 +10,32 @@ export const useAuthState = () => {
   const { user, setUser, updateUserFromSession } = useUserProfile();
 
   useEffect(() => {
+    let isSubscribed = true;
+    
     // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        if (newSession?.user) {
+        if (newSession?.user && isSubscribed) {
           setSession(newSession);
           
           // Use setTimeout to avoid potential auth deadlocks
           setTimeout(async () => {
-            await updateUserFromSession(
-              newSession.user.id,
-              newSession.user.email,
-              newSession.user.user_metadata?.avatar_url
-            );
-            
-            // Only redirect on SIGNED_IN event
-            if (event === 'SIGNED_IN') {
-              // Use window.location for more reliable navigation
-              window.location.href = '/today';
+            if (isSubscribed) {
+              await updateUserFromSession(
+                newSession.user.id,
+                newSession.user.email,
+                newSession.user.user_metadata?.avatar_url
+              );
+              
+              // Don't redirect here - let the router handle redirects
+              setIsLoading(false);
             }
-            
-            // Ensure loading state is updated
-            setIsLoading(false);
           }, 0);
-        } else {
+        } else if (isSubscribed) {
           setUser(null);
           setSession(null);
-          
-          if (event === 'SIGNED_OUT') {
-            // Use window.location for more reliable navigation
-            window.location.href = '/auth';
-          }
-          
           setIsLoading(false);
         }
       }
@@ -56,11 +48,11 @@ export const useAuthState = () => {
         
         if (error) {
           console.error("Error getting session:", error);
-          setIsLoading(false);
+          if (isSubscribed) setIsLoading(false);
           return;
         }
 
-        if (data?.session) {
+        if (data?.session && isSubscribed) {
           setSession(data.session);
           await updateUserFromSession(
             data.session.user.id,
@@ -69,16 +61,17 @@ export const useAuthState = () => {
           );
         }
         
-        setIsLoading(false);
+        if (isSubscribed) setIsLoading(false);
       } catch (error) {
         console.error("Error initializing auth:", error);
-        setIsLoading(false);
+        if (isSubscribed) setIsLoading(false);
       }
     };
 
     initializeAuth();
 
     return () => {
+      isSubscribed = false;
       subscription.unsubscribe();
     };
   }, [setUser, updateUserFromSession]);

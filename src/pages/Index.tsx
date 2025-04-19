@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Zap } from "lucide-react";
@@ -7,17 +7,22 @@ import { useAuth } from "@/hooks/use-auth";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   // Handle redirect if user is already logged in
   useEffect(() => {
-    if (!loading && user) {
-      console.log("Index: User already authenticated, redirecting to today");
-      navigate("/today", { replace: true });
+    if (!loading) {
+      setInitialLoadComplete(true);
+      
+      if (user) {
+        console.log("Index: User authenticated, redirecting to today");
+        navigate("/today", { replace: true });
+      }
     }
   }, [user, loading, navigate]);
 
-  // Only render the landing page if not authenticated or still loading
-  if (loading) {
+  // Show loading state until initial check is complete
+  if (loading || (user && !initialLoadComplete)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>

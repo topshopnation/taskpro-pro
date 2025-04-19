@@ -3,6 +3,7 @@ import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -11,6 +12,12 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    // Reset redirecting state when location changes
+    setIsRedirecting(false);
+  }, [location.pathname]);
 
   // Show a loading state while checking authentication
   if (loading) {
@@ -34,8 +41,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Redirect to auth page if user is not authenticated
-  if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to /auth");
+  if (!user && !isRedirecting) {
+    console.log("ProtectedRoute: No user, redirecting to /auth from", location.pathname);
+    setIsRedirecting(true);
     // Save the current location to redirect back after login
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
