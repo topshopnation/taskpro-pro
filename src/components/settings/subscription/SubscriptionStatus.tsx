@@ -4,6 +4,7 @@ import { BadgeCheck, Clock, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubscriptionStatusProps } from "@/types/subscriptionTypes";
+import { format } from "date-fns";
 
 export function SubscriptionStatus({ 
   subscription, 
@@ -68,12 +69,17 @@ export function SubscriptionStatus({
       <div>
         <h4 className="text-xs font-medium">Current Plan</h4>
         <p className="text-xs text-muted-foreground">{planName}</p>
-        {formattedExpiryDate && (
+        {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && (
           <p className="text-xs text-muted-foreground mt-0.5">
             {subscription?.status === 'active' 
               ? `License expires on ${formattedExpiryDate}`
               : subscription?.status === 'expired'
-                ? `License expired on ${formattedExpiryDate}`
+                ? `License expired on ${
+                    formattedExpiryDate || 
+                    (subscription?.current_period_end 
+                      ? format(new Date(subscription.current_period_end), "MMM d, yyyy") 
+                      : 'Unknown Date')
+                  }`
                 : isTrialActive
                   ? `Trial ends on ${formattedExpiryDate}`
                   : `Expired on ${formattedExpiryDate}`
