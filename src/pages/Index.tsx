@@ -3,11 +3,53 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [subscriptionPrices, setSubscriptionPrices] = useState({
+    monthly: 0,
+    yearly: 0,
+    yearlyDiscount: 0
+  });
+  const [pricesLoading, setPricesLoading] = useState(true);
+  
+  // Fetch subscription prices from database
+  useEffect(() => {
+    async function fetchSubscriptionPrices() {
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('price_monthly, price_yearly')
+          .eq('is_active', true)
+          .single();
+
+        if (error) {
+          console.error('Error fetching subscription prices:', error);
+          return;
+        }
+
+        if (data) {
+          console.log("Fetched subscription prices for home page:", data);
+          const yearlyDiscount = Math.round(((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100);
+          
+          setSubscriptionPrices({
+            monthly: data.price_monthly,
+            yearly: data.price_yearly,
+            yearlyDiscount
+          });
+        }
+      } catch (error) {
+        console.error('Error in subscription price fetch:', error);
+      } finally {
+        setPricesLoading(false);
+      }
+    }
+
+    fetchSubscriptionPrices();
+  }, []);
   
   // Handle redirect if user is already logged in
   useEffect(() => {
@@ -251,7 +293,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing - Simple version */}
+      {/* Pricing - Updated with real data from database */}
       <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -265,11 +307,24 @@ const Index = () => {
             <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-lg overflow-hidden border-2 border-primary">
               <div className="p-8 text-center">
                 <h3 className="text-2xl font-bold mb-4">Pro Plan</h3>
-                <div className="flex items-center justify-center">
-                  <span className="text-5xl font-bold">$3</span>
-                  <span className="text-xl ml-1 text-gray-600 dark:text-gray-400">/month</span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">Billed monthly or $30 annually</p>
+                {pricesLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center">
+                      <span className="text-5xl font-bold">${subscriptionPrices.monthly}</span>
+                      <span className="text-xl ml-1 text-gray-600 dark:text-gray-400">/month</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">
+                      Billed monthly or ${subscriptionPrices.yearly} annually
+                      {subscriptionPrices.yearlyDiscount > 0 && (
+                        <span className="ml-1">(save {subscriptionPrices.yearlyDiscount}%)</span>
+                      )}
+                    </p>
+                  </>
+                )}
               </div>
               <div className="p-8 bg-gray-50 dark:bg-gray-900">
                 <ul className="space-y-4">
