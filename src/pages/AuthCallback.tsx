@@ -31,10 +31,10 @@ export default function AuthCallback() {
         }
         
         if (data?.session) {
-          console.log("Session exists after OAuth flow, navigating to dashboard");
-          // Success - redirect to dashboard
+          console.log("Session exists after OAuth flow, navigating to today");
+          // Success - redirect to today
           toast.success("Successfully signed in!");
-          navigate("/dashboard", { replace: true });
+          navigate("/today", { replace: true });
           return;
         }
         
@@ -57,9 +57,9 @@ export default function AuthCallback() {
         setTimeout(async () => {
           const { data: delayedData } = await supabase.auth.getSession();
           if (delayedData?.session) {
-            console.log("Session established after delay, navigating to dashboard");
+            console.log("Session established after delay, navigating to today");
             toast.success("Successfully signed in!");
-            navigate("/dashboard", { replace: true });
+            navigate("/today", { replace: true });
           } else {
             console.log("No session established after delay, redirecting to auth");
             toast.error("Authentication failed. Please try again.");

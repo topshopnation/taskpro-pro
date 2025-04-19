@@ -29,17 +29,14 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
     if (user && (isAuthPage || isHomePage)) {
       console.log("User authenticated, redirecting to today page from auth/home page");
       navigate('/today');
-    }
-    
-    // Redirect dashboard to today
-    if (user && location.pathname === '/dashboard') {
-      navigate('/today');
+      return; // Add return to prevent further processing
     }
     
     // Redirect unauthenticated users to home page, except from auth pages
     if (!user && !isAuthPage && !isHomePage) {
       console.log("No user, redirecting to / from protected page");
       navigate('/');
+      return; // Add return to prevent further processing
     }
   }, [user, loading, location.pathname, location.search, navigate]);
 }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, Clock, Filter, FolderKanban, Star, Zap } from "lucide-react";
@@ -5,8 +6,31 @@ import { useAuth } from "@/hooks/use-auth";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  
+  // Handle redirect if user is already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      console.log("Index: User already authenticated, redirecting to today");
+      navigate("/today", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
+  // Only render the landing page if not authenticated or still loading
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Don't render anything if user is logged in (will redirect)
+  if (user) {
+    return null;
+  }
+
+  // Rest of the features array
   const features = [
     {
       icon: <FolderKanban className="h-10 w-10 text-primary" />,

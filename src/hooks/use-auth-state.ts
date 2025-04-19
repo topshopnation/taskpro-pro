@@ -25,12 +25,16 @@ export const useAuthState = () => {
               newSession.user.email,
               newSession.user.user_metadata?.avatar_url
             );
+            
+            // Only redirect on SIGNED_IN event
+            if (event === 'SIGNED_IN') {
+              // Use window.location for more reliable navigation
+              window.location.href = '/today';
+            }
+            
+            // Ensure loading state is updated
+            setIsLoading(false);
           }, 0);
-          
-          if (event === 'SIGNED_IN') {
-            // Use window.location for more reliable navigation
-            window.location.href = '/today';
-          }
         } else {
           setUser(null);
           setSession(null);
@@ -39,9 +43,9 @@ export const useAuthState = () => {
             // Use window.location for more reliable navigation
             window.location.href = '/auth';
           }
+          
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
