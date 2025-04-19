@@ -1,4 +1,3 @@
-
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,49 +5,70 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ArrowUpRight, Users, CreditCard, Activity, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-
-// Mock data for dashboard
-const mockRevenueData = [
-  { month: 'Jan', revenue: 3500 },
-  { month: 'Feb', revenue: 4200 },
-  { month: 'Mar', revenue: 3800 },
-  { month: 'Apr', revenue: 4000 },
-  { month: 'May', revenue: 4800 },
-  { month: 'Jun', revenue: 5300 },
-];
-
-const mockUserData = [
-  { month: 'Jan', users: 120 },
-  { month: 'Feb', users: 150 },
-  { month: 'Mar', users: 200 },
-  { month: 'Apr', users: 320 },
-  { month: 'May', users: 350 },
-  { month: 'Jun', users: 410 },
-];
-
-// Mock admin stats
-const mockAdminStats = {
-  total_users: 413,
-  active_subscriptions: 287,
-  trial_users: 95,
-  expired_subscriptions: 31,
-  revenue_monthly: 940,
-  revenue_yearly: 8600,
-};
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(mockAdminStats);
-  const [revenueData, setRevenueData] = useState(mockRevenueData);
-  const [userData, setUserData] = useState(mockUserData);
+  const [stats, setStats] = useState({
+    total_users: 0,
+    active_subscriptions: 0,
+    trial_users: 0,
+    expired_subscriptions: 0,
+    revenue_monthly: 0,
+    revenue_yearly: 0
+  });
+  const [revenueData, setRevenueData] = useState([]);
+  const [userData, setUserData] = useState([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch users count
+        const { count: usersCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact' });
+
+        // Fetch subscriptions stats
+        const { data: subscriptions } = await supabase
+          .from('subscriptions')
+          .select('*');
+
+        const activeSubscriptions = subscriptions?.filter(s => s.status === 'active').length || 0;
+        const trialUsers = subscriptions?.filter(s => s.status === 'trial').length || 0;
+        const expiredSubscriptions = subscriptions?.filter(s => s.status === 'expired').length || 0;
+
+        // Calculate revenue
+        const monthlyRevenue = subscriptions
+          ?.filter(s => s.status === 'active' && s.plan_type === 'monthly')
+          .length * 2; // $2 per monthly subscription
+
+        const yearlyRevenue = subscriptions
+          ?.filter(s => s.status === 'active' && s.plan_type === 'yearly')
+          .length * 20; // $20 per yearly subscription
+
+        setStats({
+          total_users: usersCount || 0,
+          active_subscriptions: activeSubscriptions,
+          trial_users: trialUsers,
+          expired_subscriptions: expiredSubscriptions,
+          revenue_monthly: monthlyRevenue,
+          revenue_yearly: yearlyRevenue
+        });
+
+        // Fetch historical data for charts
+        // This would require additional database columns for historical data
+        // For now, we'll use the current month's data
+        
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
   
   return (

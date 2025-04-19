@@ -9,78 +9,57 @@ import { UserSearch } from "@/components/admin/users/UserSearch";
 import { UserTable } from "@/components/admin/users/UserTable";
 import { UserRoleDialog } from "@/components/admin/users/UserRoleDialog";
 import { UserPagination } from "@/components/admin/users/UserPagination";
-
-const sampleUsers = [
-  {
-    id: "user123",
-    email: "johndoe@example.com",
-    firstName: "John",
-    lastName: "Doe",
-    role: "user",
-    subscription_status: "active",
-    plan_type: "monthly",
-    last_login: new Date().toISOString(),
-    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: "user456",
-    email: "janedoe@example.com",
-    firstName: "Jane",
-    lastName: "Doe",
-    role: "user",
-    subscription_status: "trial",
-    plan_type: "monthly",
-    last_login: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: "user789",
-    email: "admin@example.com",
-    firstName: "Admin",
-    lastName: "User",
-    role: "admin",
-    subscription_status: "active",
-    plan_type: "yearly",
-    last_login: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: "user101",
-    email: "support@example.com",
-    firstName: "Support",
-    lastName: "Team",
-    role: "support",
-    subscription_status: "active",
-    plan_type: "yearly",
-    last_login: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString()
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export default function UsersAdmin() {
-  const [users, setUsers] = useState(sampleUsers);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [newRole, setNewRole] = useState<AdminRole>("admin");
   const itemsPerPage = 10;
   
-  useEffect(() => {
-    const fetchUsers = async () => {
+  const fetchUsers = async () => {
+    try {
       setLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setUsers(sampleUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          subscriptions:subscriptions(
+            status,
+            plan_type,
+            last_login
+          )
+        `);
+
+      if (profilesError) throw profilesError;
+
+      const formattedUsers = profiles.map(profile => ({
+        id: profile.id,
+        email: profile.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        subscription_status: profile.subscriptions?.[0]?.status || 'none',
+        plan_type: profile.subscriptions?.[0]?.plan_type || 'none',
+        last_login: profile.updated_at,
+        created_at: profile.created_at,
+        role: profile.role || 'user'
+      }));
+
+      setUsers(formattedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchUsers();
   }, []);
   

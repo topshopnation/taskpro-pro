@@ -1,7 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionPlan, AdminRole, AdminUser, mockAdminUsers, mockSubscriptionPlans } from "@/types/adminTypes";
-import { toast } from "sonner";
+import { AdminRole, AdminUser } from "@/types/adminTypes";
 
 export const adminService = {
   // Admin users
@@ -44,76 +42,87 @@ export const adminService = {
     }
   },
   
-  // Subscription plans - mock implementation for now
-  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+  async getSubscriptionPlans() {
     try {
-      return mockSubscriptionPlans;
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
       return [];
     }
   },
   
-  async createSubscriptionPlan(plan: Partial<SubscriptionPlan>): Promise<SubscriptionPlan | null> {
+  async createSubscriptionPlan(plan: any) {
     try {
-      const newPlan: SubscriptionPlan = {
-        id: crypto.randomUUID(),
-        name: plan.name || "",
-        description: plan.description || "",
-        price_monthly: plan.price_monthly || 0,
-        price_yearly: plan.price_yearly || 0,
-        features: plan.features || [],
-        is_active: plan.is_active !== undefined ? plan.is_active : true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      return newPlan;
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .insert(plan)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Error creating subscription plan:', error);
       return null;
     }
   },
   
-  async updateSubscriptionPlan(id: string, plan: Partial<SubscriptionPlan>): Promise<boolean> {
+  async updateSubscriptionPlan(id: string, plan: any) {
     try {
-      console.log('Updating subscription plan:', {id, ...plan});
-      return true;
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update(plan)
+        .eq('id', id);
+        
+      return !error;
     } catch (error) {
       console.error('Error updating subscription plan:', error);
       return false;
     }
   },
   
-  async deleteSubscriptionPlan(id: string): Promise<boolean> {
+  async deleteSubscriptionPlan(id: string) {
     try {
-      console.log('Deleting subscription plan:', id);
-      return true;
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
+        
+      return !error;
     } catch (error) {
       console.error('Error deleting subscription plan:', error);
       return false;
     }
   },
   
-  // User management functions
-  async getUserSubscriptions(): Promise<any[]> {
+  async getUserSubscriptions() {
     try {
       const { data, error } = await supabase
         .from('subscriptions')
-        .select('*');
+        .select(`
+          *,
+          profiles:user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `);
       
-      if (error) {
-        throw error;
-      }
-      
-      return data || [];
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Error fetching user subscriptions:', error);
       return [];
     }
   },
   
-  async updateUserSubscription(userId: string, status: string, planType: string): Promise<boolean> {
+  async updateUserSubscription(userId: string, status: string, planType: string) {
     try {
       const { error } = await supabase
         .from('subscriptions')
@@ -124,11 +133,7 @@ export const adminService = {
         })
         .eq('user_id', userId);
       
-      if (error) {
-        throw error;
-      }
-      
-      return true;
+      return !error;
     } catch (error) {
       console.error('Error updating user subscription:', error);
       return false;
@@ -137,29 +142,21 @@ export const adminService = {
   
   async loginAdmin(email: string, password: string): Promise<boolean> {
     try {
-      // Use the Supabase RPC to verify admin credentials
       const { data, error } = await supabase.rpc('verify_admin_credentials', {
         input_email: email,
         input_password: password
       });
 
-      if (error) {
-        toast.error('Authentication failed');
-        return false;
-      }
-
-      if (!data) {
+      if (error || !data) {
         toast.error('Invalid admin credentials');
         return false;
       }
 
-      // Update last login timestamp
       await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
         .eq('email', email);
 
-      toast.success('Admin login successful');
       return true;
     } catch (error) {
       console.error('Admin login error:', error);

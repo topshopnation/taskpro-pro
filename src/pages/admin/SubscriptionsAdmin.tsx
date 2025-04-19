@@ -12,6 +12,7 @@ import { Loader2, PlusCircle, Search, RefreshCw } from "lucide-react";
 import { SubscriptionPlanDialogContent } from "@/components/admin/subscriptions/SubscriptionPlanDialog";
 import { DeletePlanDialog } from "@/components/admin/subscriptions/DeletePlanDialog";
 import { SubscriptionPlansTable } from "@/components/admin/subscriptions/SubscriptionPlansTable";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SubscriptionsAdmin() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -34,7 +35,12 @@ export default function SubscriptionsAdmin() {
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const subscriptionPlans = await adminService.getSubscriptionPlans();
+        const { data: subscriptionPlans, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
         setPlans(subscriptionPlans);
       } catch (error) {
         console.error("Error fetching subscription plans:", error);

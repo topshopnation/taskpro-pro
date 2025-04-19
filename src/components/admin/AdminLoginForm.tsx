@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +68,6 @@ export function AdminLoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
-              placeholder="admin@taskpro.pro"
             />
           </div>
           <div className="space-y-2">
@@ -82,7 +80,6 @@ export function AdminLoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                placeholder="Enter your password"
               />
               <button 
                 type="button"
@@ -92,9 +89,6 @@ export function AdminLoginForm() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Demo credentials: admin@taskpro.pro / admin123
-            </p>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Logging in..." : "Login to Admin"}
