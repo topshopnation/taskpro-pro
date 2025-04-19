@@ -18,6 +18,7 @@ import { processPaymentConfirmation, createTrialSubscription } from "@/component
 export default function Settings() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,17 +60,28 @@ export default function Settings() {
           if (user && user.id === userId && isRecent) {
             console.log("Processing test payment for plan:", planType);
             paymentProcessed.current = true;
-            toast.loading("Processing your subscription...");
+            setIsProcessingPayment(true);
+            
+            // Show loading toast
+            const loadingToast = toast.loading("Processing your subscription...");
             
             try {
               await processPaymentConfirmation(planType, updateSubscription);
+              
+              // Clear loading toast and show success
+              toast.dismiss(loadingToast);
               toast.success(`Subscription processed successfully!`);
               
               // Refresh subscription data after successful payment
               await fetchSubscription();
             } catch (error) {
               console.error("Error processing test payment:", error);
+              
+              // Clear loading toast and show error
+              toast.dismiss(loadingToast);
               toast.error("Failed to process test payment. Please try again.");
+            } finally {
+              setIsProcessingPayment(false);
             }
           } else if (!isRecent) {
             console.log("Test payment data is too old, ignoring");
@@ -80,13 +92,14 @@ export default function Settings() {
       } catch (error) {
         console.error("Error processing test payment data:", error);
         toast.error("Failed to process test payment. Please try again.");
+        setIsProcessingPayment(false);
       }
     };
     
-    if (user) {
+    if (user && !isProcessingPayment) {
       checkForTestPayment();
     }
-  }, [user, updateSubscription, fetchSubscription]);
+  }, [user, updateSubscription, fetchSubscription, isProcessingPayment]);
 
   // Check for payment success in URL params when component mounts
   useEffect(() => {
@@ -96,7 +109,7 @@ export default function Settings() {
     const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
     
     // Process successful payment
-    if (paymentSuccess === 'true' && planType && !paymentProcessed.current) {
+    if (paymentSuccess === 'true' && planType && !paymentProcessed.current && !isProcessingPayment) {
       console.log("Processing payment success from URL. Plan type:", planType);
       console.log("Current user:", user ? user.id : 'Not logged in');
       console.log("Current subscription status:", subscription ? subscription.status : 'None');
@@ -106,8 +119,11 @@ export default function Settings() {
         try {
           // Set the flag to prevent duplicate processing
           paymentProcessed.current = true;
+          setIsProcessingPayment(true);
           
-          toast.loading("Processing your subscription...");
+          // Show loading toast
+          const loadingToast = toast.loading("Processing your subscription...");
+          
           console.log("Starting payment processing for plan:", planType);
           
           await processPaymentConfirmation(planType, updateSubscription);
@@ -116,11 +132,15 @@ export default function Settings() {
           // Refresh subscription data after successful payment
           await fetchSubscription();
           
+          // Clear loading toast and show success
+          toast.dismiss(loadingToast);
           toast.success(`Successfully subscribed to ${planType} plan!`);
         } catch (error) {
           console.error("Error processing payment:", error);
           toast.error("Failed to process payment. Please try again or contact support.");
         } finally {
+          setIsProcessingPayment(false);
+          
           // Clean up URL parameters
           const url = new URL(window.location.href);
           url.searchParams.delete('payment_success');
@@ -146,7 +166,7 @@ export default function Settings() {
       url.searchParams.delete('payment_cancelled');
       window.history.replaceState({}, document.title, url.toString());
     }
-  }, [location, updateSubscription, user, subscription, fetchSubscription]);
+  }, [location, updateSubscription, user, subscription, fetchSubscription, isProcessingPayment]);
 
   // Reset the payment processed flag when the component unmounts
   useEffect(() => {

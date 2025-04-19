@@ -156,20 +156,30 @@ export async function createPaymentUrl(
   return paymentUrl;
 }
 
+let isProcessingPayment = false;
+
 export async function processPaymentConfirmation(
   paymentType: 'monthly' | 'yearly',
   updateSubscription: (update: SubscriptionUpdate) => Promise<void>
 ): Promise<void> {
-  const currentDate = new Date();
-  const periodEnd = new Date(currentDate);
-  
-  if (paymentType === "monthly") {
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-  } else {
-    periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+  // Prevent multiple simultaneous processing attempts
+  if (isProcessingPayment) {
+    console.log("Payment processing already in progress, skipping duplicate attempt");
+    return;
   }
   
   try {
+    isProcessingPayment = true;
+    
+    const currentDate = new Date();
+    const periodEnd = new Date(currentDate);
+    
+    if (paymentType === "monthly") {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    } else {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    }
+    
     console.log("Updating subscription with the following details:", {
       status: "active",
       planType: paymentType,
@@ -187,7 +197,9 @@ export async function processPaymentConfirmation(
     console.log("Successfully updated subscription in database");
   } catch (error) {
     console.error("Error processing payment confirmation:", error);
-    toast.error(`Failed to upgrade to ${paymentType} plan`);
-    throw error;
+    throw error; // Rethrow to be handled by the caller
+  } finally {
+    // Always reset the processing flag
+    isProcessingPayment = false;
   }
 }

@@ -20,7 +20,7 @@ export const subscriptionService = {
 
       if (checkError) {
         console.error("Error checking existing subscription:", checkError);
-        throw checkError;
+        throw new Error(`Failed to check existing subscription: ${checkError.message}`);
       }
 
       console.log("Existing subscription check result:", existingSubscription);
@@ -70,15 +70,19 @@ export const subscriptionService = {
 
       if (updateResult.error) {
         console.error("Error updating subscription:", updateResult.error);
-        throw updateResult.error;
+        throw new Error(`Failed to update subscription: ${updateResult.error.message}`);
+      }
+      
+      if (!updateResult.data || updateResult.data.length === 0) {
+        throw new Error("No subscription data returned after update");
       }
       
       console.log("Subscription updated successfully:", updateResult.data[0]);
       return updateResult.data[0] as Subscription;
     } catch (error) {
       console.error("Error updating subscription:", error);
-      toast.error("Failed to update subscription. Please try again.");
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      throw new Error(`Subscription update failed: ${errorMessage}`);
     }
   },
 
@@ -97,15 +101,15 @@ export const subscriptionService = {
           return null;
         }
         console.error("Error fetching subscription:", error);
-        throw error;
+        throw new Error(`Failed to fetch subscription: ${error.message}`);
       }
 
       console.log("Subscription fetched successfully:", data);
       return data as Subscription;
     } catch (error) {
       console.error("Error fetching subscription:", error);
-      toast.error("Failed to load subscription data");
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      throw new Error(`Subscription fetch failed: ${errorMessage}`);
     }
   }
 };
