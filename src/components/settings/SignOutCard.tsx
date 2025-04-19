@@ -13,23 +13,28 @@ export default function SignOutCard() {
   const handleSignOut = async () => {
     try {
       setIsLoggingOut(true);
-      await signOut();
+      toast.loading("Signing out...");
       
-      // Perform a thorough cleanup
+      // Clear storage first to prevent state persistence issues
       localStorage.clear();
       sessionStorage.clear();
       
-      // Clear any Supabase cookies that might exist
+      // Clear cookies
       document.cookie.split(';').forEach(cookie => {
         const [name] = cookie.trim().split('=');
-        if (name.includes('sb-') || name.includes('supabase')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-        }
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
       });
       
-      // Force a complete page reload and redirect to auth page after a short delay
-      // to ensure all state is cleared properly
+      // Call the actual sign out function
+      await signOut();
+      
+      // Display success toast
+      toast.success("Successfully signed out");
+      
+      // Force reload and redirect after a short delay
+      // This ensures all React state is completely reset
       setTimeout(() => {
+        console.log("Forcing complete page reload and redirect to auth page");
         window.location.href = '/auth';
       }, 100);
       
@@ -42,6 +47,8 @@ export default function SignOutCard() {
       // Force cleanup and redirect regardless of error
       localStorage.clear();
       sessionStorage.clear();
+      
+      // Force reload the page to clear React state
       window.location.href = '/auth';
     } finally {
       setIsLoggingOut(false);

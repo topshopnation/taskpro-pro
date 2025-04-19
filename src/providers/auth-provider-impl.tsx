@@ -14,8 +14,15 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       // Then perform the actual signout
       await signOut();
       
-      // Ensure user state is null regardless of API success
-      setUser(null);
+      // Force a complete clearing of all storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear Supabase cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.trim().split('=');
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+      });
       
       console.log("User signed out successfully, user state cleared");
       
@@ -25,6 +32,10 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       
       // Even if the API call fails, clear the user state
       setUser(null);
+      
+      // Force storage clearing
+      localStorage.clear();
+      sessionStorage.clear();
       
       // We'll rethrow so component-level error handling can navigate
       throw error;

@@ -7,14 +7,19 @@ import { useUserProfile } from "./use-user-profile";
 export const useAuthState = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setIsLoading] = useState(true);
-  const { user, setUser, updateUserFromSession } = useUserProfile();
+  const { user, setUser, resetUser, updateUserFromSession } = useUserProfile();
 
   useEffect(() => {
     let isSubscribed = true;
     
+    // Define a thorough cleanup function that can be called at multiple points
     const clearAllUserData = () => {
-      // Thorough cleanup of all user data
-      setUser(null);
+      if (!isSubscribed) return;
+      
+      console.log("Thoroughly clearing all user data in auth state");
+      
+      // Reset all state
+      resetUser();
       setSession(null);
       setIsLoading(false);
       
@@ -26,7 +31,7 @@ export const useAuthState = () => {
       document.cookie.split(';').forEach(cookie => {
         const [name] = cookie.trim().split('=');
         if (name.includes('sb-') || name.includes('supabase')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
         }
       });
     };
@@ -36,10 +41,10 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        if (event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
           if (isSubscribed) {
             // Make sure we fully clear user data on sign out
-            console.log("SIGNED_OUT event detected, clearing all user data");
+            console.log(`${event} event detected, clearing all user data`);
             clearAllUserData();
           }
         } else if (newSession?.user && isSubscribed) {
@@ -69,6 +74,7 @@ export const useAuthState = () => {
     // Then check for an existing session
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth state...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -80,6 +86,7 @@ export const useAuthState = () => {
         }
 
         if (data?.session && isSubscribed) {
+          console.log("Found existing session, updating user data");
           setSession(data.session);
           await updateUserFromSession(
             data.session.user.id,
@@ -88,6 +95,7 @@ export const useAuthState = () => {
           );
         } else if (isSubscribed) {
           // No active session, make sure user data is cleared
+          console.log("No existing session found, clearing user data");
           clearAllUserData();
         }
         
@@ -106,7 +114,7 @@ export const useAuthState = () => {
       isSubscribed = false;
       subscription.unsubscribe();
     };
-  }, [setUser, updateUserFromSession]);
+  }, [resetUser, setUser, updateUserFromSession]);
 
   return { user, setUser, session, loading };
 };

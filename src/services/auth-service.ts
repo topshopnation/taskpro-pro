@@ -54,31 +54,22 @@ export const signInWithProvider = async (provider: Provider): Promise<void> => {
 
 export const signOut = async (): Promise<void> => {
   try {
-    console.log('Starting sign out process...');
+    console.log('Starting sign out process with force clear...');
     
-    // Get the current session first to check if it exists
-    const { data: sessionData } = await supabase.auth.getSession();
-    
-    // Immediately clear all browser storage to prevent any chance of persistence
+    // Start with a thorough clearing of all local storage and cookies
     localStorage.clear();
     sessionStorage.clear();
     
     // Clear Supabase auth cookies
     document.cookie.split(';').forEach(cookie => {
       const [name] = cookie.trim().split('=');
-      if (name.includes('sb-') || name.includes('supabase')) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-      }
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
     });
     
-    // If no session exists, just clear local state and return without error
-    if (!sessionData?.session) {
-      console.log('No active session found, cleaning up client-side state only');
-      return;
-    }
+    // Reset Supabase client state before calling signOut
+    await supabase.auth.initialize();
     
-    // Proceed with sign out if session exists
-    console.log('Active session found, signing out from Supabase');
+    // Now proceed with the sign out operation
     const { error } = await supabase.auth.signOut({
       scope: 'global' // Sign out from all devices
     });
@@ -88,30 +79,25 @@ export const signOut = async (): Promise<void> => {
       throw error;
     }
     
-    // Final cleanup to ensure everything is wiped
+    // Final cleanup after successful sign out
     localStorage.clear();
     sessionStorage.clear();
     
-    console.log('Supabase sign out successful');
+    console.log('Supabase sign out successful, all storage cleared');
     toast.success("Signed out successfully");
     
-    // Reset Supabase client state
+    // Force a new initialization of Supabase client
     await supabase.auth.initialize();
     
   } catch (error: any) {
-    // If the error is about missing session, handle it gracefully
-    if (error.message?.includes('Auth session missing')) {
-      console.log('Auth session already cleared, proceeding with navigation');
-      return; // Return without error to allow navigation
-    }
-    
-    console.error('Error signing out:', error);
+    console.error('Error during sign out:', error);
     toast.error("Failed to sign out", { description: error.message });
-    throw error;
-  } finally {
-    // Final cleanup regardless of success or failure
+    
+    // Force cleanup even if there was an error
     localStorage.clear();
     sessionStorage.clear();
+    
+    throw error;
   }
 };
 
