@@ -2,11 +2,9 @@
 import { AuthContext, AuthContextType } from "@/contexts/auth-context";
 import { useAuthState } from "@/hooks/use-auth-state";
 import { signUp, signIn, signOut, signInWithProvider, updateUserProfile } from "@/services/auth-service";
-import { useNavigate } from "react-router-dom";
 
 export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
   const { user, setUser, session, loading } = useAuthState();
-  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -15,7 +13,6 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
       // Force user state to null regardless of API success
       setUser(null);
       
-      // Let the user navigate to auth page
       // The navigation will be handled in the SignOutCard component
     } catch (error) {
       console.error('Error in handleSignOut:', error);

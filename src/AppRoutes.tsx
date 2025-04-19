@@ -1,6 +1,7 @@
 
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "@/providers/auth-provider";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -27,31 +28,33 @@ import ActivityAdmin from "./pages/admin/ActivityAdmin";
 const AppRoutes = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="*" element={<ProtectedRoute />}>
-          <Route path="today" element={<TodayView />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="projects/:id/:name" element={<ProjectView />} />
-          <Route path="filters" element={<FiltersPage />} />
-          <Route path="filters/:id/:name" element={<FilterView />} />
-          <Route path="inbox" element={<InboxView />} />
-          <Route path="completed" element={<CompletedTasks />} />
-          <Route path="overdue" element={<OverdueView />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="stats" element={<Stats />} />
-          
-          {/* Admin Routes */}
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="admin/users" element={<UsersAdmin />} />
-          <Route path="admin/subscriptions" element={<SubscriptionsAdmin />} />
-          <Route path="admin/activity" element={<ActivityAdmin />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<ProtectedRoute />}>
+            <Route path="today" element={<TodayView />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/:id/:name" element={<ProjectView />} />
+            <Route path="filters" element={<FiltersPage />} />
+            <Route path="filters/:id/:name" element={<FilterView />} />
+            <Route path="inbox" element={<InboxView />} />
+            <Route path="completed" element={<CompletedTasks />} />
+            <Route path="overdue" element={<OverdueView />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="stats" element={<Stats />} />
+            
+            {/* Admin Routes */}
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="admin/users" element={<UsersAdmin />} />
+            <Route path="admin/subscriptions" element={<SubscriptionsAdmin />} />
+            <Route path="admin/activity" element={<ActivityAdmin />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 };
