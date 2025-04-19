@@ -70,7 +70,14 @@ export function SubscriptionStatus({
         <p className="text-xs text-muted-foreground">{planName}</p>
         {formattedExpiryDate && (
           <p className="text-xs text-muted-foreground mt-0.5">
-            {isTrialActive ? "Trial ends" : subscription?.status === 'active' ? "Renews" : "Expired"} on {formattedExpiryDate}
+            {subscription?.status === 'active' 
+              ? `License expires on ${formattedExpiryDate}`
+              : subscription?.status === 'expired'
+                ? `License expired on ${formattedExpiryDate}`
+                : isTrialActive
+                  ? `Trial ends on ${formattedExpiryDate}`
+                  : `Expired on ${formattedExpiryDate}`
+            }
           </p>
         )}
       </div>
