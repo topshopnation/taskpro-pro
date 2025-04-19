@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Sparkles, Trash2 } from "lucide-react";
 import { SubscriptionPlan } from "@/types/adminTypes";
+import { FeaturesList } from "./dialog/FeaturesList";
+import { PriceInputs } from "./dialog/PriceInputs";
+import { FeatureInput } from "./dialog/FeatureInput";
 
 interface SubscriptionPlanDialogContentProps {
   currentPlan: Partial<SubscriptionPlan>;
@@ -28,12 +30,10 @@ export function SubscriptionPlanDialogContent({
 
   const handleAddFeature = () => {
     if (!newFeature.trim()) return;
-    
     setCurrentPlan({
       ...currentPlan,
       features: [...(currentPlan.features || []), newFeature.trim()]
     });
-    
     setNewFeature("");
   };
 
@@ -69,72 +69,25 @@ export function SubscriptionPlanDialogContent({
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="price_monthly">Monthly Price ($)</Label>
-            <Input 
-              id="price_monthly" 
-              type="number" 
-              min="0" 
-              step="0.01"
-              value={currentPlan.price_monthly || 0} 
-              onChange={(e) => setCurrentPlan({...currentPlan, price_monthly: parseFloat(e.target.value)})}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="price_yearly">Yearly Price ($)</Label>
-            <Input 
-              id="price_yearly" 
-              type="number" 
-              min="0" 
-              step="0.01"
-              value={currentPlan.price_yearly || 0} 
-              onChange={(e) => setCurrentPlan({...currentPlan, price_yearly: parseFloat(e.target.value)})}
-            />
-          </div>
-        </div>
+        <PriceInputs 
+          monthlyPrice={currentPlan.price_monthly || 0}
+          yearlyPrice={currentPlan.price_yearly || 0}
+          onMonthlyPriceChange={(price) => setCurrentPlan({...currentPlan, price_monthly: price})}
+          onYearlyPriceChange={(price) => setCurrentPlan({...currentPlan, price_yearly: price})}
+        />
         
         <div className="space-y-2">
           <Label>Features</Label>
-          <div className="flex gap-2">
-            <Input 
-              value={newFeature} 
-              onChange={(e) => setNewFeature(e.target.value)}
-              placeholder="Add a feature"
-              className="flex-1"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddFeature();
-                }
-              }}
-            />
-            <Button type="button" onClick={handleAddFeature}>Add</Button>
-          </div>
+          <FeatureInput 
+            newFeature={newFeature}
+            onFeatureChange={setNewFeature}
+            onAddFeature={handleAddFeature}
+          />
           
-          <div className="mt-2 space-y-2">
-            {currentPlan.features?.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="flex-1 text-sm">{feature}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveFeature(index)}
-                >
-                  <Trash2 className="h-3 w-3 text-muted-foreground" />
-                </Button>
-              </div>
-            ))}
-            
-            {(currentPlan.features?.length || 0) === 0 && (
-              <div className="text-sm text-muted-foreground italic py-2">
-                No features added yet
-              </div>
-            )}
-          </div>
+          <FeaturesList 
+            features={currentPlan.features || []}
+            onRemoveFeature={handleRemoveFeature}
+          />
         </div>
         
         <div className="flex items-center space-x-2">
