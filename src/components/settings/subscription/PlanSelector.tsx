@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -77,7 +78,6 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
             </div>
             
             <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "yearly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("yearly")}>
-              <RadioGroupItem value="yearly" id="yearly" className="absolute right-3 top-3" />
               {yearlyDiscount > 0 && (
                 <div className="absolute -right-1 -top-3">
                   <div className="bg-primary flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white shadow-sm">

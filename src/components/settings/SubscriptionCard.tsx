@@ -55,7 +55,9 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     return <SubscriptionCardSkeleton />;
   }
 
-  const yearlyDiscount = Math.round(((prices.monthly * 12 - prices.yearly) / (prices.monthly * 12)) * 100);
+  const yearlyDiscount = Math.round(
+    ((prices.monthly * 12 - prices.yearly) / (prices.monthly * 12)) * 100
+  );
 
   return (
     <Card className="overflow-hidden">

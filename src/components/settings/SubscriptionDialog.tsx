@@ -1,4 +1,3 @@
-
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,8 +7,6 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
 import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -21,7 +18,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { updateSubscription, subscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
   
@@ -70,11 +66,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
   };
   
-  // Toggle debug information
-  const toggleDebug = () => {
-    setShowDebug(!showDebug);
-  };
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -94,29 +85,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{paymentError}</AlertDescription>
-            </Alert>
-          )}
-          
-          {user && (
-            <Alert variant="default" className="bg-muted">
-              <AlertDescription className="text-xs">
-                <div><strong>Current user:</strong> {user.id}</div>
-                <div><strong>Current subscription:</strong> {subscription ? subscription.status : 'None'}</div>
-                <div><strong>Testing mode:</strong> {process.env.NODE_ENV}</div>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm" onClick={toggleDebug}>
-                    {showDebug ? 'Hide' : 'Show'} Debug Info
-                  </Button>
-                </div>
-                
-                {showDebug && subscription && (
-                  <div className="mt-2 text-xs overflow-auto max-h-32 border rounded p-2">
-                    <pre className="whitespace-pre-wrap">
-                      {JSON.stringify(subscription, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </AlertDescription>
             </Alert>
           )}
           

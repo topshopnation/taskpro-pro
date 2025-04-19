@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,9 @@ export const PricingSection = () => {
         }
 
         if (data) {
-          console.log("Fetched subscription prices for home page:", data);
-          const yearlyDiscount = Math.round(((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100);
+          const yearlyDiscount = Math.round(
+            ((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100
+          );
           
           setSubscriptionPrices({
             monthly: data.price_monthly,
