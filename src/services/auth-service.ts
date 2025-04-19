@@ -52,8 +52,12 @@ export const signInWithProvider = async (provider: Provider): Promise<void> => {
   }
 };
 
-export const signOut = async () => {
+export const signOut = async (): Promise<void> => {
   try {
+    // Get the current session first to check if it exists
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    // Sign out regardless of whether a session exists
     const { error } = await supabase.auth.signOut();
     
     if (error) {
@@ -61,7 +65,10 @@ export const signOut = async () => {
       throw error;
     }
     
-    toast.success("Signed out successfully");
+    // Only show success toast if we had a session
+    if (sessionData?.session) {
+      toast.success("Signed out successfully");
+    }
   } catch (error: any) {
     console.error('Error signing out:', error);
     toast.error("Failed to sign out", { description: error.message });

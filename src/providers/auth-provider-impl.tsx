@@ -9,10 +9,10 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     try {
       await signOut();
-      // Remove navigate dependency - we'll let the auth state change redirect instead
+      // Let the auth state listener handle the redirect
     } catch (error) {
-      // Error is already handled in the service
       console.error('Error in handleSignOut:', error);
+      throw error; // Rethrow to allow component-level error handling
     }
   };
 
@@ -32,8 +32,8 @@ export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
         };
       });
     } catch (error) {
-      // Error is already handled in the service
       console.error('Error in handleUpdateProfile:', error);
+      throw error; // Rethrow to allow component-level error handling
     }
   };
 

@@ -10,12 +10,15 @@ export const useAuthState = () => {
   const { user, setUser, updateUserFromSession } = useUserProfile();
 
   useEffect(() => {
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
         if (newSession?.user) {
           setSession(newSession);
+          
+          // Use setTimeout to avoid potential auth deadlocks
           setTimeout(async () => {
             await updateUserFromSession(
               newSession.user.id,
@@ -25,6 +28,7 @@ export const useAuthState = () => {
           }, 0);
           
           if (event === 'SIGNED_IN') {
+            // Use window.location for more reliable navigation
             window.location.href = '/today';
           }
         } else {
@@ -32,13 +36,16 @@ export const useAuthState = () => {
           setSession(null);
           
           if (event === 'SIGNED_OUT') {
+            // Use window.location for more reliable navigation
             window.location.href = '/auth';
           }
         }
+        
         setIsLoading(false);
       }
     );
 
+    // Then check for an existing session
     const initializeAuth = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();

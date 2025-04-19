@@ -5,46 +5,23 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function SignOutCard() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleSignOut = async () => {
     try {
       setIsLoggingOut(true);
-      
-      // Try direct Supabase signOut first if session is missing
-      try {
-        await supabase.auth.signOut();
-      } catch (error) {
-        console.error("Direct Supabase signOut failed:", error);
-      }
-      
-      // Then use the context signOut method as a fallback
-      try {
-        await signOut();
-      } catch (error) {
-        console.error("Context signOut failed:", error);
-      }
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account."
-      });
-      
-      // Navigate manually to ensure redirect happens
+      await signOut();
+      toast.success("Signed out successfully");
       navigate('/auth');
     } catch (error: any) {
       console.error("Sign out error:", error);
-      toast({
-        title: "Error signing out",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive"
+      toast.error("Error signing out", { 
+        description: error.message || "Something went wrong. Please try again." 
       });
     } finally {
       setIsLoggingOut(false);
