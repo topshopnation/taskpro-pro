@@ -1,13 +1,23 @@
 
 import { useSubscription } from "@/contexts/subscription";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function SubscriptionStatus() {
-  const { isActive, isTrialActive, daysRemaining, loading, fetchSubscription, initialized } = useSubscription();
+  const { 
+    isActive, 
+    isTrialActive, 
+    daysRemaining, 
+    subscription, 
+    loading, 
+    fetchSubscription, 
+    initialized 
+  } = useSubscription();
   const [isLoaded, setIsLoaded] = useState(false);
   const fetchAttempted = useRef(false);
+  const navigate = useNavigate();
 
   // Ensure subscription data is loaded - only fetch once
   useEffect(() => {
@@ -23,7 +33,7 @@ export function SubscriptionStatus() {
     if (!loading && initialized) {
       const timer = setTimeout(() => {
         setIsLoaded(true);
-      }, 500); // Increased delay for more stability
+      }, 500);
       
       return () => clearTimeout(timer);
     }
@@ -34,7 +44,27 @@ export function SubscriptionStatus() {
     return null;
   }
 
-  if (!isActive && !isTrialActive) return null;
+  // Calculate if subscription is expiring soon (within 14 days)
+  const isExpiringSoon = subscription?.status === 'active' && (() => {
+    try {
+      const endDate = new Date(subscription.current_period_end ?? '');
+      const now = new Date();
+      const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 14 && daysUntilExpiry > 0;
+    } catch (err) {
+      console.error("Error calculating expiry status:", err);
+      return false;
+    }
+  })();
+
+  // Only show status if trial, inactive, or expiring soon
+  if (!isTrialActive && isActive && !isExpiringSoon) {
+    return null;
+  }
+
+  const handleClick = () => {
+    navigate('/settings');
+  };
 
   return (
     <div className="flex items-center space-x-1">
@@ -44,10 +74,24 @@ export function SubscriptionStatus() {
           Trial: {daysRemaining} days
         </Badge>
       )}
-      {isActive && !isTrialActive && (
-        <Badge variant="outline" className="text-xs">
-          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-          Active
+      {!isActive && !isTrialActive && (
+        <Badge 
+          variant="outline" 
+          className="text-xs cursor-pointer hover:bg-destructive/10"
+          onClick={handleClick}
+        >
+          <AlertTriangle className="h-3 w-3 mr-1 text-destructive" />
+          Inactive
+        </Badge>
+      )}
+      {isExpiringSoon && (
+        <Badge 
+          variant="outline" 
+          className="text-xs cursor-pointer hover:bg-amber-50"
+          onClick={handleClick}
+        >
+          <Clock className="h-3 w-3 mr-1 text-amber-500" />
+          Expiring Soon
         </Badge>
       )}
     </div>
