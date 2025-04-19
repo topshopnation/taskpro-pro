@@ -116,5 +116,5 @@ export const useAuthState = () => {
     };
   }, [resetUser, setUser, updateUserFromSession]);
 
-  return { user, setUser, session, loading };
+  return { user, setUser, session, loading, resetUser };
 };

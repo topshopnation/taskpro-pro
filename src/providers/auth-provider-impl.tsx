@@ -4,38 +4,24 @@ import { useAuthState } from "@/hooks/use-auth-state";
 import { signUp, signIn, signOut, signInWithProvider, updateUserProfile } from "@/services/auth-service";
 
 export function AuthProviderImpl({ children }: { children: React.ReactNode }) {
-  const { user, setUser, session, loading } = useAuthState();
+  const { user, setUser, session, loading, resetUser } = useAuthState();
 
   const handleSignOut = async () => {
     try {
       // Clear user state first to prevent UI flicker with wrong data
-      setUser(null);
+      resetUser();
       
       // Then perform the actual signout
       await signOut();
       
-      // Force a complete clearing of all storage
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear Supabase cookies
-      document.cookie.split(';').forEach(cookie => {
-        const [name] = cookie.trim().split('=');
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
-      });
-      
       console.log("User signed out successfully, user state cleared");
       
-      // Navigation will be handled in the SignOutCard component
+      // Navigation will be handled by the window.location redirect in SignOutCard
     } catch (error) {
       console.error('Error in handleSignOut:', error);
       
       // Even if the API call fails, clear the user state
-      setUser(null);
-      
-      // Force storage clearing
-      localStorage.clear();
-      sessionStorage.clear();
+      resetUser();
       
       // We'll rethrow so component-level error handling can navigate
       throw error;

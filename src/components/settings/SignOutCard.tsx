@@ -15,28 +15,11 @@ export default function SignOutCard() {
       setIsLoggingOut(true);
       toast.loading("Signing out...");
       
-      // Clear storage first to prevent state persistence issues
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear cookies
-      document.cookie.split(';').forEach(cookie => {
-        const [name] = cookie.trim().split('=');
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
-      });
-      
       // Call the actual sign out function
       await signOut();
       
-      // Display success toast
-      toast.success("Successfully signed out");
-      
-      // Force reload and redirect after a short delay
-      // This ensures all React state is completely reset
-      setTimeout(() => {
-        console.log("Forcing complete page reload and redirect to auth page");
-        window.location.href = '/auth';
-      }, 100);
+      // Force reload and redirect after signout to completely reset app state
+      window.location.href = '/';
       
     } catch (error: any) {
       console.error("Sign out error:", error);
@@ -45,11 +28,7 @@ export default function SignOutCard() {
       });
       
       // Force cleanup and redirect regardless of error
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Force reload the page to clear React state
-      window.location.href = '/auth';
+      window.location.href = '/';
     } finally {
       setIsLoggingOut(false);
     }
