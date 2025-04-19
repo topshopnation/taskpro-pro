@@ -18,9 +18,7 @@ export default function SignOutCard() {
       // Call the actual sign out function
       await signOut();
       
-      // Force reload and redirect after signout to completely reset app state
-      window.location.href = '/';
-      
+      // The redirect is now handled in the signOut service function
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error("Error signing out", { 

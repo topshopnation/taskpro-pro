@@ -50,6 +50,9 @@ export const useAuthState = () => {
             // Make sure we fully clear user data on sign out
             console.log(`${eventType} event detected, clearing all user data`);
             clearAllUserData();
+            
+            // Redirect to home page after sign out
+            window.location.href = '/';
           }
         } else if (newSession?.user && isSubscribed) {
           setSession(newSession);

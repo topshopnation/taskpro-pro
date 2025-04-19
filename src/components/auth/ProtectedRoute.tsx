@@ -17,7 +17,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   useEffect(() => {
     // Reset redirecting state when location changes
     setIsRedirecting(false);
-  }, [location.pathname]);
+    
+    // Additional check to force redirect if no user is available after loading is complete
+    if (!loading && !user) {
+      console.log("ProtectedRoute: No authenticated user found, redirecting to home from", location.pathname);
+      window.location.href = '/';
+    }
+  }, [location.pathname, user, loading]);
 
   // Show a loading state while checking authentication
   if (loading) {
@@ -42,10 +48,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Redirect to auth page if user is not authenticated
   if (!user && !isRedirecting) {
-    console.log("ProtectedRoute: No user, redirecting to /auth from", location.pathname);
+    console.log("ProtectedRoute: No user, redirecting to / from", location.pathname);
     setIsRedirecting(true);
-    // Save the current location to redirect back after login
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Redirect to home page instead of auth page for better UX
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render the protected content

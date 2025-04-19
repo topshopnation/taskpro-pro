@@ -56,7 +56,7 @@ export const signOut = async (): Promise<void> => {
   try {
     console.log('Starting sign out process with force clear...');
     
-    // Start with a thorough clearing of all local storage and cookies
+    // Clear user state first to prevent UI flicker with wrong data
     localStorage.clear();
     sessionStorage.clear();
     
@@ -89,6 +89,9 @@ export const signOut = async (): Promise<void> => {
     // Force a new initialization of Supabase client
     await supabase.auth.initialize();
     
+    // Redirect to homepage after successful sign out
+    window.location.href = '/';
+    
   } catch (error: any) {
     console.error('Error during sign out:', error);
     toast.error("Failed to sign out", { description: error.message });
@@ -96,6 +99,9 @@ export const signOut = async (): Promise<void> => {
     // Force cleanup even if there was an error
     localStorage.clear();
     sessionStorage.clear();
+    
+    // Redirect to homepage even if there was an error
+    window.location.href = '/';
     
     throw error;
   }
