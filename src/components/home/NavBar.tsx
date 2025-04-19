@@ -21,8 +21,15 @@ export function NavBar() {
               </Link>
             </Button>
           ) : (
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/" className="flex items-center gap-1.5">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              asChild
+            >
+              <Link 
+                to="/auth" 
+                className="flex items-center gap-1.5"
+              >
                 <LogIn className="h-4 w-4" />
                 <span>Login</span>
               </Link>
