@@ -11,6 +11,7 @@ import {
   Home,
   LogOut
 } from "lucide-react";
+import { toast } from "sonner";
 
 const menuItems = [
   { 
@@ -49,6 +50,13 @@ export function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleAdminLogout = () => {
+    // Clear admin session
+    localStorage.removeItem('admin_session');
+    toast.success("Signed out of admin portal");
+    navigate('/admin/login');
+  };
+
   return (
     <div className="flex h-full w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-6">
@@ -82,7 +90,7 @@ export function AdminSidebar() {
           <span className="ml-3">Return to App</span>
         </button>
         <button
-          onClick={() => navigate('/')}
+          onClick={handleAdminLogout}
           className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <LogOut className="h-5 w-5" />

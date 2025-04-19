@@ -6,11 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminService } from "@/services/admin-service";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export function AdminLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -21,17 +24,34 @@ export function AdminLoginForm() {
       const loginSuccess = await adminService.loginAdmin(email, password);
       
       if (loginSuccess) {
+        toast.success("Admin login successful");
+        // Store admin session separately from main user session
+        localStorage.setItem('admin_session', JSON.stringify({
+          email,
+          timestamp: new Date().toISOString()
+        }));
         navigate('/admin');
+      } else {
+        toast.error("Admin login failed", {
+          description: "Invalid credentials"
+        });
       }
     } catch (error) {
       console.error('Admin login error:', error);
+      toast.error("Admin login failed", {
+        description: "An unexpected error occurred"
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Admin Login</CardTitle>
         <CardDescription>
@@ -54,18 +74,30 @@ export function AdminLoginForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="admin-password">Password</Label>
-            <Input
-              id="admin-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              placeholder="Enter your password"
-            />
+            <div className="relative">
+              <Input
+                id="admin-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                placeholder="Enter your password"
+              />
+              <button 
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={toggleShowPassword}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Demo credentials: admin@taskpro.pro / admin123
+            </p>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Logging in..." : "Login to Admin"}
           </Button>
         </form>
       </CardContent>

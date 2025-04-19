@@ -17,9 +17,12 @@ export default function SignOutCard() {
       setIsLoggingOut(true);
       await signOut();
       
-      // Force a clean navigation to auth page
-      localStorage.removeItem('supabase.auth.token');
-      window.location.href = '/auth'; // Use window.location for a complete page reload
+      // Force a complete reset of auth state and hard redirect
+      localStorage.clear(); // Clear ALL localStorage, not just the token
+      sessionStorage.clear(); // Clear any session storage as well
+      
+      // Use location.replace for a complete page reload without history
+      window.location.replace('/auth');
     } catch (error: any) {
       console.error("Sign out error:", error);
       
@@ -27,7 +30,11 @@ export default function SignOutCard() {
       toast.error("Error signing out", { 
         description: "Redirecting to login page" 
       });
-      window.location.href = '/auth';
+      
+      // Force redirect regardless of error
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace('/auth');
     } finally {
       setIsLoggingOut(false);
     }
