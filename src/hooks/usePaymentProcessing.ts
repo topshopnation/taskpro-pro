@@ -23,10 +23,25 @@ export function usePaymentProcessing() {
 
       // Process the payment based on status
       if (paymentStatus === "completed" || paymentStatus === "success") {
+        // Determine plan type from payment ID (in our case, payment ID is the plan type)
+        const planType = paymentId as "monthly" | "yearly";
+        
+        // Calculate period end date based on plan type
+        const currentDate = new Date();
+        const periodEnd = new Date(currentDate);
+        
+        if (planType === "monthly") {
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+        } else {
+          periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        }
+        
         // Update subscription with payment details
         await updateSubscription({
-          payment_id: paymentId,
           status: "active",
+          planType: planType,
+          currentPeriodStart: currentDate.toISOString(),
+          currentPeriodEnd: periodEnd.toISOString()
         } as SubscriptionUpdate);
         
         toast.success("Payment successful! Your subscription is now active.");

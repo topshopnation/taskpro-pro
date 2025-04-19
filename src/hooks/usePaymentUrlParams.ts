@@ -6,7 +6,7 @@ import { useSubscription } from "@/contexts/subscription";
 
 export const usePaymentUrlParams = (
   isProcessingPayment: boolean,
-  processPayment: (planType: 'monthly' | 'yearly') => Promise<void>,
+  processPayment: (paymentId: string, paymentStatus: string) => Promise<void>,
   paymentProcessed: React.RefObject<boolean>
 ) => {
   const location = useLocation();
@@ -21,7 +21,9 @@ export const usePaymentUrlParams = (
     const handlePayment = async () => {
       try {
         if (paymentSuccess === 'true' && planType && !paymentProcessed.current && !isProcessingPayment) {
-          await processPayment(planType);
+          // We're using a payment ID that's the same as the plan type for simplicity
+          // and passing "completed" as the payment status
+          await processPayment(planType, "completed");
           // Force refresh subscription data after URL-based payment
           await fetchSubscription();
         }
