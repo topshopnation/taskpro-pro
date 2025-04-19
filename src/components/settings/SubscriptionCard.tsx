@@ -35,7 +35,6 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               Manage your TaskPro subscription
             </CardDescription>
           </div>
-          {/* Removed manage button */}
         </div>
       </CardHeader>
       <CardContent className="py-2 px-4 space-y-3">
@@ -57,8 +56,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               <div className="text-xs text-muted-foreground">
                 <p>Choose between:</p>
                 <ul className="pl-3 mt-0.5 space-y-0.5">
-                  <li>$3.00 per month</li>
-                  <li>$30.00 per year (save 16%)</li>
+                  <li>$10.00 per month</li>
+                  <li>$100.00 per year (save 16%)</li>
                 </ul>
               </div>
             </div>

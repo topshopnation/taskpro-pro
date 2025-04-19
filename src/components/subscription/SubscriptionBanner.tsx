@@ -23,7 +23,7 @@ export function SubscriptionBanner() {
             <Clock className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
               Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. 
-              Upgrade now to keep access to all features for only $3/month.
+              Upgrade now to keep access to all features for only $10/month.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export function SubscriptionBanner() {
           <div className="flex items-center">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
-              Your subscription has expired. Renew now for only $3/month to regain full access to TaskPro.
+              Your subscription has expired. Renew now for only $10/month to regain full access to TaskPro.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">
