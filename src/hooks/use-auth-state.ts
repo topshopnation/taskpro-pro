@@ -41,12 +41,14 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        // Fix the type error by properly handling the event types
-        // Using a string comparison instead of relying on TypeScript union types
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        // Fix the type error by using a string literal type check instead of a direct comparison
+        // This avoids TypeScript error with event types that might not be in the current union type
+        const eventType = event as string; // Cast to string to handle all possible event types
+        
+        if (eventType === 'SIGNED_OUT' || eventType === 'USER_DELETED') {
           if (isSubscribed) {
             // Make sure we fully clear user data on sign out
-            console.log(`${event} event detected, clearing all user data`);
+            console.log(`${eventType} event detected, clearing all user data`);
             clearAllUserData();
           }
         } else if (newSession?.user && isSubscribed) {
