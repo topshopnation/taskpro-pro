@@ -27,6 +27,7 @@ function Calendar({
 
   const handleQuickOptionClick = (date: Date | undefined, event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation(); // Stop event propagation
     
     if (onQuickOptionSelect) {
       onQuickOptionSelect(date);
@@ -61,13 +62,13 @@ function Calendar({
   return (
     <div className="flex flex-col space-y-1">
       {showQuickOptions && (
-        <div className="flex flex-col divide-y border rounded-md mb-1 bg-background max-h-52 overflow-y-auto">
+        <div className="flex flex-col divide-y border rounded-md mb-1 bg-background max-h-52 overflow-y-auto z-50">
           {quickOptions.map((option) => (
             <button
               key={option.value}
               onClick={(e) => handleQuickOptionClick(option.date, e)}
               className={cn(
-                "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors",
+                "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors pointer-events-auto",
                 option.date && isDateSelected(option.date) && "bg-primary/10"
               )}
               type="button"
