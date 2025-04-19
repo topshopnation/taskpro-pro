@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { AdminRole, AdminUser } from "@/types/adminTypes";
+import { AdminRole, AdminUser, SubscriptionPlan, UserProfile } from "@/types/adminTypes";
 import { toast } from "sonner";
 
 export const adminService = {
@@ -57,8 +57,8 @@ export const adminService = {
       return data.map(plan => ({
         ...plan,
         description: plan.description || '',
-        features: plan.features || []
-      }));
+        features: Array.isArray(plan.features) ? plan.features : []
+      })) as SubscriptionPlan[];
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
       return [];
@@ -69,7 +69,11 @@ export const adminService = {
     try {
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert(plan)
+        .insert({
+          ...plan,
+          description: plan.description || '',
+          features: Array.isArray(plan.features) ? plan.features : []
+        })
         .select()
         .single();
         
@@ -77,8 +81,8 @@ export const adminService = {
       return {
         ...data,
         description: data.description || '',
-        features: data.features || []
-      };
+        features: Array.isArray(data.features) ? data.features : []
+      } as SubscriptionPlan;
     } catch (error) {
       console.error('Error creating subscription plan:', error);
       return null;
@@ -89,7 +93,11 @@ export const adminService = {
     try {
       const { error } = await supabase
         .from('subscription_plans')
-        .update(plan)
+        .update({
+          ...plan,
+          description: plan.description || '',
+          features: Array.isArray(plan.features) ? plan.features : []
+        })
         .eq('id', id);
         
       return !error;

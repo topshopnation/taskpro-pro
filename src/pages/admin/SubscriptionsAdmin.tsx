@@ -35,7 +35,7 @@ export default function SubscriptionsAdmin() {
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const { data: subscriptionPlans, error } = await supabase
+        const { data: plansData, error } = await supabase
           .from('subscription_plans')
           .select('*')
           .order('created_at', { ascending: false });
@@ -43,10 +43,10 @@ export default function SubscriptionsAdmin() {
         if (error) throw error;
         
         // Ensure all plans have description and features properties
-        const formattedPlans = subscriptionPlans.map(plan => ({
+        const formattedPlans = plansData.map(plan => ({
           ...plan,
           description: plan.description || '',
-          features: plan.features || []
+          features: Array.isArray(plan.features) ? plan.features : []
         })) as SubscriptionPlan[];
         
         setPlans(formattedPlans);
@@ -70,7 +70,7 @@ export default function SubscriptionsAdmin() {
     setLoading(true);
     try {
       const refreshedPlans = await adminService.getSubscriptionPlans();
-      setPlans(refreshedPlans as SubscriptionPlan[]);
+      setPlans(refreshedPlans);
       toast.success("Subscription plans refreshed");
     } catch (error) {
       console.error("Error refreshing plans:", error);
@@ -124,7 +124,7 @@ export default function SubscriptionsAdmin() {
       } else {
         const newPlan = await adminService.createSubscriptionPlan(currentPlan);
         if (newPlan) {
-          setPlans(prev => [...prev, newPlan as SubscriptionPlan]);
+          setPlans(prev => [...prev, newPlan]);
           toast.success("Subscription plan created");
         }
       }

@@ -48,6 +48,20 @@ export interface UserProfile {
   plan_type?: string;
 }
 
+// Define user subscription interface
+export interface UserSubscription {
+  id: string;
+  user_id: string;
+  status: string;
+  plan_type: string;
+  created_at: string;
+  updated_at: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  trial_start_date?: string;
+  trial_end_date?: string;
+}
+
 // Mock data for admin users
 export const mockAdminUsers: AdminUser[] = [
   {

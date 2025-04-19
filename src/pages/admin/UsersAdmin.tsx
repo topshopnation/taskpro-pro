@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
-import { AdminRole } from "@/types/adminTypes";
+import { AdminRole, UserProfile } from "@/types/adminTypes";
 import { toast } from "sonner";
 import { UserSearch } from "@/components/admin/users/UserSearch";
 import { UserTable } from "@/components/admin/users/UserTable";
@@ -13,11 +13,11 @@ import { UserPagination } from "@/components/admin/users/UserPagination";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function UsersAdmin() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [newRole, setNewRole] = useState<AdminRole>("admin");
   const itemsPerPage = 10;
@@ -26,34 +26,40 @@ export default function UsersAdmin() {
     try {
       setLoading(true);
       
-      // First, get all profiles
+      // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
       if (profilesError) throw profilesError;
 
-      // Then, get all subscriptions separately
+      // Get all subscriptions separately
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('*');
 
       if (subsError) throw subsError;
 
+      // Get auth emails if possible
+      const { data: adminUsers, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id, email, role');
+
       // Match subscriptions to profiles
-      const formattedUsers = profiles.map(profile => {
+      const formattedUsers: UserProfile[] = profiles.map(profile => {
         const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {};
+        const adminUser = adminUsers?.find(admin => admin.id === profile.id);
         
         return {
           id: profile.id,
-          email: profile.email || '', // Add default if missing
-          firstName: profile.first_name || '',
-          lastName: profile.last_name || '',
+          email: adminUser?.email || profile.email || '',
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
           subscription_status: userSubscription.status || 'none',
           plan_type: userSubscription.plan_type || 'none',
           last_login: profile.updated_at,
           created_at: profile.created_at,
-          role: profile.role || 'user'
+          role: adminUser?.role || profile.role || 'user'
         };
       });
 
@@ -71,8 +77,8 @@ export default function UsersAdmin() {
   }, []);
   
   const filteredUsers = users.filter(user => 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const startIdx = (page - 1) * itemsPerPage;
@@ -88,6 +94,21 @@ export default function UsersAdmin() {
     if (!selectedUser || !newRole) return;
     
     try {
+      // Update the user in the database if they're an admin
+      const { error } = await supabase
+        .from('admin_users')
+        .upsert({
+          id: selectedUser.id,
+          email: selectedUser.email || '',
+          role: newRole,
+          password_hash: 'placeholder', // Would be set properly in a real scenario
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      // Update local state
       setUsers(prev => 
         prev.map(user => 
           user.id === selectedUser.id ? { ...user, role: newRole } : user
@@ -140,7 +161,7 @@ export default function UsersAdmin() {
                 users={paginatedUsers} 
                 onRoleChange={(user) => {
                   setSelectedUser(user);
-                  setNewRole(user.role as AdminRole);
+                  setNewRole(user.role as AdminRole || 'admin');
                   setShowRoleDialog(true);
                 }}
               />
