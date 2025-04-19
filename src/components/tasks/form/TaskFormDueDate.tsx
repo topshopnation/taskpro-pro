@@ -73,10 +73,15 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
       return;
     }
     
-    // For quick selections, we always set time to midnight (beginning of day)
-    const dateWithoutTime = new Date(date);
-    dateWithoutTime.setHours(0, 0, 0, 0);
-    onChange(dateWithoutTime);
+    // For quick selections, we preserve any time that might have been set previously
+    if (timeInput) {
+      const dateWithTime = addTimeToDate(date, timeInput);
+      onChange(dateWithTime);
+    } else {
+      const dateWithoutTime = new Date(date);
+      dateWithoutTime.setHours(0, 0, 0, 0);
+      onChange(dateWithoutTime);
+    }
     
     // Close popover after selection
     setOpen(false);

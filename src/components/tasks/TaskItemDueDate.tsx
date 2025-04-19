@@ -55,9 +55,16 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
       return
     }
     
-    const dateWithoutTime = new Date(date)
-    dateWithoutTime.setHours(0, 0, 0, 0)
-    onDateChange(dateWithoutTime)
+    // For quick selections, we should preserve any time that might have been set previously
+    if (timeInput) {
+      const dateWithTime = addTimeToDate(date, timeInput)
+      onDateChange(dateWithTime)
+    } else {
+      const dateWithoutTime = new Date(date)
+      dateWithoutTime.setHours(0, 0, 0, 0)
+      onDateChange(dateWithoutTime)
+    }
+    
     setOpen(false)
   }
 
