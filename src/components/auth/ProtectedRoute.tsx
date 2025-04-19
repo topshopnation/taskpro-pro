@@ -14,19 +14,18 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  // Check user status immediately on mount
   useEffect(() => {
-    // Reset redirecting state when location changes
-    setIsRedirecting(false);
-    
-    // Additional check to force redirect if no user is available after loading is complete
-    if (!loading && !user) {
-      console.log("ProtectedRoute: No authenticated user found, redirecting to home from", location.pathname);
+    if (!loading && !user && !isRedirecting) {
+      console.log("ProtectedRoute: No user detected, redirecting to home from", location.pathname);
+      setIsRedirecting(true);
+      // Force immediate redirect on initial check
       window.location.href = '/';
     }
-  }, [location.pathname, user, loading]);
+  }, [user, loading, location.pathname, isRedirecting]);
 
-  // Show a loading state while checking authentication
-  if (loading) {
+  // Show loading state only if we're genuinely loading auth status, not during redirect
+  if (loading && !isRedirecting) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -46,11 +45,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect to auth page if user is not authenticated
-  if (!user && !isRedirecting) {
-    console.log("ProtectedRoute: No user, redirecting to / from", location.pathname);
-    setIsRedirecting(true);
-    // Redirect to home page instead of auth page for better UX
+  // If not logged in and not loading, redirect to home
+  if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

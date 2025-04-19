@@ -8,8 +8,8 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
   const location = useLocation();
 
   useEffect(() => {
-    // Skip if still loading or no navigation available
-    if (typeof window === 'undefined' || !navigate || loading) return;
+    // Skip if still loading 
+    if (loading) return;
 
     // Store the current path to avoid unnecessary redirects
     const currentPath = location.pathname;
@@ -36,10 +36,11 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
       return;
     }
     
-    // Redirect unauthenticated users from protected pages to home page
+    // Redirect unauthenticated users from protected pages to home page - adding immediate redirect
     if (!user && !isAuthPage && !isHomePage) {
       console.log("No user, redirecting to / from protected page:", currentPath);
-      navigate('/', { replace: true });
+      // Force immediate redirect for better security
+      window.location.href = '/';
       return;
     }
   }, [user, loading, location.pathname, location.search, navigate]);

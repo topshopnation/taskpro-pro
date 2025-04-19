@@ -28,8 +28,8 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  // Show loading state until initial check is complete
-  if (loading || (user && !initialLoadComplete)) {
+  // Show empty loading state until initial check is complete
+  if (loading || !initialLoadComplete) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
@@ -42,6 +42,7 @@ const Index = () => {
     return null;
   }
 
+  // Only render homepage content once we've confirmed user is not logged in
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <NavBar />

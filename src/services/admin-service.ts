@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { AdminRole, AdminUser, SubscriptionPlan, UserProfile } from "@/types/adminTypes";
 import { toast } from "sonner";
@@ -43,6 +44,23 @@ export const adminService = {
     }
   },
   
+  async changeAdminPassword(adminEmail: string, oldPassword: string, newPassword: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('update_admin_password', {
+        admin_email: adminEmail,
+        old_password: oldPassword,
+        new_password: newPassword
+      });
+      
+      if (error) throw error;
+      
+      return !!data;
+    } catch (error) {
+      console.error('Error changing admin password:', error);
+      return false;
+    }
+  },
+  
   async getSubscriptionPlans() {
     try {
       const { data, error } = await supabase
@@ -79,7 +97,7 @@ export const adminService = {
           price_monthly: plan.price_monthly,
           price_yearly: plan.price_yearly,
           description: plan.description || '',
-          features: Array.isArray(plan.features) ? plan.features : [],
+          features: plan.features || [],
           is_active: plan.is_active !== undefined ? plan.is_active : true
         })
         .select()
@@ -98,18 +116,28 @@ export const adminService = {
     }
   },
   
-  async updateSubscriptionPlan(id: string, plan: any) {
+  async updateSubscriptionPlan(id: string, plan: Partial<SubscriptionPlan>) {
     try {
+      // Ensure we have the required fields
+      if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
+        console.error('Missing required fields for subscription plan update');
+        return false;
+      }
+      
       const { error } = await supabase
         .from('subscription_plans')
         .update({
-          ...plan,
+          name: plan.name,
+          price_monthly: plan.price_monthly,
+          price_yearly: plan.price_yearly,
           description: plan.description || '',
-          features: Array.isArray(plan.features) ? plan.features : []
+          features: plan.features || [],
+          is_active: plan.is_active
         })
         .eq('id', id);
         
-      return !error;
+      if (error) throw error;
+      return true;
     } catch (error) {
       console.error('Error updating subscription plan:', error);
       return false;
@@ -191,6 +219,61 @@ export const adminService = {
       console.error('Admin login error:', error);
       toast.error('An unexpected error occurred');
       return false;
+    }
+  },
+  
+  async getActivityLogs(): Promise<any[]> {
+    try {
+      // Get the last 100 auth events
+      const { data: authEvents, error: authError } = await supabase
+        .from('auth_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+        
+      if (authError) throw authError;
+      
+      // Get the last 100 profile updates
+      const { data: profileEvents, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(100);
+        
+      if (profileError) throw profileError;
+      
+      // Get the last 100 subscription updates
+      const { data: subscriptionEvents, error: subError } = await supabase
+        .from('subscriptions')
+        .select('user_id, status, plan_type, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(100);
+        
+      if (subError) throw subError;
+      
+      // Combine all events and sort by timestamp
+      const allEvents = [
+        ...(authEvents || []).map(event => ({
+          type: 'auth',
+          timestamp: event.created_at,
+          details: event
+        })),
+        ...(profileEvents || []).map(event => ({
+          type: 'profile',
+          timestamp: event.updated_at,
+          details: event
+        })),
+        ...(subscriptionEvents || []).map(event => ({
+          type: 'subscription',
+          timestamp: event.updated_at,
+          details: event
+        }))
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      return allEvents.slice(0, 100); // Return only the most recent 100 events
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      return [];
     }
   }
 };

@@ -7,8 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { DialogFooter } from "@/components/ui/dialog";
 import { SubscriptionPlan } from "@/types/adminTypes";
-import { FeaturesList } from "./dialog/FeaturesList";
-import { FeatureInput } from "./dialog/FeatureInput";
 
 interface SubscriptionPlanDialogContentProps {
   currentPlan: Partial<SubscriptionPlan>;
@@ -25,24 +23,6 @@ export function SubscriptionPlanDialogContent({
   onSubmit,
   setDialogOpen
 }: SubscriptionPlanDialogContentProps) {
-  const [newFeature, setNewFeature] = useState("");
-
-  const handleAddFeature = () => {
-    if (!newFeature.trim()) return;
-    setCurrentPlan({
-      ...currentPlan,
-      features: [...(currentPlan.features || []), newFeature.trim()]
-    });
-    setNewFeature("");
-  };
-
-  const handleRemoveFeature = (index: number) => {
-    setCurrentPlan({
-      ...currentPlan,
-      features: currentPlan.features?.filter((_, i) => i !== index)
-    });
-  };
-
   const formatPriceInput = (value: string) => {
     // Remove non-digit characters except decimal point
     let cleanValue = value.replace(/[^\d.]/g, '');
@@ -138,27 +118,16 @@ export function SubscriptionPlanDialogContent({
           </div>
         </div>
         
-        <div className="space-y-2">
-          <Label>Features</Label>
-          <FeatureInput 
-            newFeature={newFeature}
-            onFeatureChange={setNewFeature}
-            onAddFeature={handleAddFeature}
-          />
-          
-          <FeaturesList 
-            features={currentPlan.features || []}
-            onRemoveFeature={handleRemoveFeature}
-          />
-        </div>
-        
         <div className="flex items-center space-x-2">
           <Switch 
             id="is_active"
-            checked={currentPlan.is_active}
+            checked={currentPlan.is_active || false}
             onCheckedChange={(checked) => setCurrentPlan({...currentPlan, is_active: checked})}
           />
-          <Label htmlFor="is_active">Active</Label>
+          <Label htmlFor="is_active" className="font-medium">Active</Label>
+          <span className="text-sm text-muted-foreground ml-2">
+            {currentPlan.is_active ? "This plan is visible to users" : "This plan is hidden from users"}
+          </span>
         </div>
       </div>
       

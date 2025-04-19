@@ -1,4 +1,3 @@
-
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -202,6 +201,7 @@ export default function UsersAdmin() {
         open={showEditUserDialog}
         onOpenChange={setShowEditUserDialog}
         user={selectedUser}
+        onSuccess={fetchUsers}
       />
       
       <EditSubscriptionDialog 
