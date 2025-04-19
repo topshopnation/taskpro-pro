@@ -140,31 +140,31 @@ export default function FilterView() {
               />
             </div>
           </div>
-        </SubscriptionRestriction>
 
-        <div className="space-y-6">
-          {Object.keys(groupedTasks).length === 0 ? (
-            <div className="bg-muted/30 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No tasks match this filter</h3>
-              <p className="text-muted-foreground mb-4">Try adjusting your filter criteria.</p>
-              <Button onClick={() => setIsCreateTaskOpen(true)}>Add Task</Button>
-            </div>
-          ) : (
-            <GroupedTaskLists
-              groupedTasks={groupedTasks}
-              groupBy={groupBy}
-              isLoadingTasks={isLoading}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-              onAddTask={() => setIsCreateTaskOpen(true)}
-              onFavoriteToggle={handleFavoriteToggle}
-              onTaskEdit={handleTaskEdit}
-              onPriorityChange={handlePriorityChange}
-              onDateChange={handleDateChange}
-              hideTitle={!groupBy}
-            />
-          )}
-        </div>
+          <div className="space-y-6">
+            {Object.keys(groupedTasks).length === 0 ? (
+              <div className="bg-muted/30 rounded-lg p-8 text-center">
+                <h3 className="text-lg font-medium mb-2">No tasks match this filter</h3>
+                <p className="text-muted-foreground mb-4">Try adjusting your filter criteria.</p>
+                <Button onClick={() => setIsCreateTaskOpen(true)}>Add Task</Button>
+              </div>
+            ) : (
+              <GroupedTaskLists
+                groupedTasks={groupedTasks}
+                groupBy={groupBy}
+                isLoadingTasks={isLoading}
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onAddTask={() => setIsCreateTaskOpen(true)}
+                onFavoriteToggle={handleFavoriteToggle}
+                onTaskEdit={handleTaskEdit}
+                onPriorityChange={handlePriorityChange}
+                onDateChange={handleDateChange}
+                hideTitle={!groupBy}
+              />
+            )}
+          </div>
+        </SubscriptionRestriction>
 
         <FilterDialogs
           isEditDialogOpen={isEditFilterOpen}
