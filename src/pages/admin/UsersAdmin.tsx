@@ -1,3 +1,4 @@
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { UserSearch } from "@/components/admin/users/UserSearch";
 import { UserTable } from "@/components/admin/users/UserTable";
 import { UserRoleDialog } from "@/components/admin/users/UserRoleDialog";
 import { UserPagination } from "@/components/admin/users/UserPagination";
+import { EditUserDialog } from "@/components/admin/users/EditUserDialog";
+import { EditSubscriptionDialog } from "@/components/admin/users/EditSubscriptionDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function UsersAdmin() {
@@ -18,6 +21,8 @@ export default function UsersAdmin() {
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const [newRole, setNewRole] = useState<AdminRole>("admin");
   const itemsPerPage = 10;
   
@@ -161,6 +166,14 @@ export default function UsersAdmin() {
                   setNewRole(user.role as AdminRole || 'admin');
                   setShowRoleDialog(true);
                 }}
+                onEditUser={(user) => {
+                  setSelectedUser(user);
+                  setShowEditUserDialog(true);
+                }}
+                onEditSubscription={(user) => {
+                  setSelectedUser(user);
+                  setShowSubscriptionDialog(true);
+                }}
               />
               
               <UserPagination
@@ -183,6 +196,19 @@ export default function UsersAdmin() {
         newRole={newRole}
         setNewRole={setNewRole}
         onUpdate={handleRoleChange}
+      />
+      
+      <EditUserDialog 
+        open={showEditUserDialog}
+        onOpenChange={setShowEditUserDialog}
+        user={selectedUser}
+      />
+      
+      <EditSubscriptionDialog 
+        open={showSubscriptionDialog}
+        onOpenChange={setShowSubscriptionDialog}
+        user={selectedUser}
+        onSuccess={fetchUsers}
       />
     </AdminLayout>
   );

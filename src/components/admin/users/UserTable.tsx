@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, UserCheck, UserCog } from "lucide-react";
+import { MoreHorizontal, UserCheck, UserCog, CreditCard, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { UserProfile } from "@/types/adminTypes";
@@ -11,9 +11,11 @@ import { UserProfile } from "@/types/adminTypes";
 interface UserTableProps {
   users: UserProfile[];
   onRoleChange: (user: UserProfile) => void;
+  onEditUser?: (user: UserProfile) => void;
+  onEditSubscription?: (user: UserProfile) => void;
 }
 
-export function UserTable({ users, onRoleChange }: UserTableProps) {
+export function UserTable({ users, onRoleChange, onEditUser, onEditSubscription }: UserTableProps) {
   const getSubscriptionBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -113,10 +115,22 @@ export function UserTable({ users, onRoleChange }: UserTableProps) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    {onEditUser && (
+                      <DropdownMenuItem onClick={() => onEditUser(user)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit User
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => onRoleChange(user)}>
                       <UserCog className="h-4 w-4 mr-2" />
                       Change Role
                     </DropdownMenuItem>
+                    {onEditSubscription && (
+                      <DropdownMenuItem onClick={() => onEditSubscription(user)}>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Edit Subscription
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem>
                       <UserCheck className="h-4 w-4 mr-2" />
                       View Details
