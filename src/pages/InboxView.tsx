@@ -10,6 +10,7 @@ import { GroupedTaskLists } from "@/components/tasks/GroupedTaskLists"
 import { groupTasks } from "@/utils/taskSortUtils"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction"
 
 export default function InboxView() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
@@ -43,42 +44,44 @@ export default function InboxView() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Inbox className="h-5 w-5" />
-            <h1 className="text-2xl font-bold">Inbox</h1>
+      <SubscriptionRestriction>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Inbox className="h-5 w-5" />
+              <h1 className="text-2xl font-bold">Inbox</h1>
+            </div>
+            
+            <TaskSortControls
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              hideAddTaskButton={true}
+            />
           </div>
-          
-          <TaskSortControls
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
+
+          {/* Display grouped tasks */}
+          <GroupedTaskLists
+            groupedTasks={groupedTasks}
             groupBy={groupBy}
-            setGroupBy={setGroupBy}
-            hideAddTaskButton={true}
+            isLoadingTasks={isLoading}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onAddTask={() => setIsCreateTaskOpen(true)}
+            hideTitle={!groupBy}
+            onProjectChange={handleProjectChange}
+          />
+
+          <CreateTaskDialog
+            open={isCreateTaskOpen}
+            onOpenChange={setIsCreateTaskOpen}
+            defaultProjectId="inbox"
           />
         </div>
-
-        {/* Display grouped tasks */}
-        <GroupedTaskLists
-          groupedTasks={groupedTasks}
-          groupBy={groupBy}
-          isLoadingTasks={isLoading}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-          onAddTask={() => setIsCreateTaskOpen(true)}
-          hideTitle={!groupBy}
-          onProjectChange={handleProjectChange}
-        />
-
-        <CreateTaskDialog
-          open={isCreateTaskOpen}
-          onOpenChange={setIsCreateTaskOpen}
-          defaultProjectId="inbox"
-        />
-      </div>
+      </SubscriptionRestriction>
     </AppLayout>
   );
 }

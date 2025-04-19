@@ -137,6 +137,10 @@ export default function Settings() {
     }
   }, [location, updateSubscription, user, subscription]);
 
+  const handleUpgradeClick = () => {
+    setIsUpgradeDialogOpen(true);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-4">
@@ -146,7 +150,7 @@ export default function Settings() {
 
         <div className="grid gap-4">
           <ProfileCard onEditProfile={() => setIsProfileDialogOpen(true)} />
-          <SubscriptionCard onUpgrade={() => setIsUpgradeDialogOpen(true)} />
+          <SubscriptionCard onUpgrade={handleUpgradeClick} />
           <AppearanceCard />
           <VoiceInputCard />
           <DataManagementCard />

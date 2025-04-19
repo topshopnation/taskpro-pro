@@ -44,6 +44,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           isTrialActive={isTrialActive}
           daysRemaining={daysRemaining}
           formattedExpiryDate={formattedExpiryDate}
+          error={error}
         />
 
         <div className="flex items-center justify-between border rounded-md p-3">
@@ -68,7 +69,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       </CardContent>
       <CardFooter className="py-2 px-4">
         <Button 
-          onClick={() => {}} // Removed onUpgrade prop
+          onClick={onUpgrade}
           disabled={subscription?.status === 'active' && !showRenewButton}
           size="sm"
           className="text-xs h-8"
