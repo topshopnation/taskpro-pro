@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, BadgeCheck } from "lucide-react";
@@ -37,16 +38,21 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         if (error) throw error;
 
         if (data) {
-          const yearlyDiscount = Math.round(
-            ((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100
+          // Force recalculation with fresh data
+          const monthly = data.price_monthly;
+          const yearly = data.price_yearly;
+          
+          const calculatedDiscount = Math.round(
+            ((monthly * 12 - yearly) / (monthly * 12)) * 100
           );
           
           setPrices({
-            monthly: data.price_monthly,
-            yearly: data.price_yearly
+            monthly,
+            yearly
           });
           
-          setYearlyDiscount(yearlyDiscount);
+          setYearlyDiscount(calculatedDiscount);
+          console.log("SubscriptionCard - calculated discount:", calculatedDiscount);
         }
       } catch (error) {
         console.error('Error fetching subscription prices:', error);

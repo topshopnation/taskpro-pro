@@ -29,15 +29,21 @@ export const PricingSection = () => {
         }
 
         if (data) {
-          const yearlyDiscount = Math.round(
-            ((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100
+          // Force recalculation with fresh data
+          const monthly = data.price_monthly;
+          const yearly = data.price_yearly;
+          
+          const calculatedDiscount = Math.round(
+            ((monthly * 12 - yearly) / (monthly * 12)) * 100
           );
           
           setSubscriptionPrices({
-            monthly: data.price_monthly,
-            yearly: data.price_yearly,
-            yearlyDiscount
+            monthly,
+            yearly,
+            yearlyDiscount: calculatedDiscount
           });
+          
+          console.log("PricingSection - calculated discount:", calculatedDiscount);
         }
       } catch (error) {
         console.error('Error in subscription price fetch:', error);
