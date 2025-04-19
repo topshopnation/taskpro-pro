@@ -1,3 +1,4 @@
+
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,6 +8,8 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
 import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionDialogProps {
   open: boolean;
