@@ -44,12 +44,13 @@ export const subscriptionService = {
         
         console.log("Updating with data:", updateData);
         
-        // Update existing subscription
+        // Update existing subscription with immediate select to get the updated data
         updateResult = await supabase
           .from("subscriptions")
           .update(updateData)
           .eq("user_id", userId)
-          .select();
+          .select()
+          .maybeSingle();
       } else {
         console.log("Creating new subscription for user:", userId);
         // Create new subscription
@@ -65,7 +66,8 @@ export const subscriptionService = {
             current_period_end: currentPeriodEnd || null,
             updated_at: new Date().toISOString()
           })
-          .select();
+          .select()
+          .maybeSingle();
       }
 
       if (updateResult.error) {
@@ -73,12 +75,12 @@ export const subscriptionService = {
         throw new Error(`Failed to update subscription: ${updateResult.error.message}`);
       }
       
-      if (!updateResult.data || updateResult.data.length === 0) {
+      if (!updateResult.data) {
         throw new Error("No subscription data returned after update");
       }
       
-      console.log("Subscription updated successfully:", updateResult.data[0]);
-      return updateResult.data[0] as Subscription;
+      console.log("Subscription updated successfully:", updateResult.data);
+      return updateResult.data as Subscription;
     } catch (error) {
       console.error("Error updating subscription:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
@@ -89,6 +91,7 @@ export const subscriptionService = {
   async fetchSubscription(userId: string) {
     console.log("Fetching subscription for user:", userId);
     try {
+      // Force cache refresh on the fetch
       const { data, error } = await supabase
         .from("subscriptions")
         .select("*")

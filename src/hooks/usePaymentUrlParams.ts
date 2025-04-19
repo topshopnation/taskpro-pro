@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from "sonner";
+import { useSubscription } from "@/contexts/subscription";
 
 export const usePaymentUrlParams = (
   isProcessingPayment: boolean,
@@ -9,6 +10,7 @@ export const usePaymentUrlParams = (
   paymentProcessed: React.RefObject<boolean>
 ) => {
   const location = useLocation();
+  const { fetchSubscription } = useSubscription();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -16,8 +18,21 @@ export const usePaymentUrlParams = (
     const paymentCancelled = urlParams.get('payment_cancelled');
     const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
     
-    if (paymentSuccess === 'true' && planType && !paymentProcessed.current && !isProcessingPayment) {
-      processPayment(planType);
+    const handlePayment = async () => {
+      try {
+        if (paymentSuccess === 'true' && planType && !paymentProcessed.current && !isProcessingPayment) {
+          await processPayment(planType);
+          // Force refresh subscription data after URL-based payment
+          await fetchSubscription();
+        }
+      } catch (error) {
+        console.error("Error handling payment from URL params:", error);
+        toast.error("Error processing payment. Please try again.");
+      }
+    };
+
+    if (paymentSuccess === 'true' && planType) {
+      handlePayment();
     } else if (paymentCancelled === 'true') {
       toast.error("Payment was cancelled. You can try again whenever you're ready.");
       
@@ -25,5 +40,5 @@ export const usePaymentUrlParams = (
       url.searchParams.delete('payment_cancelled');
       window.history.replaceState({}, document.title, url.toString());
     }
-  }, [location, processPayment, isProcessingPayment, paymentProcessed]);
+  }, [location, processPayment, isProcessingPayment, paymentProcessed, fetchSubscription]);
 };

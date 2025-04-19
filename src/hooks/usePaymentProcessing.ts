@@ -25,7 +25,9 @@ export const usePaymentProcessing = () => {
       await processPaymentConfirmation(planType, updateSubscription);
       console.log("Subscription updated successfully");
       
-      await fetchSubscription();
+      // Force a fresh subscription fetch directly after processing
+      const fetchResult = await fetchSubscription();
+      console.log("Subscription refetched after payment:", fetchResult);
       
       toast.dismiss(loadingToast);
       toast.success(`Successfully subscribed to ${planType} plan!`);
@@ -35,6 +37,7 @@ export const usePaymentProcessing = () => {
     } finally {
       setIsProcessingPayment(false);
       
+      // Remove URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete('payment_success');
       url.searchParams.delete('payment_cancelled');
@@ -54,6 +57,8 @@ export const usePaymentProcessing = () => {
       
       if (user && user.id === userId && isRecent) {
         await processPayment(planType);
+        // Force a fresh subscription fetch here too
+        await fetchSubscription();
       }
     } catch (error) {
       console.error("Error processing test payment:", error);

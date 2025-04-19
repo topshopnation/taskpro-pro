@@ -16,6 +16,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const [initialized, setInitialized] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const fetchLock = useRef(false);
+  const lastFetchTime = useRef(0);
   
   const {
     subscription,
@@ -33,13 +34,21 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       updateState(null);
       setInitialized(true);
-      return;
+      return null;
+    }
+
+    // Prevent fetch spam with minimum time between fetches
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    if (timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
+      console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
+      return subscription;
     }
 
     // Use a ref-based lock to prevent concurrent fetches
     if (isFetching || fetchLock.current) {
       console.log("Already fetching subscription, skipping");
-      return;
+      return subscription;
     }
 
     try {
@@ -50,20 +59,25 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       const data = await subscriptionService.fetchSubscription(user.id);
       console.log("Subscription data fetched:", data);
       
+      // Update last fetch time
+      lastFetchTime.current = Date.now();
+      
       // Apply the subscription update once without delays to prevent flickering
       updateState(data);
       setInitialized(true);
       setLoading(false);
       setIsFetching(false);
+      return data;
     } catch (error) {
       console.error("Error fetching subscription:", error);
       setInitialized(true);
       setLoading(false);
       setIsFetching(false);
+      return null;
     } finally {
       fetchLock.current = false;
     }
-  }, [user, setLoading, updateState, isFetching]);
+  }, [user, setLoading, updateState, isFetching, subscription]);
 
   // Fetch subscription data when component mounts or user changes
   useEffect(() => {
@@ -97,6 +111,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       await fetchSubscription();
       
       setLoading(false);
+      return updatedSubscription;
     } catch (error) {
       console.error("Error updating subscription:", error);
       setLoading(false);

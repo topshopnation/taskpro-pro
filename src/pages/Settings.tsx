@@ -37,14 +37,20 @@ export default function Settings() {
     const checkForTestPayment = async () => {
       const testPaymentData = localStorage.getItem('taskpro_test_payment');
       if (testPaymentData && !paymentProcessed.current && user) {
-        await handleTestPayment(testPaymentData);
+        try {
+          await handleTestPayment(testPaymentData);
+          // Ensure subscription state is updated after payment
+          await fetchSubscription();
+        } catch (error) {
+          console.error("Error handling test payment:", error);
+        }
       }
     };
     
     if (user && !isProcessingPayment) {
       checkForTestPayment();
     }
-  }, [user, handleTestPayment, isProcessingPayment]);
+  }, [user, handleTestPayment, isProcessingPayment, fetchSubscription]);
 
   // Reset the payment processed flag when unmounting
   useEffect(() => {
