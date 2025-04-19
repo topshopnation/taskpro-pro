@@ -105,14 +105,19 @@ export function RescheduleDialog({ open, onOpenChange, tasks, onSuccess }: Resch
     return date < today
   }
 
+  // Handle clicks on dialog content to prevent event bubbling
+  const handleDialogContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" onClick={handleDialogContentClick}>
         <DialogHeader>
           <DialogTitle>Reschedule All Overdue Tasks</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="flex justify-center">
+        <div className="space-y-4 py-4 pointer-events-auto">
+          <div className="flex justify-center pointer-events-auto">
             <Calendar
               mode="single"
               selected={rescheduleDate}

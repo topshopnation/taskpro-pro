@@ -89,6 +89,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
 
   // Handle setting time for a date
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation(); // Stop event propagation
     const newTimeInput = e.target.value;
     setTimeInput(newTimeInput);
     
@@ -105,13 +106,22 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   };
 
   // Clear time input and reset date to midnight
-  const handleClearTime = () => {
+  const handleClearTime = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     setTimeInput("");
     if (dueDate) {
       const dateWithoutTime = new Date(dueDate);
       dateWithoutTime.setHours(0, 0, 0, 0);
       onChange(dateWithoutTime);
     }
+  };
+
+  // Prevent popover from closing when interacting with time input
+  const handlePopoverContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const dateLabel = dueDate ? getDateLabelWithDay(dueDate) : { label: "Pick a date", day: "" };
@@ -151,15 +161,17 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
           sideOffset={5}
           alignOffset={0}
           avoidCollisions={true}
+          onClick={handlePopoverContentClick}
         >
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col space-y-2 pointer-events-auto">
+            <div className="flex items-center space-x-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
               <Input
                 type="time"
                 placeholder="Add time"
                 value={timeInput}
                 onChange={handleTimeInputChange}
                 className="h-7 py-1"
+                onClick={(e) => e.stopPropagation()}
               />
               {timeInput && (
                 <Button 

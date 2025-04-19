@@ -51,6 +51,11 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     }
   };
 
+  // Prevent event bubbling on popover content click
+  const handlePopoverContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -63,13 +68,24 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
           <span>{getTimeFilterLabel(value)}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-2 z-50" side="bottom">
-        <div className="flex flex-col space-y-2">
-          <div className="flex flex-col divide-y border rounded-md bg-background">
+      <PopoverContent 
+        align="end" 
+        className="w-auto p-2 z-50" 
+        side="bottom"
+        onClick={handlePopoverContentClick}
+      >
+        <div className="flex flex-col space-y-2 pointer-events-auto">
+          <div 
+            className="flex flex-col divide-y border rounded-md bg-background pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {quickOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={() => handleQuickOptionSelect(option.date, option.value)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleQuickOptionSelect(option.date, option.value);
+                }}
                 className={cn(
                   "flex items-center justify-between p-2 text-sm hover:bg-muted transition-colors",
                   option.value === value ? "bg-primary/10" : ""
@@ -82,7 +98,10 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
               </button>
             ))}
             <button
-              onClick={() => onChange("week")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("week");
+              }}
               className={cn(
                 "flex items-center justify-between p-2 text-sm hover:bg-muted transition-colors",
                 value === "week" && "bg-primary/10"

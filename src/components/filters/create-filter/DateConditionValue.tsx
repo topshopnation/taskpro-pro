@@ -121,6 +121,11 @@ export function DateConditionValue({
     }
   };
 
+  // Prevent popover content from closing when clicked
+  const handlePopoverContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <Select value={conditionValue} onValueChange={handleSelectChange}>
@@ -156,6 +161,7 @@ export function DateConditionValue({
             avoidCollisions={true}
             side="right"
             sideOffset={5}
+            onClick={handlePopoverContentClick}
           >
             <Calendar
               mode="single"

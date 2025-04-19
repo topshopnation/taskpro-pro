@@ -70,6 +70,7 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
 
   // Handle time input change
   const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation(); // Stop event propagation
     const newTimeInput = e.target.value
     setTimeInput(newTimeInput)
     
@@ -97,6 +98,11 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
     (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0)
   const timeString = shouldShowTime ? format(dueDate, "HH:mm") : ""
   
+  // Handle click on the popover content to prevent closing
+  const handlePopoverContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <DueDateButton 
@@ -113,8 +119,9 @@ export function TaskItemDueDate({ dueDate, onDateChange, isUpdating }: TaskItemD
         alignOffset={isMobile ? -40 : 0}
         sideOffset={5}
         avoidCollisions={true}
+        onClick={handlePopoverContentClick}
       >
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-2 pointer-events-auto">
           <TimeInput
             timeInput={timeInput}
             onTimeChange={handleTimeInputChange}
