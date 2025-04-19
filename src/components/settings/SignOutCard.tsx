@@ -19,9 +19,17 @@ export default function SignOutCard() {
       localStorage.clear();
       sessionStorage.clear();
       
-      // Add a small delay to ensure auth state changes are processed
+      // Clear any Supabase cookies that might exist
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.trim().split('=');
+        if (name.includes('sb-') || name.includes('supabase')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+        }
+      });
+      
+      // Force a complete page reload and redirect to auth page after a short delay
+      // to ensure all state is cleared properly
       setTimeout(() => {
-        // Force a complete page reload and redirect to auth page
         window.location.href = '/auth';
       }, 100);
       

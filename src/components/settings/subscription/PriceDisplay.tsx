@@ -8,7 +8,7 @@ interface PriceDisplayProps {
 }
 
 export default function PriceDisplay({ planType }: PriceDisplayProps) {
-  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 10, yearly: 100 });
+  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,6 +23,7 @@ export default function PriceDisplay({ planType }: PriceDisplayProps) {
         if (error) throw error;
 
         if (data) {
+          console.log("Fetched subscription prices:", data);
           setPrices({
             monthly: data.price_monthly,
             yearly: data.price_yearly

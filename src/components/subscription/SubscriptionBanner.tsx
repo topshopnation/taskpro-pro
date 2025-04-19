@@ -3,16 +3,43 @@ import { useSubscription } from "@/contexts/subscription";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Clock, AlertTriangle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SubscriptionBanner() {
   const { subscription, isActive, isTrialActive, daysRemaining } = useSubscription();
   const [dismissed, setDismissed] = useState(false);
+  const [monthlyPrice, setMonthlyPrice] = useState(0);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Show nothing if subscription is active or banner was dismissed
-  if (isActive || dismissed) return null;
+  useEffect(() => {
+    async function fetchMonthlyPrice() {
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('price_monthly')
+          .eq('is_active', true)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setMonthlyPrice(data.price_monthly);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription price:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMonthlyPrice();
+  }, []);
+  
+  // Show nothing if subscription is active, banner was dismissed, or prices are still loading
+  if (isActive || dismissed || loading) return null;
   
   // Trial with less than 3 days remaining - show warning
   if (isTrialActive && daysRemaining <= 3) {
@@ -23,7 +50,7 @@ export function SubscriptionBanner() {
             <Clock className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
               Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. 
-              Upgrade now to keep access to all features for only $10/month.
+              Upgrade now to keep access to all features for only ${monthlyPrice}/month.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -57,7 +84,7 @@ export function SubscriptionBanner() {
           <div className="flex items-center">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <AlertDescription className="text-sm">
-              Your subscription has expired. Renew now for only $10/month to regain full access to TaskPro.
+              Your subscription has expired. Renew now for only ${monthlyPrice}/month to regain full access to TaskPro.
             </AlertDescription>
           </div>
           <div className="flex items-center gap-2">

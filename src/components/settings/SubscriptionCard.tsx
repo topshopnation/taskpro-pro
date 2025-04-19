@@ -7,6 +7,8 @@ import { SubscriptionCardSkeleton } from "./subscription/SubscriptionCardSkeleto
 import { SubscriptionStatus } from "./subscription/SubscriptionStatus";
 import { SubscriptionFeatures } from "./subscription/SubscriptionFeatures";
 import { SubscriptionCardProps } from "@/types/subscriptionTypes";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   const {
@@ -20,10 +22,43 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     error
   } = useSubscriptionCard();
 
+  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
+  const [pricesLoading, setPricesLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPrices() {
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('price_monthly, price_yearly')
+          .eq('is_active', true)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setPrices({
+            monthly: data.price_monthly,
+            yearly: data.price_yearly
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching subscription prices:', error);
+      } finally {
+        setPricesLoading(false);
+      }
+    }
+
+    fetchPrices();
+  }, []);
+
   // Display loading state until we have finished initializing and the component is stable
-  if (!hasRendered || !isStable) {
+  if (!hasRendered || !isStable || pricesLoading) {
     return <SubscriptionCardSkeleton />;
   }
+
+  // Calculate yearly savings percentage
+  const yearlyDiscount = Math.round(((prices.monthly * 12 - prices.yearly) / (prices.monthly * 12)) * 100);
 
   return (
     <Card className="overflow-hidden">
@@ -56,8 +91,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               <div className="text-xs text-muted-foreground">
                 <p>Choose between:</p>
                 <ul className="pl-3 mt-0.5 space-y-0.5">
-                  <li>$10.00 per month</li>
-                  <li>$100.00 per year (save 16%)</li>
+                  <li>${prices.monthly.toFixed(2)} per month</li>
+                  <li>${prices.yearly.toFixed(2)} per year (save {yearlyDiscount}%)</li>
                 </ul>
               </div>
             </div>

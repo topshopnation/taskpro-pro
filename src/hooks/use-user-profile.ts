@@ -22,12 +22,12 @@ export const useUserProfile = () => {
       const profile = await fetchUserProfile(userId);
       const mappedUser = mapProfileToUser(userId, email, profile, avatarUrl);
       
-      // If no first name is set, use email as display name
-      if (!mappedUser.firstName && email) {
-        mappedUser.firstName = email.split('@')[0];
+      // Only set the user if we have a valid userId to prevent mock users
+      if (userId) {
+        setUser(mappedUser);
+      } else {
+        setUser(null);
       }
-      
-      setUser(mappedUser);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
       // If profile fetch fails but we have minimal user data, set basic user

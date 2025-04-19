@@ -12,6 +12,25 @@ export const useAuthState = () => {
   useEffect(() => {
     let isSubscribed = true;
     
+    const clearAllUserData = () => {
+      // Thorough cleanup of all user data
+      setUser(null);
+      setSession(null);
+      setIsLoading(false);
+      
+      // Clear browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear Supabase cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.trim().split('=');
+        if (name.includes('sb-') || name.includes('supabase')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+        }
+      });
+    };
+    
     // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
@@ -21,13 +40,7 @@ export const useAuthState = () => {
           if (isSubscribed) {
             // Make sure we fully clear user data on sign out
             console.log("SIGNED_OUT event detected, clearing all user data");
-            setUser(null);
-            setSession(null);
-            setIsLoading(false);
-            
-            // Force clear any lingering data
-            localStorage.clear();
-            sessionStorage.clear();
+            clearAllUserData();
           }
         } else if (newSession?.user && isSubscribed) {
           setSession(newSession);
@@ -48,9 +61,7 @@ export const useAuthState = () => {
         } else if (isSubscribed) {
           // No active session, ensure user data is cleared
           console.log("No active session, clearing user data");
-          setUser(null);
-          setSession(null);
-          setIsLoading(false);
+          clearAllUserData();
         }
       }
     );
@@ -63,9 +74,7 @@ export const useAuthState = () => {
         if (error) {
           console.error("Error getting session:", error);
           if (isSubscribed) {
-            setUser(null);
-            setSession(null);
-            setIsLoading(false);
+            clearAllUserData();
           }
           return;
         }
@@ -79,17 +88,14 @@ export const useAuthState = () => {
           );
         } else if (isSubscribed) {
           // No active session, make sure user data is cleared
-          setUser(null);
-          setSession(null);
+          clearAllUserData();
         }
         
         if (isSubscribed) setIsLoading(false);
       } catch (error) {
         console.error("Error initializing auth:", error);
         if (isSubscribed) {
-          setUser(null);
-          setSession(null);
-          setIsLoading(false);
+          clearAllUserData();
         }
       }
     };
