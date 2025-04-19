@@ -1,4 +1,3 @@
-
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,40 +25,34 @@ export default function UsersAdmin() {
     try {
       setLoading(true);
       
-      // Get all profiles
+      // Get profiles with email and role
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
       if (profilesError) throw profilesError;
 
-      // Get all subscriptions separately
+      // Get subscriptions separately
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('*');
 
       if (subsError) throw subsError;
 
-      // Get auth emails if possible
-      const { data: adminUsers, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id, email, role');
-
       // Match subscriptions to profiles
       const formattedUsers: UserProfile[] = profiles.map(profile => {
         const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {};
-        const adminUser = adminUsers?.find(admin => admin.id === profile.id);
         
         return {
           id: profile.id,
-          email: adminUser?.email || profile.email || '',
+          email: profile.email || '',
           first_name: profile.first_name || '',
           last_name: profile.last_name || '',
           subscription_status: userSubscription.status || 'none',
           plan_type: userSubscription.plan_type || 'none',
-          last_login: profile.updated_at,
+          role: profile.role || 'user',
           created_at: profile.created_at,
-          role: adminUser?.role || profile.role || 'user'
+          updated_at: profile.updated_at
         };
       });
 

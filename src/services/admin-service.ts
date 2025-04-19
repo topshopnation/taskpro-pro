@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AdminRole, AdminUser, SubscriptionPlan, UserProfile } from "@/types/adminTypes";
 import { toast } from "sonner";
@@ -53,8 +52,8 @@ export const adminService = {
         
       if (error) throw error;
       
-      // Ensure all plans have description and features properties
-      return data.map(plan => ({
+      // Transform the data to ensure all plans have description and features
+      return (data || []).map(plan => ({
         ...plan,
         description: plan.description || '',
         features: Array.isArray(plan.features) ? plan.features : []
@@ -65,7 +64,7 @@ export const adminService = {
     }
   },
   
-  async createSubscriptionPlan(plan: any) {
+  async createSubscriptionPlan(plan: Partial<SubscriptionPlan>) {
     try {
       const { data, error } = await supabase
         .from('subscription_plans')
@@ -78,6 +77,7 @@ export const adminService = {
         .single();
         
       if (error) throw error;
+      
       return {
         ...data,
         description: data.description || '',
