@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, BadgeCheck } from "lucide-react";
@@ -52,12 +51,10 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     fetchPrices();
   }, []);
 
-  // Display loading state until we have finished initializing and the component is stable
   if (!hasRendered || !isStable || pricesLoading) {
     return <SubscriptionCardSkeleton />;
   }
 
-  // Calculate yearly savings percentage
   const yearlyDiscount = Math.round(((prices.monthly * 12 - prices.yearly) / (prices.monthly * 12)) * 100);
 
   return (

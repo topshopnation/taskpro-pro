@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -40,7 +39,7 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
   }, []);
   
   const yearlyDiscount = plan ? 
-    Math.round(((plan.price_monthly * 12) - plan.price_yearly) / (plan.price_monthly * 12) * 100) : 0;
+    Math.round(((plan.price_monthly * 12 - plan.price_yearly) / (plan.price_monthly * 12)) * 100) : 0;
   
   if (loading) {
     return (
@@ -92,11 +91,11 @@ export default function PlanSelector({ planType, onPlanTypeChange }: PlanSelecto
                   <Label htmlFor="yearly" className="font-medium text-sm">Yearly</Label>
                 </div>
                 <div className="mt-1 flex items-baseline">
-                  <span className="text-2xl font-bold">${plan.price_yearly.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">${plan?.price_yearly.toFixed(2)}</span>
                   <span className="ml-1 text-muted-foreground text-sm">/ year</span>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Billed annually. Only ${(plan.price_yearly / 12).toFixed(2)} per month.
+                  Billed annually. Only ${plan ? (plan.price_yearly / 12).toFixed(2) : '0'} per month.
                 </div>
               </div>
             </div>
