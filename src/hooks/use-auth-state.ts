@@ -20,10 +20,14 @@ export const useAuthState = () => {
         if (event === 'SIGNED_OUT') {
           if (isSubscribed) {
             // Make sure we fully clear user data on sign out
+            console.log("SIGNED_OUT event detected, clearing all user data");
             setUser(null);
             setSession(null);
             setIsLoading(false);
-            console.log("User signed out, all user data cleared");
+            
+            // Force clear any lingering data
+            localStorage.clear();
+            sessionStorage.clear();
           }
         } else if (newSession?.user && isSubscribed) {
           setSession(newSession);
@@ -42,6 +46,8 @@ export const useAuthState = () => {
             }
           }, 0);
         } else if (isSubscribed) {
+          // No active session, ensure user data is cleared
+          console.log("No active session, clearing user data");
           setUser(null);
           setSession(null);
           setIsLoading(false);
@@ -56,7 +62,11 @@ export const useAuthState = () => {
         
         if (error) {
           console.error("Error getting session:", error);
-          if (isSubscribed) setIsLoading(false);
+          if (isSubscribed) {
+            setUser(null);
+            setSession(null);
+            setIsLoading(false);
+          }
           return;
         }
 
@@ -67,12 +77,20 @@ export const useAuthState = () => {
             data.session.user.email,
             data.session.user.user_metadata?.avatar_url
           );
+        } else if (isSubscribed) {
+          // No active session, make sure user data is cleared
+          setUser(null);
+          setSession(null);
         }
         
         if (isSubscribed) setIsLoading(false);
       } catch (error) {
         console.error("Error initializing auth:", error);
-        if (isSubscribed) setIsLoading(false);
+        if (isSubscribed) {
+          setUser(null);
+          setSession(null);
+          setIsLoading(false);
+        }
       }
     };
 

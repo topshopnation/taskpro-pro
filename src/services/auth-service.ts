@@ -54,12 +54,14 @@ export const signInWithProvider = async (provider: Provider): Promise<void> => {
 
 export const signOut = async (): Promise<void> => {
   try {
-    // Clear all browser storage related to authentication
-    localStorage.clear();
-    sessionStorage.clear();
+    console.log('Starting sign out process...');
     
     // Get the current session first to check if it exists
     const { data: sessionData } = await supabase.auth.getSession();
+    
+    // Clear all browser storage related to authentication
+    localStorage.clear();
+    sessionStorage.clear();
     
     // If no session exists, just clear local state and return without error
     if (!sessionData?.session) {
@@ -67,16 +69,22 @@ export const signOut = async (): Promise<void> => {
       return;
     }
     
-    // Proceed with global sign out if session exists
+    // Proceed with sign out if session exists
+    console.log('Active session found, signing out from Supabase');
     const { error } = await supabase.auth.signOut({
-      scope: 'global' // Ensure we sign out completely from all devices
+      scope: 'global' // Sign out from all devices
     });
     
     if (error) {
-      console.error('Error signing out:', error);
+      console.error('Error signing out from Supabase:', error);
       throw error;
     }
     
+    // Ensure all local storage is wiped even after signOut
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    console.log('Supabase sign out successful');
     toast.success("Signed out successfully");
   } catch (error: any) {
     // If the error is about missing session, handle it gracefully
@@ -88,6 +96,10 @@ export const signOut = async (): Promise<void> => {
     console.error('Error signing out:', error);
     toast.error("Failed to sign out", { description: error.message });
     throw error;
+  } finally {
+    // Ensure localStorage is cleared regardless of success or failure
+    localStorage.clear();
+    sessionStorage.clear();
   }
 };
 

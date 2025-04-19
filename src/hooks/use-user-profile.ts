@@ -7,13 +7,14 @@ export const useUserProfile = () => {
   const [user, setUser] = useState<User | null>(null);
 
   const updateUserFromSession = useCallback(async (
-    userId: string,
+    userId?: string,
     email?: string,
     avatarUrl?: string
   ) => {
     try {
       // If userId is not provided, reset the user state
       if (!userId) {
+        console.log("No userId provided, resetting user state");
         setUser(null);
         return;
       }
@@ -29,8 +30,9 @@ export const useUserProfile = () => {
       setUser(mappedUser);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
-      // If profile fetch fails, set basic user with email as first name
+      // If profile fetch fails but we have minimal user data, set basic user
       if (userId && email) {
+        console.log("Setting minimal user data after profile fetch failure");
         setUser({
           id: userId,
           email: email,
@@ -38,6 +40,7 @@ export const useUserProfile = () => {
         });
       } else {
         // If we don't have minimal user data, reset the user state
+        console.log("No minimal user data available, resetting user state");
         setUser(null);
       }
     }

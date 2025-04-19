@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -9,7 +8,6 @@ import { toast } from "sonner";
 
 export default function SignOutCard() {
   const { signOut } = useAuth();
-  const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -17,24 +15,26 @@ export default function SignOutCard() {
       setIsLoggingOut(true);
       await signOut();
       
-      // Force a complete reset of auth state and hard redirect
-      localStorage.clear(); // Clear ALL localStorage, not just the token
-      sessionStorage.clear(); // Clear any session storage as well
+      // Perform a thorough cleanup
+      localStorage.clear();
+      sessionStorage.clear();
       
-      // Use location.replace for a complete page reload without history
-      window.location.replace('/auth');
+      // Add a small delay to ensure auth state changes are processed
+      setTimeout(() => {
+        // Force a complete page reload and redirect to auth page
+        window.location.href = '/auth';
+      }, 100);
+      
     } catch (error: any) {
       console.error("Sign out error:", error);
-      
-      // Even if there's an error, we want to attempt to navigate to auth
       toast.error("Error signing out", { 
         description: "Redirecting to login page" 
       });
       
-      // Force redirect regardless of error
+      // Force cleanup and redirect regardless of error
       localStorage.clear();
       sessionStorage.clear();
-      window.location.replace('/auth');
+      window.location.href = '/auth';
     } finally {
       setIsLoggingOut(false);
     }
