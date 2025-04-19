@@ -1,3 +1,4 @@
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,30 +26,36 @@ export default function UsersAdmin() {
     try {
       setLoading(true);
       
+      // First, get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          subscriptions:subscriptions(
-            status,
-            plan_type,
-            last_login
-          )
-        `);
+        .select('*');
 
       if (profilesError) throw profilesError;
 
-      const formattedUsers = profiles.map(profile => ({
-        id: profile.id,
-        email: profile.email,
-        firstName: profile.first_name,
-        lastName: profile.last_name,
-        subscription_status: profile.subscriptions?.[0]?.status || 'none',
-        plan_type: profile.subscriptions?.[0]?.plan_type || 'none',
-        last_login: profile.updated_at,
-        created_at: profile.created_at,
-        role: profile.role || 'user'
-      }));
+      // Then, get all subscriptions separately
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('subscriptions')
+        .select('*');
+
+      if (subsError) throw subsError;
+
+      // Match subscriptions to profiles
+      const formattedUsers = profiles.map(profile => {
+        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {};
+        
+        return {
+          id: profile.id,
+          email: profile.email || '', // Add default if missing
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          subscription_status: userSubscription.status || 'none',
+          plan_type: userSubscription.plan_type || 'none',
+          last_login: profile.updated_at,
+          created_at: profile.created_at,
+          role: profile.role || 'user'
+        };
+      });
 
       setUsers(formattedUsers);
     } catch (error) {
@@ -74,10 +81,7 @@ export default function UsersAdmin() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
+    fetchUsers();
   };
   
   const handleRoleChange = async () => {

@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { AdminRole, AdminUser } from "@/types/adminTypes";
+import { toast } from "sonner";
 
 export const adminService = {
   // Admin users
@@ -50,7 +52,13 @@ export const adminService = {
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      return data;
+      
+      // Ensure all plans have description and features properties
+      return data.map(plan => ({
+        ...plan,
+        description: plan.description || '',
+        features: plan.features || []
+      }));
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
       return [];
@@ -66,7 +74,11 @@ export const adminService = {
         .single();
         
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        description: data.description || '',
+        features: data.features || []
+      };
     } catch (error) {
       console.error('Error creating subscription plan:', error);
       return null;

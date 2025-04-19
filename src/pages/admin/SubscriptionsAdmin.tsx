@@ -41,7 +41,15 @@ export default function SubscriptionsAdmin() {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setPlans(subscriptionPlans);
+        
+        // Ensure all plans have description and features properties
+        const formattedPlans = subscriptionPlans.map(plan => ({
+          ...plan,
+          description: plan.description || '',
+          features: plan.features || []
+        })) as SubscriptionPlan[];
+        
+        setPlans(formattedPlans);
       } catch (error) {
         console.error("Error fetching subscription plans:", error);
         toast.error("Failed to load subscription plans");
@@ -62,7 +70,7 @@ export default function SubscriptionsAdmin() {
     setLoading(true);
     try {
       const refreshedPlans = await adminService.getSubscriptionPlans();
-      setPlans(refreshedPlans);
+      setPlans(refreshedPlans as SubscriptionPlan[]);
       toast.success("Subscription plans refreshed");
     } catch (error) {
       console.error("Error refreshing plans:", error);
@@ -116,7 +124,7 @@ export default function SubscriptionsAdmin() {
       } else {
         const newPlan = await adminService.createSubscriptionPlan(currentPlan);
         if (newPlan) {
-          setPlans(prev => [...prev, newPlan]);
+          setPlans(prev => [...prev, newPlan as SubscriptionPlan]);
           toast.success("Subscription plan created");
         }
       }

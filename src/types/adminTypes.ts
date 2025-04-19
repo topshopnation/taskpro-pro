@@ -35,6 +35,19 @@ export interface UserActivity {
   timestamp: string;
 }
 
+// Define user profile interface for admin views
+export interface UserProfile {
+  id: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  created_at: string;
+  updated_at?: string;
+  role?: string;
+  subscription_status?: string;
+  plan_type?: string;
+}
+
 // Mock data for admin users
 export const mockAdminUsers: AdminUser[] = [
   {
