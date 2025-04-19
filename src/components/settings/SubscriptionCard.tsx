@@ -23,6 +23,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
 
   const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [yearlyDiscount, setYearlyDiscount] = useState(0);
 
   useEffect(() => {
     async function fetchPrices() {
@@ -36,10 +37,16 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         if (error) throw error;
 
         if (data) {
+          const yearlyDiscount = Math.round(
+            ((data.price_monthly * 12 - data.price_yearly) / (data.price_monthly * 12)) * 100
+          );
+          
           setPrices({
             monthly: data.price_monthly,
             yearly: data.price_yearly
           });
+          
+          setYearlyDiscount(yearlyDiscount);
         }
       } catch (error) {
         console.error('Error fetching subscription prices:', error);
@@ -54,10 +61,6 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   if (!hasRendered || !isStable || pricesLoading) {
     return <SubscriptionCardSkeleton />;
   }
-
-  const yearlyDiscount = Math.round(
-    ((prices.monthly * 12 - prices.yearly) / (prices.monthly * 12)) * 100
-  );
 
   return (
     <Card className="overflow-hidden">
