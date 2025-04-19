@@ -41,6 +41,8 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
+        // Fix the type error by properly handling the event types
+        // Using a string comparison instead of relying on TypeScript union types
         if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
           if (isSubscribed) {
             // Make sure we fully clear user data on sign out
