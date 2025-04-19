@@ -15,6 +15,8 @@ export function usePaymentProcessing() {
   // Handle the completion of a payment based on URL params
   const processPayment = async (paymentId: string, paymentStatus: string) => {
     if (!user) return;
+    
+    console.log("Starting payment processing:", { paymentId, paymentStatus });
     setIsProcessingPayment(true);
 
     try {
@@ -36,6 +38,13 @@ export function usePaymentProcessing() {
           periodEnd.setFullYear(periodEnd.getFullYear() + 1);
         }
         
+        console.log("Updating subscription with:", {
+          status: "active",
+          planType: planType,
+          currentPeriodStart: currentDate.toISOString(),
+          currentPeriodEnd: periodEnd.toISOString()
+        });
+        
         // Update subscription with payment details
         await updateSubscription({
           status: "active",
@@ -44,13 +53,14 @@ export function usePaymentProcessing() {
           currentPeriodEnd: periodEnd.toISOString()
         } as SubscriptionUpdate);
         
-        toast.success("Payment successful! Your subscription is now active.");
+        console.log("Subscription update completed successfully");
       } else {
         toast.error("Payment was not completed successfully.");
       }
     } catch (error: any) {
       console.error("Error processing payment:", error);
       toast.error(`Payment processing error: ${error.message}`);
+      paymentProcessed.current = false;
     } finally {
       setIsProcessingPayment(false);
     }
@@ -59,10 +69,16 @@ export function usePaymentProcessing() {
   // Handle test payment data (for development purposes)
   const handleTestPayment = async (testPaymentData: string) => {
     try {
+      if (paymentProcessed.current) {
+        console.log("Payment already processed, skipping test payment");
+        return false;
+      }
+      
       const paymentData = JSON.parse(testPaymentData);
       const { paymentId, success } = paymentData;
 
       if (success && paymentId) {
+        console.log("Processing test payment:", paymentData);
         await processPayment(paymentId, "completed");
         // Clear the test payment data
         localStorage.removeItem("taskpro_test_payment");

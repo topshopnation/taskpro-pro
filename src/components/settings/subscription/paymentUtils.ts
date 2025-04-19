@@ -116,7 +116,8 @@ export async function createPaymentUrl(
   
   const customData = JSON.stringify({
     user_id: userId,
-    plan_type: planType
+    plan_type: planType,
+    timestamp: Date.now() // Add timestamp to prevent caching issues
   });
   
   const encodedCustomData = encodeURIComponent(customData);
@@ -130,14 +131,19 @@ export async function createPaymentUrl(
       planType
     });
     
+    // Store test payment data with timestamp to ensure it's fresh
     localStorage.setItem('taskpro_test_payment', JSON.stringify({
       userId,
       planType,
+      paymentId: planType,
+      success: true,
       timestamp: Date.now()
     }));
     
-    // Always redirect to settings page
-    window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType;
+    // Don't show the toast here, it will be shown after processing is complete
+    
+    // Always redirect to settings page with fresh query parameters
+    window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType + "&t=" + Date.now();
     
     return paymentUrl;
   }
@@ -150,12 +156,13 @@ export async function createPaymentUrl(
   
   // Always return to settings page in production too
   const settingsUrl = window.location.origin + "/settings";
-  paymentUrl += `&return=${encodeURIComponent(settingsUrl + "?payment_success=true&plan_type=" + planType)}`;
-  paymentUrl += `&cancel_url=${encodeURIComponent(settingsUrl + "?payment_cancelled=true")}`;
+  paymentUrl += `&return=${encodeURIComponent(settingsUrl + "?payment_success=true&plan_type=" + planType + "&t=" + Date.now())}`;
+  paymentUrl += `&cancel_url=${encodeURIComponent(settingsUrl + "?payment_cancelled=true&t=" + Date.now())}`;
   
   return paymentUrl;
 }
 
+// Define a global variable to track whether a payment is already being processed
 let isProcessingPayment = false;
 
 export async function processPaymentConfirmation(
@@ -170,6 +177,7 @@ export async function processPaymentConfirmation(
   
   try {
     isProcessingPayment = true;
+    console.log("Starting payment confirmation processing for plan:", paymentType);
     
     const currentDate = new Date();
     const periodEnd = new Date(currentDate);

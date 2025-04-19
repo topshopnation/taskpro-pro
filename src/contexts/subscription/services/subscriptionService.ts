@@ -51,6 +51,9 @@ export const subscriptionService = {
           .eq("user_id", userId)
           .select()
           .maybeSingle();
+          
+        // Log the raw response for debugging  
+        console.log("Update result:", updateResult);
       } else {
         console.log("Creating new subscription for user:", userId);
         // Create new subscription
@@ -68,6 +71,9 @@ export const subscriptionService = {
           })
           .select()
           .maybeSingle();
+          
+        // Log the raw response for debugging
+        console.log("Insert result:", updateResult);
       }
 
       if (updateResult.error) {
@@ -107,8 +113,13 @@ export const subscriptionService = {
         throw new Error(`Failed to fetch subscription: ${error.message}`);
       }
 
-      console.log("Subscription fetched successfully:", data);
-      return data as Subscription;
+      if (data) {
+        console.log("Subscription fetched successfully:", data);
+        return data as Subscription;
+      } else {
+        console.log("No subscription found for user:", userId);
+        return null;
+      }
     } catch (error) {
       console.error("Error fetching subscription:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";

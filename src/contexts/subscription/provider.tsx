@@ -17,6 +17,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const [isFetching, setIsFetching] = useState(false);
   const fetchLock = useRef(false);
   const lastFetchTime = useRef(0);
+  const lastUpdateTime = useRef(0);
   
   const {
     subscription,
@@ -28,7 +29,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     setLoading
   } = useSubscriptionState();
 
-  const fetchSubscription = useCallback(async () => {
+  const fetchSubscription = useCallback(async (force = false) => {
     if (!user) {
       console.log("No user, skipping subscription fetch");
       setLoading(false);
@@ -37,16 +38,16 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       return null;
     }
 
-    // Prevent fetch spam with minimum time between fetches
+    // Prevent fetch spam with minimum time between fetches (unless forced)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    if (timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
+    if (!force && timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
       console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
       return subscription;
     }
 
     // Use a ref-based lock to prevent concurrent fetches
-    if (isFetching || fetchLock.current) {
+    if ((isFetching || fetchLock.current) && !force) {
       console.log("Already fetching subscription, skipping");
       return subscription;
     }
@@ -98,17 +99,27 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       throw new Error("You must be signed in to update your subscription.");
     }
 
+    // Prevent update spam with minimum time between updates
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastUpdateTime.current;
+    if (timeSinceLastUpdate < 1000 && lastUpdateTime.current > 0) {
+      console.log("Throttling subscription update, last update was", timeSinceLastUpdate, "ms ago");
+      // Still continue with the update but log the throttling
+    }
+
     try {
       setLoading(true);
       console.log("Starting subscription update for user:", user.id, "with data:", update);
       const updatedSubscription = await subscriptionService.updateSubscription(user.id, update);
       
+      lastUpdateTime.current = Date.now();
       console.log("Subscription updated successfully:", updatedSubscription);
+      
       // Update immediately without artificial delays
       updateState(updatedSubscription);
       
       // Refresh the subscription data to ensure we have the latest
-      await fetchSubscription();
+      await fetchSubscription(true);
       
       setLoading(false);
       return updatedSubscription;

@@ -32,12 +32,13 @@ export default function Settings() {
     initializeTrialIfNeeded();
   }, [user, subscription, loading, fetchSubscription]);
 
-  // Check for test payment in localStorage
+  // Check for test payment in localStorage on mount and after URL changes
   useEffect(() => {
     const checkForTestPayment = async () => {
       const testPaymentData = localStorage.getItem('taskpro_test_payment');
       if (testPaymentData && !paymentProcessed.current && user) {
         try {
+          console.log("Found test payment data in localStorage");
           await handleTestPayment(testPaymentData);
           // Ensure subscription state is updated after payment
           await fetchSubscription();
@@ -51,6 +52,14 @@ export default function Settings() {
       checkForTestPayment();
     }
   }, [user, handleTestPayment, isProcessingPayment, fetchSubscription]);
+
+  // Refresh subscription data when the component mounts
+  useEffect(() => {
+    if (user && !loading) {
+      console.log("Settings page mounted, refreshing subscription data");
+      fetchSubscription();
+    }
+  }, []);
 
   // Reset the payment processed flag when unmounting
   useEffect(() => {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
-import { createPaymentUrl, processPaymentConfirmation } from "./subscription/paymentUtils";
+import { createPaymentUrl } from "./subscription/paymentUtils";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -18,7 +18,7 @@ interface SubscriptionDialogProps {
 
 export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionDialogProps) {
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
-  const { updateSubscription, subscription } = useSubscription();
+  const { updateSubscription, subscription, fetchSubscription } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const location = useLocation();
