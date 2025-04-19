@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import ProfileCard from "@/components/settings/ProfileCard";
@@ -22,6 +22,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateSubscription, subscription, loading, fetchSubscription } = useSubscription();
+  const paymentProcessed = useRef(false);
 
   // Check if user needs a trial subscription
   useEffect(() => {
@@ -55,8 +56,9 @@ export default function Settings() {
           // Make sure this is for the current user and not too old (5 minutes max)
           const isRecent = Date.now() - timestamp < 5 * 60 * 1000;
           
-          if (user && user.id === userId && isRecent) {
+          if (user && user.id === userId && isRecent && !paymentProcessed.current) {
             console.log("Processing test payment for plan:", planType);
+            paymentProcessed.current = true;
             toast.loading("Processing your subscription...");
             
             try {
@@ -91,7 +93,7 @@ export default function Settings() {
     const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
     
     // Process successful payment
-    if (paymentSuccess === 'true' && planType) {
+    if (paymentSuccess === 'true' && planType && !paymentProcessed.current) {
       console.log("Processing payment success from URL. Plan type:", planType);
       console.log("Current user:", user ? user.id : 'Not logged in');
       console.log("Current subscription status:", subscription ? subscription.status : 'None');
@@ -99,6 +101,9 @@ export default function Settings() {
       // Process the subscription update
       const processPayment = async () => {
         try {
+          // Set the flag to prevent duplicate processing
+          paymentProcessed.current = true;
+          
           toast.loading("Processing your subscription...");
           console.log("Starting payment processing for plan:", planType);
           
@@ -136,6 +141,13 @@ export default function Settings() {
       window.history.replaceState({}, document.title, url.toString());
     }
   }, [location, updateSubscription, user, subscription]);
+
+  // Reset the payment processed flag when the component unmounts
+  useEffect(() => {
+    return () => {
+      paymentProcessed.current = false;
+    };
+  }, []);
 
   const handleUpgradeClick = () => {
     setIsUpgradeDialogOpen(true);
