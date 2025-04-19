@@ -27,7 +27,6 @@ function Calendar({
 
   const handleQuickOptionClick = (date: Date | undefined, event: React.MouseEvent) => {
     event.preventDefault();
-    event.stopPropagation();
     
     if (onQuickOptionSelect) {
       onQuickOptionSelect(date);

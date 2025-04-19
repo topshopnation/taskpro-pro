@@ -1,4 +1,12 @@
 
-import { SubscriptionProvider, useSubscription } from "./subscription";
+import { createContext, useContext } from 'react';
+import { SubscriptionContextType } from './subscription';
+import { useSubscription as useSubscriptionHook } from './subscription/context';
 
-export { SubscriptionProvider, useSubscription };
+// Create subscription context with default values
+export const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+
+// Create useSubscription hook
+export const useSubscription = () => {
+  return useSubscriptionHook();
+};

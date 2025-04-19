@@ -1,69 +1,62 @@
 
-import { useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/subscription";
-import { processPaymentConfirmation } from "@/components/settings/subscription/paymentUtils";
+import { SubscriptionUpdate } from "@/contexts/subscription/types";
 
-export const usePaymentProcessing = () => {
+export function usePaymentProcessing() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const location = useLocation();
-  const { user } = useAuth();
-  const { updateSubscription, fetchSubscription } = useSubscription();
   const paymentProcessed = useRef(false);
+  const { user } = useAuth();
+  const { updateSubscription } = useSubscription();
 
-  const processPayment = async (planType: 'monthly' | 'yearly') => {
+  // Handle the completion of a payment based on URL params
+  const processPayment = async (paymentId: string, paymentStatus: string) => {
+    if (!user) return;
+    setIsProcessingPayment(true);
+
     try {
+      // Mark the payment as processed
       paymentProcessed.current = true;
-      setIsProcessingPayment(true);
-      
-      const loadingToast = toast.loading("Processing your subscription...");
-      
-      console.log("Starting payment processing for plan:", planType);
-      
-      await processPaymentConfirmation(planType, updateSubscription);
-      console.log("Subscription updated successfully");
-      
-      // Force a fresh subscription fetch directly after processing
-      const fetchResult = await fetchSubscription();
-      console.log("Subscription refetched after payment:", fetchResult);
-      
-      toast.dismiss(loadingToast);
-      toast.success(`Successfully subscribed to ${planType} plan!`);
-    } catch (error) {
+
+      // Process the payment based on status
+      if (paymentStatus === "completed" || paymentStatus === "success") {
+        // Update subscription with payment details
+        await updateSubscription({
+          payment_id: paymentId,
+          status: "active",
+        } as SubscriptionUpdate);
+        
+        toast.success("Payment successful! Your subscription is now active.");
+      } else {
+        toast.error("Payment was not completed successfully.");
+      }
+    } catch (error: any) {
       console.error("Error processing payment:", error);
-      toast.error("Failed to process payment. Please try again or contact support.");
+      toast.error(`Payment processing error: ${error.message}`);
     } finally {
       setIsProcessingPayment(false);
-      
-      // Remove URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete('payment_success');
-      url.searchParams.delete('payment_cancelled');
-      url.searchParams.delete('plan_type');
-      window.history.replaceState({}, document.title, url.toString());
     }
   };
 
+  // Handle test payment data (for development purposes)
   const handleTestPayment = async (testPaymentData: string) => {
     try {
-      const { userId, planType, timestamp } = JSON.parse(testPaymentData);
-      console.log("Found test payment data:", { userId, planType, timestamp });
-      
-      localStorage.removeItem('taskpro_test_payment');
-      
-      const isRecent = Date.now() - timestamp < 5 * 60 * 1000;
-      
-      if (user && user.id === userId && isRecent) {
-        await processPayment(planType);
-        // Force a fresh subscription fetch here too
-        await fetchSubscription();
+      const paymentData = JSON.parse(testPaymentData);
+      const { paymentId, success } = paymentData;
+
+      if (success && paymentId) {
+        await processPayment(paymentId, "completed");
+        // Clear the test payment data
+        localStorage.removeItem("taskpro_test_payment");
+        return true;
       }
+      return false;
     } catch (error) {
-      console.error("Error processing test payment:", error);
-      toast.error("Failed to process test payment. Please try again.");
-      setIsProcessingPayment(false);
+      console.error("Error handling test payment:", error);
+      return false;
     }
   };
 
@@ -71,6 +64,6 @@ export const usePaymentProcessing = () => {
     isProcessingPayment,
     processPayment,
     handleTestPayment,
-    paymentProcessed
+    paymentProcessed,
   };
-};
+}
