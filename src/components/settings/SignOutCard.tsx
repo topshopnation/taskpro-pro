@@ -16,13 +16,19 @@ export default function SignOutCard() {
     try {
       setIsLoggingOut(true);
       await signOut();
-      toast.success("Signed out successfully");
-      navigate('/auth');
+      
+      // Force a clean navigation to auth regardless of success or failure
+      localStorage.removeItem('supabase.auth.token');
+      navigate('/auth', { replace: true });
     } catch (error: any) {
       console.error("Sign out error:", error);
+      
+      // Even if there's an error, we want to attempt to navigate to auth
+      // This ensures users can get back to the login screen
       toast.error("Error signing out", { 
-        description: error.message || "Something went wrong. Please try again." 
+        description: "Redirecting to login page" 
       });
+      navigate('/auth', { replace: true });
     } finally {
       setIsLoggingOut(false);
     }

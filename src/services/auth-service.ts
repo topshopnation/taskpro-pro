@@ -57,7 +57,15 @@ export const signOut = async (): Promise<void> => {
     // Get the current session first to check if it exists
     const { data: sessionData } = await supabase.auth.getSession();
     
-    // Sign out regardless of whether a session exists
+    // If no session exists, just clear local state and return without error
+    if (!sessionData?.session) {
+      console.log('No active session found, clearing local state only');
+      // We'll handle this case gracefully - no need to throw an error
+      localStorage.removeItem('supabase.auth.token');
+      return;
+    }
+    
+    // Proceed with sign out if session exists
     const { error } = await supabase.auth.signOut();
     
     if (error) {
@@ -65,11 +73,14 @@ export const signOut = async (): Promise<void> => {
       throw error;
     }
     
-    // Only show success toast if we had a session
-    if (sessionData?.session) {
-      toast.success("Signed out successfully");
-    }
+    toast.success("Signed out successfully");
   } catch (error: any) {
+    // If the error is about missing session, handle it gracefully
+    if (error.message?.includes('Auth session missing')) {
+      console.log('Auth session already cleared, proceeding with navigation');
+      return; // Return without error to allow navigation
+    }
+    
     console.error('Error signing out:', error);
     toast.error("Failed to sign out", { description: error.message });
     throw error;
