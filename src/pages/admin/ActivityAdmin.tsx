@@ -84,7 +84,7 @@ export default function ActivityAdmin() {
   const getEventDescription = (log: ActivityLog) => {
     switch (log.type) {
       case 'auth':
-        return `Auth event: ${log.details.event_type || 'Unknown'}`;
+        return `User signup: ${log.details.user_id}`;
       case 'profile':
         return `Profile updated: ${log.details.first_name || ''} ${log.details.last_name || ''} (${log.details.email || 'No email'})`;
       case 'subscription':
