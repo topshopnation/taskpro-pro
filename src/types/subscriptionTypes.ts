@@ -39,4 +39,5 @@ export interface UseSubscriptionCardReturn {
   isStable: boolean;
   showRenewButton: boolean;
   error: string | null;
+  isSubscriptionActive: boolean; // Added new property
 }

@@ -39,10 +39,12 @@ export const updateSubscriptionStatus = (
   // Check if subscription is active
   else if (subscription.status === 'active' && subscription.current_period_end) {
     const periodEnd = new Date(subscription.current_period_end);
+    const isStillActive = periodEnd > now;
+    
     return {
       isTrialActive: false,
       daysRemaining: calculateDaysRemaining(subscription.current_period_end),
-      isActive: periodEnd > now
+      isActive: isStillActive
     };
   } 
   // Otherwise subscription is not active

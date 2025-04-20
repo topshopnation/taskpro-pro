@@ -35,12 +35,25 @@ export function SubscriptionStatus({
       </div>
     );
   } else if (subscription?.status === 'active') {
+    const currentDate = new Date();
+    const expiryDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+    const isExpired = expiryDate && expiryDate < currentDate;
+    
     planName = subscription.plan_type === 'monthly' ? "Monthly Subscription" : "Annual Subscription";
-    statusElement = (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-        Active
-      </Badge>
-    );
+    
+    if (isExpired) {
+      statusElement = (
+        <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
+          Expired
+        </Badge>
+      );
+    } else {
+      statusElement = (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+          Active
+        </Badge>
+      );
+    }
   } else if (subscription?.status === 'expired') {
     planName = "Expired Subscription";
     statusElement = (
@@ -58,7 +71,7 @@ export function SubscriptionStatus({
   } else {
     planName = "No Active Subscription";
     statusElement = (
-      <Badge variant="outline" className="text-muted-foreground text-xs">
+      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
         Inactive
       </Badge>
     );

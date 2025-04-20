@@ -19,7 +19,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     hasRendered,
     isStable,
     showRenewButton,
-    error
+    error,
+    isSubscriptionActive // Use this new property
   } = useSubscriptionCard();
 
   const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
@@ -112,12 +113,12 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       <CardFooter className="py-2 px-4">
         <Button 
           onClick={onUpgrade}
-          disabled={subscription?.status === 'active' && !showRenewButton}
+          disabled={isSubscriptionActive && !showRenewButton} // Use isSubscriptionActive here
           size="sm"
           className="text-xs h-8"
         >
           <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-          {subscription?.status === 'active' 
+          {isSubscriptionActive 
             ? showRenewButton 
               ? 'Renew Subscription'
               : 'Currently Subscribed' 

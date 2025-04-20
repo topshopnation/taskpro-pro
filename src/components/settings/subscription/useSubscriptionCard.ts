@@ -64,12 +64,26 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
     }
   }, [loading, initialized, fetchSubscription]);
 
+  // Check if subscription is truly active (accounts for expired dates)
+  const isSubscriptionActive = subscription?.status === 'active' && (() => {
+    try {
+      if (!subscription.current_period_end) return false;
+      const endDate = new Date(subscription.current_period_end);
+      const now = new Date();
+      return endDate > now;
+    } catch (err) {
+      console.error("Error checking subscription active status:", err);
+      return false;
+    }
+  })();
+
   const showRenewButton = subscription?.status === 'active' && (() => {
     try {
+      if (!subscription.current_period_end) return false;
       const endDate = new Date(subscription.current_period_end);
       const now = new Date();
       const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilExpiry <= 14;
+      return daysUntilExpiry <= 14 || endDate <= now; // Show renew if expired or expiring soon
     } catch (err) {
       console.error("Error calculating renewal status:", err);
       return false;
@@ -84,6 +98,7 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
     hasRendered,
     isStable,
     showRenewButton,
-    error
+    error,
+    isSubscriptionActive // Add this as a new property to easily check active status
   };
 }
