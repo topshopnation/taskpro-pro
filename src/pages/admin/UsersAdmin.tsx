@@ -10,7 +10,7 @@ import { UserTable } from "@/components/admin/users/UserTable";
 import { UserRoleDialog } from "@/components/admin/users/UserRoleDialog";
 import { UserPagination } from "@/components/admin/users/UserPagination";
 import { EditUserDialog } from "@/components/admin/users/EditUserDialog";
-import { EditSubscriptionDialog } from "@/components/admin/users/EditSubscriptionDialog";
+import { EditSubscriptionDialog } from "@/components/admin/users/subscription/EditSubscriptionDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function UsersAdmin() {
