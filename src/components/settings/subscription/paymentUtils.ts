@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -194,6 +195,9 @@ export async function processPaymentConfirmation(
       currentPeriodEnd: periodEnd.toISOString()
     });
     
+    // The updated subscription service will handle the logic to:
+    // 1. For expired subscriptions: Set the end date from today
+    // 2. For active subscriptions: Add time to the current end date
     await updateSubscription({
       status: "active",
       planType: paymentType,

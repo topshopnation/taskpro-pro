@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { UserProfile } from "@/types/adminTypes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { updateSubscriptionStatus } from "@/contexts/subscription/utils";
+import { Subscription, SubscriptionStatus } from "@/contexts/subscription/types";
 
 interface UserTableProps {
   users: UserProfile[];
@@ -59,10 +60,10 @@ export function UserTable({ users, onRoleChange, onEditUser, onEditSubscription 
   // Calculate expiration date and days remaining
   const getExpirationInfo = (user: UserProfile) => {
     // Create a mock subscription object to use with updateSubscriptionStatus
-    const mockSubscription = user.subscription_status ? {
+    const mockSubscription: Subscription | null = user.subscription_status ? {
       id: '',
       user_id: user.id,
-      status: user.subscription_status,
+      status: user.subscription_status as SubscriptionStatus,
       plan_type: user.plan_type || 'monthly',
       trial_start_date: null,
       trial_end_date: user.trial_end_date || null,

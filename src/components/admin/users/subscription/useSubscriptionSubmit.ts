@@ -24,27 +24,53 @@ export function useSubscriptionSubmit(
     try {
       setIsSubmitting(true);
       
-      const subscriptionData = {
-        user_id: user.id,
-        status,
-        plan_type: planType,
-        current_period_start: startDate ? startDate.toISOString() : new Date().toISOString(),
-        current_period_end: expiryDate ? expiryDate.toISOString() : null,
-        updated_at: new Date().toISOString()
-      };
-      
-      // Check if subscription exists
-      const { data, error: checkError } = await supabase
+      // First, check if subscription exists and get current data
+      const { data: existingSubscription, error: checkError } = await supabase
         .from('subscriptions')
-        .select('id')
+        .select('id, status, current_period_end')
         .eq('user_id', user.id)
         .maybeSingle();
       
       if (checkError) throw checkError;
       
+      // Calculate appropriate dates for the subscription
+      const now = new Date();
+      let periodStart = startDate ? startDate : now;
+      let periodEnd = expiryDate;
+      
+      // If there's an existing subscription that's still active, add time to it
+      if (existingSubscription && existingSubscription.current_period_end) {
+        const currentEndDate = new Date(existingSubscription.current_period_end);
+        
+        // If the subscription is still active, extend it
+        if (currentEndDate > now && expiryDate) {
+          console.log("Extending active subscription");
+          
+          // Calculate the duration of the new subscription period
+          const newStartDate = periodStart.getTime();
+          const newEndDate = expiryDate.getTime();
+          const newDuration = newEndDate - newStartDate;
+          
+          // Add this duration to the current end date
+          periodEnd = new Date(currentEndDate.getTime() + newDuration);
+          console.log("Extended end date:", periodEnd);
+        }
+      }
+      
+      const subscriptionData = {
+        user_id: user.id,
+        status,
+        plan_type: planType,
+        current_period_start: periodStart.toISOString(),
+        current_period_end: periodEnd ? periodEnd.toISOString() : null,
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log("Updating subscription with data:", subscriptionData);
+      
       // Update or insert subscription
       let error;
-      if (data) {
+      if (existingSubscription) {
         // Update existing subscription
         const { error: updateError } = await supabase
           .from('subscriptions')

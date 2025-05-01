@@ -39,8 +39,38 @@ export const subscriptionService = {
         if (planType) updateData.plan_type = planType;
         if (trialStartDate) updateData.trial_start_date = trialStartDate;
         if (trialEndDate) updateData.trial_end_date = trialEndDate;
-        if (currentPeriodStart) updateData.current_period_start = currentPeriodStart;
-        if (currentPeriodEnd) updateData.current_period_end = currentPeriodEnd;
+        
+        // Handle current period start/end dates
+        // If there's a current_period_start provided, use it
+        if (currentPeriodStart) {
+          updateData.current_period_start = currentPeriodStart;
+        }
+        
+        // For renewals, handle current_period_end correctly based on existing subscription
+        if (currentPeriodEnd) {
+          const now = new Date();
+          const existingEndDate = existingSubscription.current_period_end 
+            ? new Date(existingSubscription.current_period_end)
+            : null;
+            
+          // If subscription is expired or doesn't have an end date, start from today
+          if (!existingEndDate || existingEndDate < now) {
+            console.log("Subscription expired or no end date, setting end date from today");
+            updateData.current_period_end = currentPeriodEnd;
+          } else {
+            // If subscription is still active, add time to the existing end date
+            console.log("Subscription still active, extending from current end date");
+            // Calculate the duration being added from the current period parameters
+            const newEndDate = new Date(currentPeriodEnd);
+            const startDate = new Date(currentPeriodStart || new Date());
+            const durationToAdd = newEndDate.getTime() - startDate.getTime();
+            
+            // Add this duration to the existing end date
+            const extendedEndDate = new Date(existingEndDate.getTime() + durationToAdd);
+            updateData.current_period_end = extendedEndDate.toISOString();
+            console.log("Extended end date:", updateData.current_period_end);
+          }
+        }
         
         console.log("Updating with data:", updateData);
         
