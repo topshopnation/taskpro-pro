@@ -1,8 +1,7 @@
-
 import { toast } from "sonner";
 import { SubscriptionUpdate } from "@/contexts/subscription/types";
 import { supabase } from "@/integrations/supabase/client";
-import { adminService } from "@/services/admin-service";
+import { adminService } from "@/services/admin";
 
 // Payment mode for testing vs production
 const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
