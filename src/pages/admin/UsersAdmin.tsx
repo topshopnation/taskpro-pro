@@ -1,3 +1,4 @@
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export default function UsersAdmin() {
 
       if (profilesError) throw profilesError;
 
-      // Get subscriptions separately
+      // Get subscriptions with more details
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('*');
@@ -57,6 +58,8 @@ export default function UsersAdmin() {
           last_name: profile.last_name || '',
           subscription_status: userSubscription.status,
           plan_type: userSubscription.plan_type,
+          current_period_end: userSubscription.current_period_end,
+          trial_end_date: userSubscription.trial_end_date,
           role: profile.role || 'user',
           created_at: profile.created_at,
           updated_at: profile.updated_at,
