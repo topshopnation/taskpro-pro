@@ -45,20 +45,18 @@ export default function UsersAdmin() {
 
       // Match subscriptions to profiles
       const formattedUsers: UserProfile[] = profiles.map(profile => {
-        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id) || {
-          status: 'none',
-          plan_type: 'none'
-        };
+        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id);
         
+        // Use optional chaining to safely access properties
         return {
           id: profile.id,
           email: profile.email || '',
           first_name: profile.first_name || '',
           last_name: profile.last_name || '',
-          subscription_status: userSubscription.status,
-          plan_type: userSubscription.plan_type,
-          current_period_end: userSubscription.current_period_end || undefined,
-          trial_end_date: userSubscription.trial_end_date || undefined,
+          subscription_status: userSubscription?.status || 'none',
+          plan_type: userSubscription?.plan_type || 'none',
+          current_period_end: userSubscription?.current_period_end,
+          trial_end_date: userSubscription?.trial_end_date,
           role: profile.role || 'user',
           created_at: profile.created_at,
           updated_at: profile.updated_at,

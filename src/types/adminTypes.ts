@@ -1,4 +1,3 @@
-
 // Define admin role types
 export type AdminRole = 'super_admin' | 'admin' | 'support';
 
@@ -47,8 +46,8 @@ export interface UserProfile {
   subscription_status?: string;
   plan_type?: string;
   last_login?: string;
-  current_period_end?: string;
-  trial_end_date?: string;
+  current_period_end?: string | undefined;
+  trial_end_date?: string | undefined;
 }
 
 // Define user subscription interface

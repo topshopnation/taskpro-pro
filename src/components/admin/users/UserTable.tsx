@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { format } from "date-fns";
 import { UserProfile } from "@/types/adminTypes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { updateSubscriptionStatus } from "@/contexts/subscription/utils";
-import { Subscription, SubscriptionStatus } from "@/contexts/subscription/types";
+import { Subscription, SubscriptionStatus, SubscriptionPlanType } from "@/contexts/subscription/types";
 
 interface UserTableProps {
   users: UserProfile[];
@@ -64,7 +63,7 @@ export function UserTable({ users, onRoleChange, onEditUser, onEditSubscription 
       id: '',
       user_id: user.id,
       status: user.subscription_status as SubscriptionStatus,
-      plan_type: user.plan_type || 'monthly',
+      plan_type: (user.plan_type || 'monthly') as SubscriptionPlanType,
       trial_start_date: null,
       trial_end_date: user.trial_end_date || null,
       current_period_start: null,
