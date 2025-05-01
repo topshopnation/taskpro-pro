@@ -18,6 +18,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const fetchLock = useRef(false);
   const lastFetchTime = useRef(0);
   const lastUpdateTime = useRef(0);
+  const initialLoadDone = useRef(false);
   
   const {
     subscription,
@@ -35,13 +36,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       updateState(null);
       setInitialized(true);
+      initialLoadDone.current = true;
       return null;
     }
 
     // Prevent fetch spam with minimum time between fetches (unless forced)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    if (!force && timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
+    if (!force && timeSinceLastFetch < 1000 && lastFetchTime.current > 0) {
       console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
       return subscription;
     }
@@ -55,7 +57,12 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     try {
       fetchLock.current = true;
       setIsFetching(true);
-      setLoading(true);
+      
+      // Only show loading state on initial load
+      if (!initialLoadDone.current) {
+        setLoading(true);
+      }
+      
       console.log("Fetching subscription for user:", user.id);
       const data = await subscriptionService.fetchSubscription(user.id);
       console.log("Subscription data fetched:", data);
@@ -63,17 +70,20 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       // Update last fetch time
       lastFetchTime.current = Date.now();
       
-      // Apply the subscription update once without delays to prevent flickering
+      // Apply the subscription update without delays to prevent flickering
       updateState(data);
       setInitialized(true);
       setLoading(false);
       setIsFetching(false);
+      initialLoadDone.current = true;
+      
       return data;
     } catch (error) {
       console.error("Error fetching subscription:", error);
       setInitialized(true);
       setLoading(false);
       setIsFetching(false);
+      initialLoadDone.current = true;
       return null;
     } finally {
       fetchLock.current = false;
@@ -90,6 +100,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       updateState(null);
       setLoading(false);
       setInitialized(true);
+      initialLoadDone.current = true;
     }
   }, [user?.id, fetchSubscription, isFetching, initialized]);
 
@@ -102,9 +113,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent update spam with minimum time between updates
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTime.current;
-    if (timeSinceLastUpdate < 1000 && lastUpdateTime.current > 0) {
+    if (timeSinceLastUpdate < 2000 && lastUpdateTime.current > 0) {
       console.log("Throttling subscription update, last update was", timeSinceLastUpdate, "ms ago");
-      // Still continue with the update but log the throttling
+      throw new Error("Please wait a moment before updating your subscription again.");
     }
 
     try {
@@ -118,8 +129,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       // Update immediately without artificial delays
       updateState(updatedSubscription);
       
-      // Refresh the subscription data to ensure we have the latest
-      await fetchSubscription(true);
+      // Don't immediately fetch again - let the realtime subscription handle updates
+      // This prevents UI flicker
       
       setLoading(false);
       return updatedSubscription;
@@ -128,10 +139,15 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       throw error;
     }
-  }, [user, updateState, setLoading, fetchSubscription]);
+  }, [user, updateState, setLoading]);
 
-  // Setup realtime subscription updates
-  useSubscriptionRealtime(user?.id, updateState);
+  // Setup realtime subscription updates with debouncing to prevent UI flickering
+  const handleSubscriptionUpdate = useCallback((updatedSubscription) => {
+    console.log("Realtime subscription update received:", updatedSubscription);
+    updateState(updatedSubscription);
+  }, [updateState]);
+  
+  useSubscriptionRealtime(user?.id, handleSubscriptionUpdate);
 
   const value = {
     isActive,

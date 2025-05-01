@@ -22,6 +22,13 @@ export function SubscriptionStatus({
     );
   }
 
+  // Determine if subscription is expired based on date comparison
+  const currentDate = new Date();
+  const expiryDate = subscription?.current_period_end 
+    ? new Date(subscription.current_period_end) 
+    : null;
+  const isExpired = expiryDate && expiryDate < currentDate;
+  
   // Determine proper plan name and status badge based on subscription state
   let planName: string;
   let statusElement: React.ReactNode;
@@ -34,27 +41,14 @@ export function SubscriptionStatus({
         <Progress value={(daysRemaining / 14) * 100} className="h-1.5 w-20" />
       </div>
     );
-  } else if (subscription?.status === 'active') {
-    const currentDate = new Date();
-    const expiryDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
-    const isExpired = expiryDate && expiryDate < currentDate;
-    
+  } else if (subscription?.status === 'active' && !isExpired) {
     planName = subscription.plan_type === 'monthly' ? "Monthly Subscription" : "Annual Subscription";
-    
-    if (isExpired) {
-      statusElement = (
-        <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
-          Expired
-        </Badge>
-      );
-    } else {
-      statusElement = (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-          Active
-        </Badge>
-      );
-    }
-  } else if (subscription?.status === 'expired') {
+    statusElement = (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+        Active
+      </Badge>
+    );
+  } else if (isExpired || subscription?.status === 'expired') {
     planName = "Expired Subscription";
     statusElement = (
       <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
@@ -84,9 +78,9 @@ export function SubscriptionStatus({
         <p className="text-xs text-muted-foreground">{planName}</p>
         {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && (
           <p className="text-xs text-muted-foreground mt-0.5">
-            {subscription?.status === 'active' 
+            {subscription?.status === 'active' && !isExpired
               ? `License expires on ${formattedExpiryDate}`
-              : subscription?.status === 'expired'
+              : isExpired || subscription?.status === 'expired'
                 ? `License expired on ${
                     formattedExpiryDate || 
                     (subscription?.current_period_end 

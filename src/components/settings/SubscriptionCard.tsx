@@ -20,7 +20,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     isStable,
     showRenewButton,
     error,
-    isSubscriptionActive // Use this new property
+    isSubscriptionActive
   } = useSubscriptionCard();
 
   const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
@@ -53,7 +53,6 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           });
           
           setYearlyDiscount(calculatedDiscount);
-          console.log("SubscriptionCard - calculated discount:", calculatedDiscount);
         }
       } catch (error) {
         console.error('Error fetching subscription prices:', error);
@@ -68,6 +67,13 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   if (!hasRendered || !isStable || pricesLoading) {
     return <SubscriptionCardSkeleton />;
   }
+
+  // Determine appropriate button text based on subscription status
+  const buttonText = isSubscriptionActive 
+    ? showRenewButton 
+      ? 'Renew Subscription'
+      : 'Currently Subscribed' 
+    : 'Subscribe Now';
 
   return (
     <Card className="overflow-hidden">
@@ -113,16 +119,12 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       <CardFooter className="py-2 px-4">
         <Button 
           onClick={onUpgrade}
-          disabled={isSubscriptionActive && !showRenewButton} // Use isSubscriptionActive here
+          disabled={isSubscriptionActive && !showRenewButton}
           size="sm"
           className="text-xs h-8"
         >
           <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-          {isSubscriptionActive 
-            ? showRenewButton 
-              ? 'Renew Subscription'
-              : 'Currently Subscribed' 
-            : 'Subscribe Now'}
+          {buttonText}
         </Button>
       </CardFooter>
     </Card>

@@ -1,3 +1,4 @@
+
 import { Subscription } from "./types";
 
 /**
@@ -36,11 +37,12 @@ export const updateSubscriptionStatus = (
       isActive: isTrialActive
     };
   } 
-  // Check if subscription is active
+  // Check if subscription is active and not expired
   else if (subscription.status === 'active' && subscription.current_period_end) {
     const periodEnd = new Date(subscription.current_period_end);
     const isStillActive = periodEnd > now;
     
+    // A subscription is only active if it has not expired
     return {
       isTrialActive: false,
       daysRemaining: calculateDaysRemaining(subscription.current_period_end),
