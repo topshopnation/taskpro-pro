@@ -57,8 +57,12 @@ export function SubscriptionStatus() {
     }
   })();
 
-  // Only show status if trial, inactive, or expiring soon
-  if (!isTrialActive && isActive && !isExpiringSoon) {
+  // Determine if subscription is expired
+  const isExpired = subscription?.status === 'expired' || 
+    (subscription?.current_period_end && new Date(subscription.current_period_end) < new Date());
+
+  // Only show status if trial, inactive, expired, or expiring soon
+  if (!isTrialActive && isActive && !isExpiringSoon && !isExpired) {
     return null;
   }
 
@@ -74,7 +78,17 @@ export function SubscriptionStatus() {
           Trial: {daysRemaining} days
         </Badge>
       )}
-      {!isActive && !isTrialActive && (
+      {isExpired && (
+        <Badge 
+          variant="outline" 
+          className="text-xs cursor-pointer hover:bg-destructive/10"
+          onClick={handleClick}
+        >
+          <AlertTriangle className="h-3 w-3 mr-1 text-destructive" />
+          Expired
+        </Badge>
+      )}
+      {!isActive && !isTrialActive && !isExpired && (
         <Badge 
           variant="outline" 
           className="text-xs cursor-pointer hover:bg-destructive/10"

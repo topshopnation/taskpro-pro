@@ -349,8 +349,10 @@ export type Database = {
         Returns: boolean
       }
       verify_admin_credentials: {
-        Args: { input_email: string; input_password: string }
-        Returns: boolean
+        Args:
+          | Record<PropertyKey, never>
+          | { input_email: string; input_password: string }
+        Returns: undefined
       }
     }
     Enums: {
