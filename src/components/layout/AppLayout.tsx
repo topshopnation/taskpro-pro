@@ -23,11 +23,11 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen flex-col w-full">
+      <div className="flex min-h-screen flex-col w-full safe-area-layout">
         <AppHeader />
         <div className="flex flex-1 w-full">
           <AppSidebar className="hidden md:block" />
-          <main className="flex-1 p-3 md:p-6 overflow-x-hidden">
+          <main className="flex-1 p-3 md:p-6 overflow-x-hidden pb-safe">
             {shouldRestrict ? (
               <SubscriptionRestriction>
                 {content}

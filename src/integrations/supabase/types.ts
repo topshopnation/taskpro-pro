@@ -352,7 +352,7 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | { input_email: string; input_password: string }
-        Returns: undefined
+        Returns: boolean
       }
     }
     Enums: {
