@@ -51,10 +51,10 @@ serve(async (req) => {
       throw new Error("Failed to get PayPal access token");
     }
     
-    // Use your actual PayPal Plan IDs from the screenshot
+    // Use your correct PayPal Plan IDs
     const planId = planType === 'yearly' 
-      ? 'P-80L22294MH2379142M74Z2KA'  // TaskPro Annual Subscription
-      : 'P-65H54700W1266783QM743DA';  // TaskPro Monthly Subscription
+      ? 'P-80L22294MH2379142M7422KA'  // TaskPro Annual Subscription
+      : 'P-65H54700W12667836M7423DA';  // TaskPro Monthly Subscription
     
     // Create PayPal subscription
     const subscriptionData = {
