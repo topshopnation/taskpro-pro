@@ -41,7 +41,7 @@ serve(async (req) => {
     
     // Get PayPal configuration
     const { clientId, clientSecret, baseUrl } = getPayPalConfig();
-    const { returnUrl, cancelUrl } = getReturnUrls(supabaseUrl);
+    const { returnUrl, cancelUrl } = getReturnUrls();
     
     console.log("Using return URLs:", { returnUrl, cancelUrl });
     
@@ -80,15 +80,16 @@ serve(async (req) => {
         throw new Error("No approval URL found in PayPal response");
       }
       
-      // Store the subscription ID to be included in the return URL
-      const modifiedReturnUrl = `${returnUrl}&subscription_id=${subscription.id}&plan_type=${planType}`;
+      // Create the complete return URL with subscription details
+      const completeReturnUrl = `${returnUrl}&subscription_id=${subscription.id}&plan_type=${planType}`;
       
-      // Modify the approval URL to include the subscription ID in the return URL
+      // Update the approval URL to use our custom return URL
       const urlObj = new URL(approvalUrl);
-      urlObj.searchParams.set('return_url', modifiedReturnUrl);
+      urlObj.searchParams.set('return_url', completeReturnUrl);
       
       console.log("Subscription created successfully with approval URL:", urlObj.toString());
       console.log("PayPal subscription ID:", subscription.id);
+      console.log("Return URL will be:", completeReturnUrl);
       
       return new Response(
         JSON.stringify({ 
