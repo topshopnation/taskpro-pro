@@ -113,7 +113,7 @@ export function TaskItem({
     <>
       <div 
         className={cn(
-          "flex flex-col gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
+          "flex flex-col gap-1 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
           `task-priority-${task.priority}`
         )}
         onClick={handleTaskClick}

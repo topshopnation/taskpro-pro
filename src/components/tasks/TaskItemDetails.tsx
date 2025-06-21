@@ -24,15 +24,6 @@ export function TaskItemDetails({
       )}>
         {title}
       </h3>
-      
-      {notes && (
-        <p className={cn(
-          "text-xs text-muted-foreground mt-1 break-words line-clamp-2",
-          completed && "line-through"
-        )}>
-          {notes}
-        </p>
-      )}
     </div>
   );
 }
