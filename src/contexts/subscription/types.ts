@@ -26,6 +26,7 @@ export interface SubscriptionUpdate {
   trialEndDate?: string;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
+  paypalSubscriptionId?: string;
 }
 
 // Context type definition
