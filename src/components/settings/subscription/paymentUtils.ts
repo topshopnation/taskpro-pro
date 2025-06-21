@@ -5,18 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { adminService } from "@/services/admin";
 
 // Payment mode for testing vs production
-const PAYMENT_MODE: "production" | "test" = "test"; // Set to "test" for testing payments
+const PAYMENT_MODE: "production" | "test" = "test";
 
-// Get subscription plan IDs - now uses our admin service
+// Get subscription plan IDs with better error handling
 async function getSubscriptionPlanIds(planType: "monthly" | "yearly"): Promise<string | null> {
   try {
-    // Get plans from our admin service (which currently returns mock data)
     const plans = await adminService.getSubscriptionPlans();
     const plan = plans.find(p => p.is_active);
     
     if (plan) {
-      // In a real implementation, this would return the PayPal plan ID
-      // For now, just return a mock ID
       return planType === "monthly" ? "monthly-plan-id" : "yearly-plan-id";
     }
     
@@ -27,13 +24,12 @@ async function getSubscriptionPlanIds(planType: "monthly" | "yearly"): Promise<s
   }
 }
 
-// Fallback default PayPal links if database doesn't have plan IDs
+// Fallback default PayPal links
 const DEFAULT_PAYPAL_PLANS = {
   monthly: "P-65H54700W12667836M7423DA",
   yearly: "P-80L22294MH2379142M7422KA"
 };
 
-// Check if user can renew (within 14 days of expiry or already expired)
 export function canRenewSubscription(subscription: any): boolean {
   if (!subscription?.current_period_end) return true;
   
@@ -44,7 +40,6 @@ export function canRenewSubscription(subscription: any): boolean {
   return daysUntilExpiry <= 14;
 }
 
-// Function to create a trial subscription for new users
 export async function createTrialSubscription(userId: string): Promise<boolean> {
   if (!userId) {
     console.error("Cannot create trial: No user ID provided");
@@ -54,7 +49,6 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
   try {
     console.log("Checking if user already has a subscription:", userId);
     
-    // First, check if the user already has any subscription
     const { data: existingSubscription, error: checkError } = await supabase
       .from("subscriptions")
       .select("id, status, trial_end_date")
@@ -66,7 +60,6 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
       return false;
     }
     
-    // If user already has a subscription, don't create a trial
     if (existingSubscription) {
       console.log("User already has a subscription, not creating trial:", existingSubscription);
       return false;
@@ -76,9 +69,8 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
     
     const now = new Date();
     const trialEnd = new Date(now);
-    trialEnd.setDate(trialEnd.getDate() + 14); // 14 day trial
+    trialEnd.setDate(trialEnd.getDate() + 14);
     
-    // Create trial subscription
     const { error: insertError } = await supabase
       .from("subscriptions")
       .insert({
@@ -117,7 +109,7 @@ export async function createPaymentUrl(
   const customData = JSON.stringify({
     user_id: userId,
     plan_type: planType,
-    timestamp: Date.now() // Add timestamp to prevent caching issues
+    timestamp: Date.now()
   });
   
   const encodedCustomData = encodeURIComponent(customData);
@@ -131,7 +123,6 @@ export async function createPaymentUrl(
       planType
     });
     
-    // Store test payment data with timestamp to ensure it's fresh
     localStorage.setItem('taskpro_test_payment', JSON.stringify({
       userId,
       planType,
@@ -140,36 +131,32 @@ export async function createPaymentUrl(
       timestamp: Date.now()
     }));
     
-    // Don't show the toast here, it will be shown after processing is complete
+    const baseUrl = window.location.origin;
+    const redirectUrl = `${baseUrl}/settings?payment_success=true&plan_type=${planType}&t=${Date.now()}`;
     
-    // Always redirect to settings page with fresh query parameters
-    window.location.href = window.location.origin + "/settings?payment_success=true&plan_type=" + planType + "&t=" + Date.now();
-    
+    window.location.href = redirectUrl;
     return paymentUrl;
   }
   
-  // Use default plan IDs for now
+  // Production mode
   const planId = DEFAULT_PAYPAL_PLANS[planType];
-  
   paymentUrl = `https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${planId}`;
   paymentUrl += `&custom_id=${encodedCustomData}`;
   
-  // Always return to settings page in production too
-  const settingsUrl = window.location.origin + "/settings";
+  const baseUrl = window.location.origin;
+  const settingsUrl = `${baseUrl}/settings`;
   paymentUrl += `&return=${encodeURIComponent(settingsUrl + "?payment_success=true&plan_type=" + planType + "&t=" + Date.now())}`;
   paymentUrl += `&cancel_url=${encodeURIComponent(settingsUrl + "?payment_cancelled=true&t=" + Date.now())}`;
   
   return paymentUrl;
 }
 
-// Define a global variable to track whether a payment is already being processed
 let isProcessingPayment = false;
 
 export async function processPaymentConfirmation(
   paymentType: 'monthly' | 'yearly',
   updateSubscription: (update: SubscriptionUpdate) => Promise<void>
 ): Promise<void> {
-  // Prevent multiple simultaneous processing attempts
   if (isProcessingPayment) {
     console.log("Payment processing already in progress, skipping duplicate attempt");
     return;
@@ -195,9 +182,6 @@ export async function processPaymentConfirmation(
       currentPeriodEnd: periodEnd.toISOString()
     });
     
-    // The updated subscription service will handle the logic to:
-    // 1. For expired subscriptions: Set the end date from today
-    // 2. For active subscriptions: Add time to the current end date
     await updateSubscription({
       status: "active",
       planType: paymentType,
@@ -208,9 +192,8 @@ export async function processPaymentConfirmation(
     console.log("Successfully updated subscription in database");
   } catch (error) {
     console.error("Error processing payment confirmation:", error);
-    throw error; // Rethrow to be handled by the caller
+    throw error;
   } finally {
-    // Always reset the processing flag
     isProcessingPayment = false;
   }
 }

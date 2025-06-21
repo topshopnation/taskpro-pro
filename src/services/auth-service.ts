@@ -5,11 +5,13 @@ import { toast } from "sonner";
 
 export const signUp = async (email: string, password: string): Promise<void> => {
   try {
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    
     const { error } = await supabase.auth.signUp({ 
       email, 
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: redirectUrl,
       }
     });
     
@@ -37,10 +39,12 @@ export const signIn = async (email: string, password: string): Promise<void> => 
 
 export const signInWithProvider = async (provider: Provider): Promise<void> => {
   try {
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl,
       },
     });
     
@@ -54,53 +58,52 @@ export const signInWithProvider = async (provider: Provider): Promise<void> => {
 
 export const signOut = async (): Promise<void> => {
   try {
-    console.log('Starting sign out process with force clear...');
+    console.log('Starting sign out process...');
     
-    // Clear user state first to prevent UI flicker with wrong data
-    localStorage.clear();
-    sessionStorage.clear();
+    // Clear all auth-related storage
+    const clearAuthStorage = () => {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-') || key.startsWith('taskpro_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-') || key.startsWith('taskpro_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
     
-    // Clear Supabase auth cookies
-    document.cookie.split(';').forEach(cookie => {
-      const [name] = cookie.trim().split('=');
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
-    });
+    // Clear storage first
+    clearAuthStorage();
     
-    // Reset Supabase client state before calling signOut
-    await supabase.auth.initialize();
-    
-    // Now proceed with the sign out operation
+    // Sign out from Supabase
     const { error } = await supabase.auth.signOut({
-      scope: 'global' // Sign out from all devices
+      scope: 'global'
     });
     
     if (error) {
       console.error('Error signing out from Supabase:', error);
-      throw error;
+      // Still proceed with cleanup even if sign out fails
     }
     
-    // Final cleanup after successful sign out
-    localStorage.clear();
-    sessionStorage.clear();
+    // Final cleanup
+    clearAuthStorage();
     
-    console.log('Supabase sign out successful, all storage cleared');
+    console.log('Sign out completed, redirecting to home');
     toast.success("Signed out successfully");
     
-    // Force a new initialization of Supabase client
-    await supabase.auth.initialize();
-    
-    // Redirect to homepage after successful sign out
+    // Force page reload to ensure clean state
     window.location.href = '/';
     
   } catch (error: any) {
     console.error('Error during sign out:', error);
     toast.error("Failed to sign out", { description: error.message });
     
-    // Force cleanup even if there was an error
+    // Force cleanup and redirect even on error
     localStorage.clear();
     sessionStorage.clear();
-    
-    // Redirect to homepage even if there was an error
     window.location.href = '/';
     
     throw error;

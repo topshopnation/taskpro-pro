@@ -11,70 +11,100 @@ export default function AuthCallback() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (redirecting) return; // Prevent multiple runs
+    if (redirecting) return;
     
     console.log("AuthCallback: Processing OAuth callback");
     setRedirecting(true);
     
-    // Process the OAuth callback
     const processCallback = async () => {
       try {
-        // Get the URL hash parameters (for implicit flow) or query parameters (for code flow)
+        // Get URL parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         
-        // Debug info
-        console.log("Hash params:", Object.fromEntries(hashParams.entries()));
-        console.log("Query params:", Object.fromEntries(queryParams.entries()));
+        console.log("Processing callback with params:", {
+          hash: Object.fromEntries(hashParams.entries()),
+          query: Object.fromEntries(queryParams.entries())
+        });
         
-        // Check for existing session
-        const { data, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Error getting session:", sessionError);
-          throw sessionError;
-        }
-        
-        if (data?.session) {
-          console.log("Session exists after OAuth flow, navigating to today");
-          // Success - redirect to today
-          toast.success("Successfully signed in!");
-          navigate("/today", { replace: true });
-          return;
-        }
-        
-        // If we don't have a session yet, check for error cases
+        // Check for OAuth errors first
         const error = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
         
         if (error) {
           console.error("OAuth Error:", error, errorDescription);
-          setError(errorDescription || error);
-          toast.error(`Authentication error: ${errorDescription || error}`);
+          const message = errorDescription || error;
+          setError(message);
+          toast.error(`Authentication error: ${message}`);
+          
+          // Clear any potential auth state
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error("Error during cleanup sign out:", signOutError);
+          }
+          
           setTimeout(() => navigate("/auth", { replace: true }), 3000);
           return;
         }
         
-        // If we get here and don't have a session or an error, wait a bit longer then redirect to auth
-        console.log("No session or error found, waiting a bit longer...");
+        // Check for existing session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        // Wait a bit longer for the session to be established
-        setTimeout(async () => {
-          const { data: delayedData } = await supabase.auth.getSession();
-          if (delayedData?.session) {
-            console.log("Session established after delay, navigating to today");
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          throw new Error(`Session error: ${sessionError.message}`);
+        }
+        
+        if (sessionData?.session) {
+          console.log("Session exists after OAuth flow, user authenticated");
+          toast.success("Successfully signed in!");
+          navigate("/today", { replace: true });
+          return;
+        }
+        
+        // If no session yet, wait a bit for it to be established
+        console.log("No immediate session, waiting for establishment...");
+        
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        const checkSession = async (): Promise<boolean> => {
+          attempts++;
+          const { data } = await supabase.auth.getSession();
+          
+          if (data?.session) {
+            console.log(`Session established after ${attempts} attempts`);
             toast.success("Successfully signed in!");
             navigate("/today", { replace: true });
-          } else {
-            console.log("No session established after delay, redirecting to auth");
-            toast.error("Authentication failed. Please try again.");
-            navigate("/auth", { replace: true });
+            return true;
           }
-        }, 2000);
-      } catch (error) {
+          
+          if (attempts >= maxAttempts) {
+            console.log("Max attempts reached, redirecting to auth");
+            throw new Error("Authentication timed out. Please try again.");
+          }
+          
+          // Wait before next attempt
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return checkSession();
+        };
+        
+        await checkSession();
+        
+      } catch (error: any) {
         console.error("Error processing OAuth callback:", error);
-        setError("Authentication failed. Please try again.");
-        toast.error("Authentication failed. Please try again.");
+        const message = error.message || "Authentication failed. Please try again.";
+        setError(message);
+        toast.error(message);
+        
+        // Clear any auth state before redirecting
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error during cleanup sign out:", signOutError);
+        }
+        
         setTimeout(() => navigate("/auth", { replace: true }), 3000);
       }
     };
@@ -89,8 +119,9 @@ export default function AuthCallback() {
         <h2 className="text-xl font-semibold">Completing authentication...</h2>
         <p className="text-muted-foreground">Please wait while we sign you in.</p>
         {error && (
-          <div className="mt-4 rounded-md bg-destructive/15 p-3 text-destructive">
-            <p>{error}</p>
+          <div className="mt-4 rounded-md bg-destructive/15 p-3 text-destructive max-w-md text-center">
+            <p className="font-medium">Authentication Error</p>
+            <p className="text-sm mt-1">{error}</p>
             <p className="mt-2 text-sm">Redirecting to login page...</p>
           </div>
         )}

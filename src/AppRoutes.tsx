@@ -16,6 +16,8 @@ import OverdueView from "./pages/OverdueView";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Stats from "./pages/Stats";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -34,6 +36,8 @@ const AppRoutes = () => {
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="*" element={<ProtectedRoute />}>
             <Route path="today" element={<TodayView />} />

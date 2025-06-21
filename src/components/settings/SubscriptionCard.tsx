@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CreditCard, BadgeCheck } from "lucide-react";
+import { CreditCard, BadgeCheck, AlertCircle } from "lucide-react";
 import { useSubscriptionCard } from "./subscription/useSubscriptionCard";
 import { SubscriptionCardSkeleton } from "./subscription/SubscriptionCardSkeleton";
 import { SubscriptionStatus } from "./subscription/SubscriptionStatus";
@@ -9,6 +9,7 @@ import { SubscriptionFeatures } from "./subscription/SubscriptionFeatures";
 import { SubscriptionCardProps } from "@/types/subscriptionTypes";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   const {
@@ -23,9 +24,10 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     isSubscriptionActive
   } = useSubscriptionCard();
 
-  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 0, yearly: 0 });
+  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 9.99, yearly: 99.99 });
   const [pricesLoading, setPricesLoading] = useState(true);
-  const [yearlyDiscount, setYearlyDiscount] = useState(0);
+  const [pricesError, setPricesError] = useState<string | null>(null);
+  const [yearlyDiscount, setYearlyDiscount] = useState(17);
 
   useEffect(() => {
     async function fetchPrices() {
@@ -34,12 +36,13 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           .from('subscription_plans')
           .select('price_monthly, price_yearly')
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
-
-        if (data) {
-          // Force recalculation with fresh data
+        if (error) {
+          console.warn('Could not fetch subscription prices from database:', error);
+          // Use default prices if database fetch fails
+          setPricesError("Using default pricing");
+        } else if (data) {
           const monthly = data.price_monthly;
           const yearly = data.price_yearly;
           
@@ -47,15 +50,17 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             ((monthly * 12 - yearly) / (monthly * 12)) * 100
           );
           
-          setPrices({
-            monthly,
-            yearly
-          });
-          
+          setPrices({ monthly, yearly });
           setYearlyDiscount(calculatedDiscount);
+          setPricesError(null);
+        } else {
+          // No data found, use defaults
+          console.warn('No subscription plan found in database, using defaults');
+          setPricesError("Using default pricing");
         }
       } catch (error) {
         console.error('Error fetching subscription prices:', error);
+        setPricesError("Could not load pricing");
       } finally {
         setPricesLoading(false);
       }
@@ -68,7 +73,6 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     return <SubscriptionCardSkeleton />;
   }
 
-  // Determine appropriate button text based on subscription status
   const buttonText = isSubscriptionActive 
     ? showRenewButton 
       ? 'Renew Subscription'
@@ -88,6 +92,13 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
         </div>
       </CardHeader>
       <CardContent className="py-2 px-4 space-y-3">
+        {pricesError && (
+          <Alert variant="destructive" className="py-2">
+            <AlertCircle className="h-3 w-3" />
+            <AlertDescription className="text-xs">{pricesError}</AlertDescription>
+          </Alert>
+        )}
+        
         <SubscriptionStatus
           subscription={subscription}
           isTrialActive={isTrialActive}
