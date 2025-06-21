@@ -9,10 +9,28 @@ export const subscriptionPlansService = {
   async getSubscriptionPlans() {
     try {
       console.log("Fetching subscription plans...");
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Check if current user is admin for full access
+      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
+      
+      if (adminCheckError) {
+        console.error('Error checking admin status:', adminCheckError);
+        // Fall back to public access (only active plans)
+      }
+
+      let query = supabase.from('subscription_plans').select('*');
+      
+      if (isAdmin) {
+        console.log('User is admin, fetching all plans');
+        // Admin can see all plans
+        query = query.order('created_at', { ascending: false });
+      } else {
+        console.log('User is not admin, fetching only active plans');
+        // Non-admin can only see active plans
+        query = query.eq('is_active', true).order('created_at', { ascending: false });
+      }
+      
+      const { data, error } = await query;
         
       if (error) {
         console.error('Database error fetching subscription plans:', error);
@@ -34,6 +52,14 @@ export const subscriptionPlansService = {
   async createSubscriptionPlan(plan: Partial<SubscriptionPlan>) {
     try {
       console.log("Creating subscription plan:", plan);
+      
+      // Check if current user is admin
+      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
+      
+      if (adminCheckError || !isAdmin) {
+        console.error('User is not admin, cannot create plan');
+        throw new Error('Admin access required');
+      }
       
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan');
@@ -89,6 +115,14 @@ export const subscriptionPlansService = {
     try {
       console.log("Updating subscription plan:", id, plan);
       
+      // Check if current user is admin
+      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
+      
+      if (adminCheckError || !isAdmin) {
+        console.error('User is not admin, cannot update plan');
+        throw new Error('Admin access required');
+      }
+      
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan update');
       }
@@ -137,6 +171,15 @@ export const subscriptionPlansService = {
   async deleteSubscriptionPlan(id: string) {
     try {
       console.log("Deleting subscription plan:", id);
+      
+      // Check if current user is admin
+      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
+      
+      if (adminCheckError || !isAdmin) {
+        console.error('User is not admin, cannot delete plan');
+        throw new Error('Admin access required');
+      }
+      
       const { error } = await supabase
         .from('subscription_plans')
         .delete()

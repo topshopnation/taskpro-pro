@@ -17,19 +17,22 @@ export const subscriptionPlanService = {
   async getActivePlan(): Promise<SubscriptionPlanData | null> {
     try {
       console.log("Fetching active subscription plan...");
+      
+      // This query should work with the new RLS policy that allows anyone to view active plans
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          console.log("No active subscription plan found");
-          return null;
-        }
         console.error('Database error fetching active plan:', error);
         throw error;
+      }
+
+      if (!data) {
+        console.log("No active subscription plan found");
+        return null;
       }
 
       console.log("Active plan found:", data);
@@ -47,10 +50,21 @@ export const subscriptionPlanService = {
   async getAllPlans(): Promise<SubscriptionPlanData[]> {
     try {
       console.log("Fetching all subscription plans...");
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Check if user is admin to get all plans, otherwise only active ones
+      const { data: isAdmin } = await supabase.rpc('is_current_user_admin').catch(() => ({ data: false }));
+      
+      let query = supabase.from('subscription_plans').select('*');
+      
+      if (isAdmin) {
+        console.log("User is admin, fetching all plans");
+        query = query.order('created_at', { ascending: false });
+      } else {
+        console.log("User is not admin, fetching only active plans");
+        query = query.eq('is_active', true).order('created_at', { ascending: false });
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Database error fetching subscription plans:', error);

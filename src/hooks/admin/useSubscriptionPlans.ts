@@ -20,7 +20,7 @@ export function useSubscriptionPlans() {
       setPlans(plansData || []);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
-      toast.error("Failed to load subscription plans");
+      toast.error("Failed to load subscription plans. Please check if you're logged in as an admin.");
       setPlans([]);
     } finally {
       setLoading(false);
