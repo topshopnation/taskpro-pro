@@ -42,8 +42,8 @@ export function SubscriptionStatus({
     }
   })();
 
-  // Check if subscription has auto-renewal
-  const hasAutoRenewal = subscription?.paypal_subscription_id;
+  // Check if subscription has auto-renewal (check if paypal_subscription_id exists on the object)
+  const hasAutoRenewal = subscription && 'paypal_subscription_id' in subscription && subscription.paypal_subscription_id;
   
   // Determine proper plan name and status badge based on subscription state
   let planName: string;

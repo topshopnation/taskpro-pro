@@ -67,8 +67,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     return 'Subscribe Now';
   };
 
-  // Check if subscription has auto-renewal (PayPal subscription ID indicates auto-renewal)
-  const hasAutoRenewal = subscription?.paypal_subscription_id;
+  // Check if subscription has auto-renewal (check if paypal_subscription_id exists on the object)
+  const hasAutoRenewal = subscription && 'paypal_subscription_id' in subscription && subscription.paypal_subscription_id;
 
   const yearlyDiscount = activePlan ? Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100) : 0;
 
