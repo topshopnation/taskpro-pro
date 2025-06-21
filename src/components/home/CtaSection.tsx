@@ -12,7 +12,7 @@ export const CtaSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Boost Your Productivity?</h2>
         <p className="text-xl max-w-3xl mx-auto mb-8 text-white/90">
-          Trust TaskPro for your task management needs.
+          Join thousands of users who trust TaskPro for their task management needs. Start your free trial today!
         </p>
         {user ? (
           <Button
@@ -30,7 +30,7 @@ export const CtaSection = () => {
             className="text-lg h-12 px-8 hover:bg-white hover:text-primary"
             onClick={() => navigate("/auth")}
           >
-            Get Started Now
+            Start Your Free Trial
           </Button>
         )}
       </div>

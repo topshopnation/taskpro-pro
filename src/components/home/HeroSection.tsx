@@ -45,7 +45,7 @@ export const HeroSection = () => {
                   className="text-lg h-12 px-8 animate-fade-in"
                   onClick={() => navigate("/auth")}
                 >
-                  Get Started Free
+                  Start Free Trial
                 </Button>
               )}
               <Button
@@ -66,6 +66,9 @@ export const HeroSection = () => {
               <span className="mx-2">•</span>
               <Check className="h-4 w-4 text-primary" />
               <span>No credit card required</span>
+              <span className="mx-2">•</span>
+              <Check className="h-4 w-4 text-primary" />
+              <span>Full feature access</span>
             </div>
           </div>
           <div className="flex-1 w-full max-w-lg">
