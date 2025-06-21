@@ -25,6 +25,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import SubscriptionsAdmin from "./pages/admin/SubscriptionsAdmin";
 import ActivityAdmin from "./pages/admin/ActivityAdmin";
+import DatabaseAdmin from "./pages/admin/DatabaseAdmin";
+import SettingsAdmin from "./pages/admin/SettingsAdmin";
 import AdminAuth from "./pages/AdminAuth";
 import { AuthProvider } from "@/providers/auth-provider";
 
@@ -45,6 +47,8 @@ const AppRoutes = () => {
           <Route path="/admin/users" element={<UsersAdmin />} />
           <Route path="/admin/subscriptions" element={<SubscriptionsAdmin />} />
           <Route path="/admin/activity" element={<ActivityAdmin />} />
+          <Route path="/admin/database" element={<DatabaseAdmin />} />
+          <Route path="/admin/settings" element={<SettingsAdmin />} />
           
           {/* Regular User Protected Routes */}
           <Route path="*" element={<ProtectedRoute />}>

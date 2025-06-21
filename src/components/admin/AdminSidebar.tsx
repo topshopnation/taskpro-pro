@@ -8,7 +8,6 @@ import {
   BarChart3,
   Database,
   History,
-  Home,
   LogOut
 } from "lucide-react";
 import { toast } from "sonner";
@@ -82,13 +81,6 @@ export function AdminSidebar() {
         </nav>
       </div>
       <div className="border-t p-4">
-        <button
-          onClick={() => navigate('/')}
-          className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <Home className="h-5 w-5" />
-          <span className="ml-3">Return to App</span>
-        </button>
         <button
           onClick={handleAdminLogout}
           className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"

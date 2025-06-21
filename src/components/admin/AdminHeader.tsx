@@ -7,7 +7,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { BellIcon, LogOut, Settings, User } from "lucide-react";
+import { BellIcon, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -59,7 +59,7 @@ export function AdminHeader({ adminEmail }: AdminHeaderProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>Admin Settings</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleAdminLogout}>
               <LogOut className="mr-2 h-4 w-4" />
