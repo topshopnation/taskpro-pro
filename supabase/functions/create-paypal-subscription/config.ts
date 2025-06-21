@@ -2,7 +2,7 @@
 export function getPayPalConfig() {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-  const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+  const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "production"; // Changed default to production
   
   console.log("PayPal Environment:", environment);
   console.log("PayPal Client ID exists:", !!clientId);
@@ -22,7 +22,7 @@ export function getPayPalConfig() {
 }
 
 export function getReturnUrls() {
-  // Use production domain instead of Supabase URL
+  // Use production domain
   const baseUrl = "https://taskpro.pro";
   
   const returnUrl = `${baseUrl}/settings?subscription_success=true`;

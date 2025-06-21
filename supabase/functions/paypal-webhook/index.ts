@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "./cors.ts";
 import { handlePaymentEvent } from "./payment-handler.ts";
@@ -38,13 +39,14 @@ serve(async (req) => {
     // Log parsed request data
     logger.info("Parsed request data:", JSON.stringify(requestData, null, 2));
     
-    // Validate webhook request (simplified for more immediate logging)
-    const isSimulator = !headersObj["paypal-transmission-id"] || 
-                      headersObj["paypal-transmission-id"]?.includes("simulator") || 
-                      requestData?.id?.includes("WH-TEST") || 
-                      requestData?.test === true;
+    // Enhanced validation for production - check for real PayPal headers
+    const isProduction = headersObj["paypal-transmission-id"] && 
+                        !headersObj["paypal-transmission-id"]?.includes("simulator") && 
+                        !requestData?.id?.includes("WH-TEST") && 
+                        requestData?.test !== true;
     
-    logger.info("Is simulator request:", isSimulator);
+    logger.info("Is production request:", isProduction);
+    logger.info("PayPal transmission ID:", headersObj["paypal-transmission-id"]);
     
     // Handle subscription events
     if (
@@ -57,11 +59,11 @@ serve(async (req) => {
       
       if (requestData.event_type?.startsWith('BILLING.SUBSCRIPTION.')) {
         logger.info("Processing subscription event:", requestData.event_type);
-        return await handleSubscriptionEvent(requestData, isSimulator);
+        return await handleSubscriptionEvent(requestData, !isProduction);
       } else {
         // Keep existing payment event handling for backward compatibility
         logger.info("Processing payment event:", requestData.event_type);
-        return await handlePaymentEvent(requestData, isSimulator);
+        return await handlePaymentEvent(requestData, !isProduction);
       }
     }
 
