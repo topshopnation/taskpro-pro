@@ -20,8 +20,8 @@ export const useSubscriptionUrlParams = (
   
   // PayPal can return various parameters - check all possible ones
   const subscriptionId = urlParams.get('subscription_id');
-  const baToken = urlParams.get('ba_token');
-  const token = urlParams.get('token');
+  const baToken = urlParams.get('ba_token'); // PayPal billing agreement token
+  const token = urlParams.get('token'); // PayPal payment token
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
   // Use subscription_id first, then ba_token, then token as fallback
@@ -54,11 +54,15 @@ export const useSubscriptionUrlParams = (
         // Process the PayPal subscription using the subscription ID
         await processSubscription(finalSubscriptionId, "completed");
         
-        // Additional forced refresh to ensure UI updates immediately
+        // Force multiple refreshes to ensure UI updates
         console.log("🔄 Force refreshing subscription data after URL processing");
         setTimeout(async () => {
-          await fetchSubscription();
+          await fetchSubscription(true); // Force refresh
         }, 500);
+        
+        setTimeout(async () => {
+          await fetchSubscription(true); // Second force refresh
+        }, 2000);
         
         // Clean up URL parameters after successful processing
         console.log("🧹 Cleaning up URL parameters");

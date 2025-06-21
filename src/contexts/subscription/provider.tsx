@@ -45,7 +45,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       // Prevent fetch spam with minimum time between fetches
       const now = Date.now();
       const timeSinceLastFetch = now - lastFetchTime.current;
-      if (timeSinceLastFetch < 3000 && lastFetchTime.current > 0) {
+      if (timeSinceLastFetch < 2000 && lastFetchTime.current > 0) { // Reduced from 3000 to 2000
         console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
         return subscription;
       }
@@ -120,7 +120,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent update spam with minimum time between updates
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTime.current;
-    if (timeSinceLastUpdate < 2000 && lastUpdateTime.current > 0) {
+    if (timeSinceLastUpdate < 1000 && lastUpdateTime.current > 0) { // Reduced from 2000 to 1000
       console.log("Throttling subscription update, last update was", timeSinceLastUpdate, "ms ago");
       throw new Error("Please wait a moment before updating your subscription again.");
     }
