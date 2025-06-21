@@ -51,8 +51,10 @@ serve(async (req) => {
       throw new Error("Failed to get PayPal access token");
     }
     
-    // Define subscription plan IDs (these need to be created in PayPal dashboard first)
-    const planId = planType === 'yearly' ? 'P-TASKPRO-YEARLY-PLAN' : 'P-TASKPRO-MONTHLY-PLAN';
+    // Use your actual PayPal Plan IDs from the screenshot
+    const planId = planType === 'yearly' 
+      ? 'P-80L22294MH2379142M74Z2KA'  // TaskPro Annual Subscription
+      : 'P-65H54700W1266783QM743DA';  // TaskPro Monthly Subscription
     
     // Create PayPal subscription
     const subscriptionData = {
