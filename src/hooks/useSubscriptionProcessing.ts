@@ -18,8 +18,15 @@ export function useSubscriptionProcessing() {
       return;
     }
     
+    // Prevent duplicate processing
+    if (subscriptionProcessed.current) {
+      console.log("Subscription already processed, skipping");
+      return;
+    }
+    
     console.log("Starting subscription processing:", { subscriptionId, subscriptionStatus });
     setIsProcessingSubscription(true);
+    subscriptionProcessed.current = true; // Mark as processed immediately
 
     try {
       // Process the subscription based on status
@@ -29,13 +36,20 @@ export function useSubscriptionProcessing() {
         
         if (success) {
           console.log("Subscription activated successfully");
-          // Don't fetch immediately - let the calling code handle the refresh timing
+          // Show success message only once
+          toast.success("Subscription activated successfully! Your plan has been updated.");
+          
+          // Fetch updated subscription data after a short delay
+          setTimeout(async () => {
+            await fetchSubscription(true); // Force refresh
+          }, 1000);
         } else {
           throw new Error("Subscription activation failed");
         }
       } else {
         console.error("Subscription was not completed successfully, status:", subscriptionStatus);
         toast.error("Subscription was not completed successfully.");
+        subscriptionProcessed.current = false; // Reset on failure
       }
     } catch (error: any) {
       console.error("Error processing subscription:", error);

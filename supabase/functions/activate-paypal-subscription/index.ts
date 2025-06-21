@@ -24,10 +24,14 @@ serve(async (req) => {
     
     console.log("Activating PayPal subscription:", { subscriptionId, userId });
     
+    if (!subscriptionId || !userId) {
+      throw new Error("Missing subscriptionId or userId");
+    }
+    
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live"; // Default to live
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live";
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
@@ -36,7 +40,7 @@ serve(async (req) => {
     // Use correct PayPal API URL based on environment
     const baseUrl = environment === "sandbox" 
       ? "https://api-m.sandbox.paypal.com" 
-      : "https://api-m.paypal.com"; // Live environment
+      : "https://api-m.paypal.com";
     
     // Get PayPal access token
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -82,9 +86,14 @@ serve(async (req) => {
     
     // Extract custom data to get plan type
     let planType = 'monthly';
+    let dbPlanId = null;
+    
     try {
-      const customData = JSON.parse(subscription.custom_id || '{}');
-      planType = customData.planType || 'monthly';
+      if (subscription.custom_id) {
+        const customData = JSON.parse(subscription.custom_id);
+        planType = customData.planType || 'monthly';
+        dbPlanId = customData.dbPlanId || null;
+      }
     } catch (e) {
       console.warn("Could not parse custom_id, defaulting to monthly plan");
     }
@@ -121,57 +130,58 @@ serve(async (req) => {
       throw new Error(`Failed to fetch existing subscription: ${fetchError.message}`);
     }
     
-    let data;
-    let error;
+    const subscriptionData = {
+      user_id: userId,
+      status: 'active',
+      plan_type: planType,
+      paypal_subscription_id: subscriptionId,
+      current_period_start: currentDate.toISOString(),
+      current_period_end: periodEnd.toISOString(),
+      updated_at: currentDate.toISOString()
+    };
+    
+    let result;
     
     if (existingSubscription) {
       // Update existing subscription
-      const updateResult = await supabase
+      const { data, error } = await supabase
         .from('subscriptions')
-        .update({
-          status: 'active',
-          plan_type: planType,
-          paypal_subscription_id: subscriptionId,
-          current_period_start: currentDate.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          updated_at: currentDate.toISOString()
-        })
+        .update(subscriptionData)
         .eq('user_id', userId)
-        .select();
+        .select()
+        .single();
         
-      data = updateResult.data;
-      error = updateResult.error;
+      if (error) {
+        console.error('Error updating subscription:', error);
+        throw new Error(`Failed to update subscription: ${error.message}`);
+      }
+      
+      result = data;
+      console.log('Subscription updated successfully:', result);
     } else {
       // Create new subscription
-      const insertResult = await supabase
+      const { data, error } = await supabase
         .from('subscriptions')
         .insert({
-          user_id: userId,
-          status: 'active',
-          plan_type: planType,
-          paypal_subscription_id: subscriptionId,
-          current_period_start: currentDate.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          created_at: currentDate.toISOString(),
-          updated_at: currentDate.toISOString()
+          ...subscriptionData,
+          created_at: currentDate.toISOString()
         })
-        .select();
+        .select()
+        .single();
         
-      data = insertResult.data;
-      error = insertResult.error;
-    }
+      if (error) {
+        console.error('Error creating subscription:', error);
+        throw new Error(`Failed to create subscription: ${error.message}`);
+      }
       
-    if (error) {
-      console.error('Error updating/creating subscription:', error);
-      throw new Error(`Failed to update subscription: ${error.message}`);
+      result = data;
+      console.log('Subscription created successfully:', result);
     }
-    
-    console.log('Subscription activated successfully:', data);
     
     return new Response(
       JSON.stringify({ 
         success: true,
-        subscription: data[0],
+        subscription: result,
         message: 'Subscription activated successfully'
       }),
       { 

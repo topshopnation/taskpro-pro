@@ -31,19 +31,9 @@ export const useSubscriptionUrlParams = (
           subscriptionProcessed: subscriptionProcessed.current 
         });
         
-        // Mark as processed immediately to prevent double processing
-        subscriptionProcessed.current = true;
-        
         if (subscriptionId) {
           console.log("Processing subscription with ID:", subscriptionId);
           await processSubscription(subscriptionId, "completed");
-          
-          // Single refresh after successful processing with a delay
-          setTimeout(async () => {
-            console.log("Refreshing subscription data after successful activation");
-            await fetchSubscription();
-            toast.success("Subscription activated successfully! Your plan has been updated.");
-          }, 1000);
         } else {
           console.error("No subscription ID found in URL parameters");
           toast.error("Subscription activation failed - missing subscription information.");
@@ -59,7 +49,7 @@ export const useSubscriptionUrlParams = (
       subscriptionProcessed.current = false; // Reset on error
       toast.error("Error processing subscription. Please contact support if the issue persists.");
     }
-  }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription, fetchSubscription]);
+  }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription]);
 
   useEffect(() => {
     if (subscriptionSuccess === 'true' && !subscriptionProcessed.current) {
