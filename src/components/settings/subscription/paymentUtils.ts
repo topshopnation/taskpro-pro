@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionPlanType } from "@/types/subscriptionTypes";
 
@@ -34,38 +33,7 @@ export const createTrialSubscription = async (userId: string): Promise<boolean> 
 };
 
 export const createPaymentUrl = async (planType: SubscriptionPlanType, userId: string): Promise<string | null> => {
-  try {
-    console.log("Creating PayPal payment URL for plan:", planType, "user:", userId);
-    
-    if (!userId) {
-      console.error("No user ID provided for payment URL creation");
-      return null;
-    }
-
-    // Call our Supabase Edge Function to create PayPal payment
-    const { data, error } = await supabase.functions.invoke('create-paypal-payment', {
-      body: {
-        planType,
-        userId,
-        returnUrl: `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`,
-        cancelUrl: `${window.location.origin}/settings?payment_cancelled=true`
-      }
-    });
-
-    if (error) {
-      console.error('Error creating PayPal payment:', error);
-      return null;
-    }
-
-    if (data?.approval_url) {
-      console.log('PayPal payment URL created:', data.approval_url);
-      return data.approval_url;
-    }
-
-    console.error('No approval URL returned from PayPal');
-    return null;
-  } catch (error) {
-    console.error('Error creating payment URL:', error);
-    return null;
-  }
+  // For now, redirect to the new subscription URL creation
+  const { createSubscriptionUrl } = await import('./subscriptionUtils');
+  return createSubscriptionUrl(planType, userId);
 };

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "./cors.ts";
 import { handlePaymentEvent } from "./payment-handler.ts";
@@ -47,20 +46,27 @@ serve(async (req) => {
     
     logger.info("Is simulator request:", isSimulator);
     
-    // Process payment events
+    // Handle subscription events
     if (
-      requestData.event_type === "PAYMENT.SALE.COMPLETED" ||
-      requestData.event_type === "CHECKOUT.ORDER.APPROVED" ||
-      requestData.event_type === "BILLING.SUBSCRIPTION.CREATED" ||
-      requestData.event_type === "BILLING.SUBSCRIPTION.RENEWED" ||
-      requestData.event_type === "BILLING.SUBSCRIPTION.CANCELLED"
+      requestData.event_type?.startsWith('BILLING.SUBSCRIPTION.') ||
+      requestData.event_type === 'PAYMENT.SALE.COMPLETED' ||
+      requestData.event_type === 'CHECKOUT.ORDER.APPROVED'
     ) {
-      logger.info("Processing payment/subscription event:", requestData.event_type);
-      return await handlePaymentEvent(requestData, isSimulator);
+      // Import the subscription handler
+      const { handleSubscriptionEvent } = await import("./subscription-handler.ts");
+      
+      if (requestData.event_type?.startsWith('BILLING.SUBSCRIPTION.')) {
+        logger.info("Processing subscription event:", requestData.event_type);
+        return await handleSubscriptionEvent(requestData, isSimulator);
+      } else {
+        // Keep existing payment event handling for backward compatibility
+        logger.info("Processing payment event:", requestData.event_type);
+        return await handlePaymentEvent(requestData, isSimulator);
+      }
     }
 
     // For other event types, just acknowledge receipt
-    logger.info("Received non-payment event type:", requestData.event_type);
+    logger.info("Received non-payment/subscription event type:", requestData.event_type);
     return createResponse({ 
       success: true, 
       message: "Event received", 
