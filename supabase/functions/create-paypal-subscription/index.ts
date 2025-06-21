@@ -193,7 +193,7 @@ serve(async (req) => {
           payer_selected: "PAYPAL",
           payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
         },
-        return_url: `${returnUrl}`,
+        return_url: `${returnUrl}&subscription_id={{subscription_id}}`,
         cancel_url: cancelUrl
       },
       custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })
@@ -222,11 +222,14 @@ serve(async (req) => {
     }
     
     if (subscription.status === "APPROVAL_PENDING") {
-      const approvalUrl = subscription.links?.find((link: any) => link.rel === "approve")?.href;
+      let approvalUrl = subscription.links?.find((link: any) => link.rel === "approve")?.href;
       
       if (!approvalUrl) {
         throw new Error("No approval URL found in PayPal response");
       }
+      
+      // Replace the subscription_id placeholder with the actual subscription ID
+      approvalUrl = approvalUrl.replace('{{subscription_id}}', subscription.id);
       
       console.log("Subscription created successfully with approval URL:", approvalUrl);
       
