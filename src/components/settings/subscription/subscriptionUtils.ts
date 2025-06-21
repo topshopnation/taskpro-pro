@@ -61,3 +61,33 @@ export async function activateSubscription(subscriptionId: string, userId: strin
     return false;
   }
 }
+
+export async function cancelSubscription(subscriptionId: string): Promise<boolean> {
+  try {
+    console.log("🔄 Canceling subscription:", { subscriptionId });
+    
+    const { data, error } = await supabase.functions.invoke('cancel-paypal-subscription', {
+      body: {
+        subscriptionId
+      }
+    });
+
+    if (error) {
+      console.error("❌ Error canceling subscription:", error);
+      return false;
+    }
+
+    console.log("✅ Subscription cancellation response:", data);
+    
+    if (data?.success) {
+      console.log("🎉 Subscription canceled successfully");
+      return true;
+    } else {
+      console.error("❌ Subscription cancellation failed");
+      return false;
+    }
+  } catch (error: any) {
+    console.error("💥 Exception in cancelSubscription:", error);
+    return false;
+  }
+}
