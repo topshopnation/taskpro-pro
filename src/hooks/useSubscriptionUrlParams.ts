@@ -40,7 +40,7 @@ export const useSubscriptionUrlParams = (
           
           // Force immediate refresh of subscription data after processing
           console.log("Refreshing subscription data after successful activation");
-          await fetchSubscription(true); // Force refresh
+          await fetchSubscription(); // Force refresh
           
           toast.success("Subscription activated successfully! Your plan has been updated.");
         } else {

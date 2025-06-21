@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { SubscriptionRestriction } from "@/components/subscription/SubscriptionRestriction";
 import { useSubscriptionCheck } from "@/hooks/use-subscription-check";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
@@ -44,6 +45,8 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
           richColors
           closeButton
         />
+        
+        <InstallPrompt />
       </div>
     </SidebarProvider>
   );
