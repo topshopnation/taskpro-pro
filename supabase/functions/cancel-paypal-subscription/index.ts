@@ -7,6 +7,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function getPayPalConfig() {
+  const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
+  const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
+  const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+  
+  if (!clientId || !clientSecret) {
+    throw new Error("PayPal credentials not configured");
+  }
+  
+  const baseUrl = environment === "sandbox" 
+    ? "https://api-m.sandbox.paypal.com" 
+    : "https://api-m.paypal.com";
+  
+  return { clientId, clientSecret, baseUrl };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -22,17 +38,12 @@ serve(async (req) => {
       throw new Error("Missing subscriptionId or userId");
     }
 
-    // Get PayPal access token
-    const clientId = Deno.env.get('PAYPAL_CLIENT_ID');
-    const clientSecret = Deno.env.get('PAYPAL_CLIENT_SECRET');
-    
-    if (!clientId || !clientSecret) {
-      throw new Error("PayPal credentials not configured");
-    }
-
+    // Get PayPal configuration
+    const { clientId, clientSecret, baseUrl } = getPayPalConfig();
     const auth = btoa(`${clientId}:${clientSecret}`);
     
-    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+    // Get PayPal access token
+    const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${auth}`,
@@ -49,7 +60,7 @@ serve(async (req) => {
     }
 
     // Cancel the subscription with PayPal
-    const cancelResponse = await fetch(`https://api-m.paypal.com/v1/billing/subscriptions/${subscriptionId}/cancel`, {
+    const cancelResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}/cancel`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
