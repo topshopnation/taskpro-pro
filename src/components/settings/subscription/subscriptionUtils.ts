@@ -20,6 +20,13 @@ export const createTrialSubscription = async (userId: string): Promise<boolean> 
     
     if (existingSubscription) {
       console.log('User already has a subscription:', existingSubscription);
+      
+      // Check if they had an expired trial - if so, they cannot get another trial
+      if (existingSubscription.status === 'expired' && existingSubscription.trial_end_date) {
+        console.log('User has expired trial, cannot create new trial');
+        return false; // Don't create another trial for expired trial users
+      }
+      
       return true; // Consider this a success if they already have one
     }
 

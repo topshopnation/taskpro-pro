@@ -11,6 +11,9 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
   const { subscription, isTrialActive, daysRemaining } = useSubscription();
 
   const getButtonConfig = () => {
+    // Check if user has expired trial
+    const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
+    
     // Trial users
     if (isTrialActive) {
       if (daysRemaining <= 3) {
@@ -26,6 +29,16 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
         variant: "default" as const,
         icon: CreditCard,
         urgent: false
+      };
+    }
+
+    // Expired trial users - must upgrade to paid plan
+    if (hasExpiredTrial) {
+      return {
+        text: "Upgrade to Paid Plan",
+        variant: "default" as const,
+        icon: CreditCard,
+        urgent: true
       };
     }
 
@@ -52,8 +65,8 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
       };
     }
 
-    // Expired or canceled users
-    if (subscription?.status === 'expired' || subscription?.status === 'canceled') {
+    // Canceled users
+    if (subscription?.status === 'canceled') {
       return {
         text: "Renew Subscription",
         variant: "default" as const,
@@ -73,6 +86,7 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
 
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
+  const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
 
   return (
     <div className="flex flex-col gap-2">
@@ -90,6 +104,8 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
         <p className="text-xs text-muted-foreground text-center">
           {isTrialActive && daysRemaining <= 3 
             ? "Trial ending soon - upgrade to continue" 
+            : hasExpiredTrial
+            ? "Trial expired - upgrade to paid plan required"
             : "Renew to restore access to premium features"}
         </p>
       )}

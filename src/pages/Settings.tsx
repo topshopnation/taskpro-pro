@@ -16,7 +16,7 @@ export default function Settings() {
   // Handle URL parameters for subscription processing
   useSubscriptionUrlParams(isProcessingSubscription, processSubscription, subscriptionProcessed);
 
-  // Check if user needs a trial subscription
+  // Check if user needs a trial subscription (but not if they had an expired trial)
   useEffect(() => {
     const initializeTrialIfNeeded = async () => {
       if (user && !loading && !subscription) {
@@ -25,6 +25,8 @@ export default function Settings() {
         if (created) {
           console.log("Created trial subscription for new user");
           await fetchSubscription();
+        } else {
+          console.log("Could not create trial - user may have had previous trial");
         }
       }
     };

@@ -28,16 +28,23 @@ export const subscriptionPlanService = {
 
       if (error) {
         console.error('Database error fetching active plan:', error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
       }
 
       if (!data || data.length === 0) {
         console.log("No active subscription plan found");
-        return null;
+        throw new Error("No active subscription plans are currently available");
       }
 
       const plan = data[0];
       console.log("Active plan found:", plan);
+      
+      // Validate plan data
+      if (!plan.name || plan.price_monthly == null || plan.price_yearly == null) {
+        console.error("Invalid plan data:", plan);
+        throw new Error("Subscription plan data is incomplete");
+      }
+      
       return {
         ...plan,
         description: plan.description || '',
@@ -77,7 +84,11 @@ export const subscriptionPlanService = {
 
       if (error) {
         console.error('Database error fetching subscription plans:', error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("No subscription plans found");
       }
 
       console.log("All plans found:", data);

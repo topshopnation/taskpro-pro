@@ -25,6 +25,10 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const [plansError, setPlansError] = useState<string | null>(null);
   const { user } = useAuth();
   
+  // Check if user has had a trial before (expired trial users cannot get another trial)
+  const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
+  const canStartTrial = !subscription || (!hasExpiredTrial && !isTrialActive && subscription?.status !== 'active');
+  
   // Reset plan type to monthly when dialog opens and check for plans
   useEffect(() => {
     if (open) {
@@ -40,13 +44,16 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     setPlansError(null);
     
     try {
+      console.log("Checking subscription plans...");
       const activePlan = await subscriptionPlanService.getActivePlan();
+      console.log("Active plan check result:", activePlan);
+      
       if (!activePlan) {
         setPlansError("No subscription plans are currently available. Please contact support.");
       }
     } catch (error: any) {
       console.error("Error loading subscription plans:", error);
-      setPlansError("Failed to load subscription plans. Please try refreshing or contact support if the issue persists.");
+      setPlansError(error.message || "Failed to load subscription plans. Please try refreshing or contact support if the issue persists.");
     } finally {
       setIsLoadingPlans(false);
     }
@@ -92,6 +99,9 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     if (subscription?.status === 'active') {
       return 'Manage Your Subscription';
     }
+    if (hasExpiredTrial) {
+      return 'Upgrade to Paid Plan';
+    }
     if (isTrialActive) {
       return 'Upgrade Your Trial';
     }
@@ -102,15 +112,24 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     if (subscription?.status === 'active') {
       return 'Change your subscription plan or manage billing details.';
     }
+    if (hasExpiredTrial) {
+      return 'Your trial has expired. Upgrade to a paid plan to continue using TaskPro Pro features.';
+    }
     if (isTrialActive) {
       return 'Your trial is active! Upgrade now to continue enjoying TaskPro Pro features.';
     }
-    return 'Unlock unlimited projects, advanced features, and priority support.';
+    if (canStartTrial) {
+      return 'Start your free 14-day trial or subscribe to unlock unlimited projects, advanced features, and priority support.';
+    }
+    return 'Subscribe to unlock unlimited projects, advanced features, and priority support.';
   };
 
   const getButtonText = () => {
     if (subscription?.status === 'active') {
       return 'Update Plan';
+    }
+    if (hasExpiredTrial) {
+      return 'Upgrade to Paid Plan';
     }
     if (isTrialActive) {
       return 'Upgrade Now';
@@ -159,6 +178,15 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{paymentError}</AlertDescription>
+            </Alert>
+          )}
+
+          {hasExpiredTrial && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Your trial period has ended. You can only subscribe to a paid plan - trial renewals are not available.
+              </AlertDescription>
             </Alert>
           )}
           
