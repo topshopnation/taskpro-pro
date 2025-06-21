@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/subscription";
-import { cancelSubscription } from "./subscriptionUtils";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
 interface CancelSubscriptionDialogProps {
@@ -28,12 +29,33 @@ export function CancelSubscriptionDialog({ open, onOpenChange }: CancelSubscript
     setIsProcessing(true);
     
     try {
-      await cancelSubscription(subscription.paypal_subscription_id);
-      toast.success("Subscription canceled successfully. Your access will continue until your billing period ends.");
-      
-      // Refresh subscription data
-      await fetchSubscription();
-      onOpenChange(false);
+      console.log("Canceling subscription with:", {
+        subscriptionId: subscription.paypal_subscription_id,
+        userId: user.id
+      });
+
+      const { data, error } = await supabase.functions.invoke('cancel-paypal-subscription', {
+        body: {
+          subscriptionId: subscription.paypal_subscription_id,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        console.error("Error canceling subscription:", error);
+        toast.error(error.message || "Failed to cancel subscription. Please try again.");
+        return;
+      }
+
+      if (data?.success) {
+        toast.success("Subscription canceled successfully. Your access will continue until your billing period ends.");
+        
+        // Refresh subscription data
+        await fetchSubscription();
+        onOpenChange(false);
+      } else {
+        toast.error("Failed to cancel subscription. Please try again.");
+      }
     } catch (error: any) {
       console.error("Error canceling subscription:", error);
       toast.error(error.message || "Failed to cancel subscription. Please try again.");

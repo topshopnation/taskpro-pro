@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CreditCard, ExternalLink, X } from "lucide-react";
+import { CreditCard, ExternalLink, X, Plus } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription";
 import { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 
@@ -61,9 +61,9 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
       }
       
       return {
-        text: "Manage Subscription",
+        text: "Renew Subscription",
         variant: "outline" as const,
-        icon: ExternalLink,
+        icon: Plus,
         urgent: false
       };
     }
@@ -126,7 +126,7 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
             ? "Trial ending soon - upgrade to continue" 
             : hasExpiredTrial
             ? "Trial expired - upgrade to paid plan required"
-            : "Renew to restore access to premium features"}
+            : "Renew to add more time and continue access"}
         </p>
       )}
       

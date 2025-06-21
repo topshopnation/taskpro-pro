@@ -66,7 +66,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
 
   const getDialogTitle = () => {
     if (subscription?.status === 'active') {
-      return 'Manage Your Subscription';
+      return 'Renew Your Subscription';
     }
     if (hasExpiredTrial) {
       return 'Upgrade to Paid Plan';
@@ -79,7 +79,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
 
   const getDialogDescription = () => {
     if (subscription?.status === 'active') {
-      return 'Change your subscription plan or manage billing details.';
+      return 'Add more time to your current subscription. Your new billing cycle will begin when your current subscription expires.';
     }
     if (hasExpiredTrial) {
       return 'Your trial has expired. Upgrade to a paid plan to continue using TaskPro Pro features.';
@@ -92,7 +92,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
 
   const getButtonText = () => {
     if (subscription?.status === 'active') {
-      return 'Update Plan';
+      return 'Renew Subscription';
     }
     if (hasExpiredTrial) {
       return 'Upgrade to Paid Plan';
@@ -107,17 +107,8 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {subscription?.status === 'active' ? 'Manage Your Subscription' : 
-             hasExpiredTrial ? 'Upgrade to Paid Plan' :
-             isTrialActive ? 'Upgrade Your Trial' : 'Subscribe to TaskPro Pro'}
-          </DialogTitle>
-          <DialogDescription>
-            {subscription?.status === 'active' ? 'Change your subscription plan or manage billing details.' :
-             hasExpiredTrial ? 'Your trial has expired. Upgrade to a paid plan to continue using TaskPro Pro features.' :
-             isTrialActive ? 'Your trial is active! Upgrade now to continue enjoying TaskPro Pro features.' :
-             'Subscribe to unlock unlimited projects, advanced features, and priority support.'}
-          </DialogDescription>
+          <DialogTitle>{getDialogTitle()}</DialogTitle>
+          <DialogDescription>{getDialogDescription()}</DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
@@ -136,6 +127,15 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
               </AlertDescription>
             </Alert>
           )}
+
+          {subscription?.status === 'active' && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This will extend your current subscription. Your new billing cycle will start when your current subscription expires.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <PlanSelector 
             planType={planType} 
@@ -151,10 +151,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             onClick={openSubscriptionLink} 
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : 
-             subscription?.status === 'active' ? 'Update Plan' :
-             hasExpiredTrial ? 'Upgrade to Paid Plan' :
-             isTrialActive ? 'Upgrade Now' : 'Subscribe Now'}
+            {isProcessing ? "Processing..." : getButtonText()}
           </Button>
         </DialogFooter>
       </DialogContent>
