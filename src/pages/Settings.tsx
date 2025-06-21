@@ -13,7 +13,7 @@ export default function Settings() {
   const { subscription, loading, fetchSubscription, initialized } = useSubscription();
   const { isProcessingSubscription, processSubscription, subscriptionProcessed } = useSubscriptionProcessing();
 
-  // Handle URL parameters for subscription processing
+  // Handle URL parameters for subscription processing (PayPal returns)
   useSubscriptionUrlParams(isProcessingSubscription, processSubscription, subscriptionProcessed);
 
   // Check if user needs a trial subscription (but not if they had an expired trial)
