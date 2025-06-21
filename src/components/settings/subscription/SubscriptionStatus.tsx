@@ -29,13 +29,13 @@ export function SubscriptionStatus({
     : null;
   const isExpired = expiryDate && expiryDate < currentDate;
   
-  // Check if subscription expires within 60 days
+  // Check if subscription expires within 14 days (not 60)
   const isExpiringSoon = subscription?.status === 'active' && (() => {
     try {
       const endDate = new Date(subscription.current_period_end ?? '');
       const now = new Date();
       const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilExpiry <= 60 && daysUntilExpiry > 0;
+      return daysUntilExpiry <= 14 && daysUntilExpiry > 0;
     } catch (err) {
       console.error("Error calculating expiry status:", err);
       return false;
