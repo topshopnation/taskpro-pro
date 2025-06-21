@@ -29,7 +29,7 @@ export function SubscriptionStatus({
     : null;
   const isExpired = expiryDate && expiryDate < currentDate;
   
-  // Check if subscription expires within 14 days (not 60)
+  // Check if subscription expires within 14 days
   const isExpiringSoon = subscription?.status === 'active' && (() => {
     try {
       const endDate = new Date(subscription.current_period_end ?? '');
@@ -45,15 +45,25 @@ export function SubscriptionStatus({
   // Determine proper plan name and status badge based on subscription state
   let planName: string;
   let statusElement: React.ReactNode;
+  let statusMessage: string | null = null;
   
   if (isTrialActive) {
     planName = "Free Trial";
-    statusElement = (
-      <div className="flex flex-col items-end">
-        <span className="text-xs text-amber-600 font-medium mb-0.5">{daysRemaining} days left</span>
-        <Progress value={(daysRemaining / 14) * 100} className="h-1.5 w-20" />
-      </div>
-    );
+    if (daysRemaining > 3) {
+      statusElement = (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+          Active Trial
+        </Badge>
+      );
+      statusMessage = `${daysRemaining} days remaining`;
+    } else {
+      statusElement = (
+        <div className="flex flex-col items-end">
+          <span className="text-xs text-amber-600 font-medium mb-0.5">{daysRemaining} days left</span>
+          <Progress value={(daysRemaining / 14) * 100} className="h-1.5 w-20" />
+        </div>
+      );
+    }
   } else if (subscription?.status === 'active' && !isExpired) {
     planName = subscription.plan_type === 'monthly' ? "TaskPro Pro Monthly" : "TaskPro Pro Annual";
     if (isExpiringSoon) {
@@ -97,7 +107,10 @@ export function SubscriptionStatus({
       <div>
         <h4 className="text-xs font-medium">Current Plan</h4>
         <p className="text-xs text-muted-foreground">{planName}</p>
-        {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && (
+        {statusMessage && (
+          <p className="text-xs text-muted-foreground mt-0.5">{statusMessage}</p>
+        )}
+        {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && !statusMessage && (
           <p className="text-xs text-muted-foreground mt-0.5">
             {subscription?.status === 'active' && !isExpired
               ? isExpiringSoon
@@ -110,9 +123,7 @@ export function SubscriptionStatus({
                       ? format(new Date(subscription.current_period_end), "MMM d, yyyy") 
                       : 'Unknown Date')
                   }`
-                : isTrialActive
-                  ? `Trial ends ${formattedExpiryDate}`
-                  : `Ended on ${formattedExpiryDate}`
+                : `Ended on ${formattedExpiryDate}`
             }
           </p>
         )}

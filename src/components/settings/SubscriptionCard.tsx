@@ -49,20 +49,36 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     fetchActivePlan();
   }, []);
 
-  if (!hasRendered || !isStable || pricesLoading) {
+  if (!hasRendered || !isStable) {
     return <SubscriptionCardSkeleton />;
   }
 
+  // Don't show upgrade button if user has an active trial with time remaining
+  const shouldShowUpgradeButton = () => {
+    // If trial is active and has days remaining, don't show upgrade button
+    if (isTrialActive && daysRemaining > 0) {
+      return false;
+    }
+    
+    // If subscription is active and not expiring soon, don't show upgrade button
+    if (isSubscriptionActive && !showRenewButton) {
+      return false;
+    }
+    
+    // Show upgrade button for expired trials, expired subscriptions, or no subscription
+    return true;
+  };
+
   // Determine button text based on subscription state
   const getButtonText = () => {
-    if (isTrialActive) {
-      return 'Upgrade Now';
+    if (subscription?.status === 'active' && !showRenewButton) {
+      return 'Manage Subscription';
     }
-    if (isSubscriptionActive && showRenewButton) {
+    if (subscription?.status === 'active' && showRenewButton) {
       return 'Renew Subscription';
     }
-    if (isSubscriptionActive && !showRenewButton) {
-      return 'Manage Subscription';
+    if (isTrialActive && daysRemaining <= 3) {
+      return 'Upgrade Before Trial Ends';
     }
     return 'Subscribe Now';
   };
@@ -90,45 +106,53 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           error={error}
         />
 
-        {pricesError ? (
-          <div className="text-xs text-destructive p-2 bg-destructive/10 rounded">
-            {pricesError}
-          </div>
-        ) : activePlan ? (
-          <div className="flex items-center justify-between border rounded-md p-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary/10 p-1.5 rounded-md">
-                <BadgeCheck className="h-4 w-4 text-primary" />
+        {/* Only show pricing info if user needs to upgrade */}
+        {shouldShowUpgradeButton() && (
+          <>
+            {pricesError ? (
+              <div className="text-xs text-destructive p-2 bg-destructive/10 rounded">
+                {pricesError}
               </div>
-              <div>
-                <h4 className="text-xs font-medium">{activePlan.name}</h4>
-                <div className="text-xs text-muted-foreground">
-                  <p>Current pricing:</p>
-                  <ul className="pl-3 mt-0.5 space-y-0.5">
-                    <li>${activePlan.price_monthly.toFixed(2)} per month</li>
-                    <li>${activePlan.price_yearly.toFixed(2)} per year (save {yearlyDiscount}%)</li>
-                  </ul>
+            ) : activePlan && !pricesLoading ? (
+              <div className="flex items-center justify-between border rounded-md p-3">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/10 p-1.5 rounded-md">
+                    <BadgeCheck className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-medium">{activePlan.name}</h4>
+                    <div className="text-xs text-muted-foreground">
+                      <p>Available plans:</p>
+                      <ul className="pl-3 mt-0.5 space-y-0.5">
+                        <li>${activePlan.price_monthly.toFixed(2)} per month</li>
+                        <li>${activePlan.price_yearly.toFixed(2)} per year (save {yearlyDiscount}%)</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-xs text-muted-foreground">
-            Loading pricing information...
-          </div>
+            ) : pricesLoading ? (
+              <div className="text-xs text-muted-foreground">
+                Loading pricing information...
+              </div>
+            ) : null}
+          </>
         )}
       </CardContent>
-      <CardFooter className="py-2 px-4">
-        <Button 
-          onClick={onUpgrade}
-          size="sm"
-          className="text-xs h-8"
-          disabled={pricesError !== null}
-        >
-          <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-          {getButtonText()}
-        </Button>
-      </CardFooter>
+      
+      {shouldShowUpgradeButton() && (
+        <CardFooter className="py-2 px-4">
+          <Button 
+            onClick={onUpgrade}
+            size="sm"
+            className="text-xs h-8"
+            disabled={pricesError !== null}
+          >
+            <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+            {getButtonText()}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
