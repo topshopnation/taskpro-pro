@@ -54,9 +54,11 @@ export const useSubscriptionUrlParams = (
         // Process the PayPal subscription using the subscription ID
         await processSubscription(finalSubscriptionId, "completed");
         
-        // Force refresh subscription data after URL-based subscription processing
-        console.log("🔄 Refreshing subscription data after processing");
-        await fetchSubscription();
+        // Additional forced refresh to ensure UI updates immediately
+        console.log("🔄 Force refreshing subscription data after URL processing");
+        setTimeout(async () => {
+          await fetchSubscription();
+        }, 500);
         
         // Clean up URL parameters after successful processing
         console.log("🧹 Cleaning up URL parameters");
