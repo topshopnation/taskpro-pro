@@ -27,7 +27,7 @@ export default function Settings() {
           if (result.success && result.subscription) {
             console.log("Created trial subscription for new user");
             // Force refresh subscription data to get the new trial
-            await fetchSubscription(true); // Force refresh to bypass cache
+            await fetchSubscription(); // Remove the argument since it doesn't accept any
           } else {
             console.log("Could not create trial - user may have had previous subscription");
           }
