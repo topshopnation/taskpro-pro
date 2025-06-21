@@ -27,7 +27,7 @@ serve(async (req) => {
     // Get PayPal configuration
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "production"; // Changed default to production
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "production";
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
@@ -65,36 +65,76 @@ serve(async (req) => {
     
     console.log("✅ Successfully obtained PayPal access token");
     
-    // Get subscription details from PayPal
-    console.log("📋 Fetching subscription details for ID:", subscriptionId);
-    
-    const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
-    
-    console.log("📋 Subscription response status:", subscriptionResponse.status);
-    
-    if (!subscriptionResponse.ok) {
-      const errorText = await subscriptionResponse.text();
-      console.error("❌ Failed to get subscription details:", errorText);
-      throw new Error(`Failed to get subscription details: ${subscriptionResponse.status} ${errorText}`);
-    }
-    
-    const subscriptionData = await subscriptionResponse.json();
-    console.log("💾 PayPal subscription data:", JSON.stringify(subscriptionData, null, 2));
-    
-    // Extract plan details from custom_id
+    // Check if this is a billing agreement (starts with BA-) or subscription (starts with I-)
+    let subscriptionData;
     let planType = 'monthly';
-    try {
-      const customData = JSON.parse(subscriptionData.custom_id || '{}');
-      planType = customData.planType || 'monthly';
-      console.log("📦 Extracted plan type:", planType);
-    } catch (e) {
-      console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
+    
+    if (subscriptionId.startsWith('BA-')) {
+      console.log("📋 Processing PayPal billing agreement:", subscriptionId);
+      
+      // For billing agreements, we get the agreement details
+      const agreementResponse = await fetch(`${baseUrl}/v1/billing-agreements/${subscriptionId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log("📋 Agreement response status:", agreementResponse.status);
+      
+      if (!agreementResponse.ok) {
+        const errorText = await agreementResponse.text();
+        console.error("❌ Failed to get agreement details:", errorText);
+        throw new Error(`Failed to get agreement details: ${agreementResponse.status} ${errorText}`);
+      }
+      
+      subscriptionData = await agreementResponse.json();
+      console.log("💾 PayPal agreement data:", JSON.stringify(subscriptionData, null, 2));
+      
+      // Extract plan details from the agreement
+      try {
+        if (subscriptionData.plan?.payment_definitions?.[0]?.frequency_interval === '12') {
+          planType = 'yearly';
+        } else {
+          planType = 'monthly';
+        }
+        console.log("📦 Extracted plan type from agreement:", planType);
+      } catch (e) {
+        console.warn("⚠️ Could not parse plan type from agreement, defaulting to monthly");
+      }
+      
+    } else {
+      console.log("📋 Processing PayPal subscription:", subscriptionId);
+      
+      // For regular subscriptions, get subscription details
+      const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log("📋 Subscription response status:", subscriptionResponse.status);
+      
+      if (!subscriptionResponse.ok) {
+        const errorText = await subscriptionResponse.text();
+        console.error("❌ Failed to get subscription details:", errorText);
+        throw new Error(`Failed to get subscription details: ${subscriptionResponse.status} ${errorText}`);
+      }
+      
+      subscriptionData = await subscriptionResponse.json();
+      console.log("💾 PayPal subscription data:", JSON.stringify(subscriptionData, null, 2));
+      
+      // Extract plan details from custom_id
+      try {
+        const customData = JSON.parse(subscriptionData.custom_id || '{}');
+        planType = customData.planType || 'monthly';
+        console.log("📦 Extracted plan type from subscription:", planType);
+      } catch (e) {
+        console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
+      }
     }
     
     // Calculate subscription period
@@ -183,7 +223,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         subscription: updatedSubscription,
-        paypal_status: subscriptionData.status,
+        paypal_status: subscriptionData.state || subscriptionData.status,
+        paypal_type: subscriptionId.startsWith('BA-') ? 'billing_agreement' : 'subscription',
         message: "Subscription activated successfully"
       }),
       { 
