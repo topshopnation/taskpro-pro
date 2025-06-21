@@ -17,7 +17,9 @@ export const useSubscriptionUrlParams = (
   const urlParams = new URLSearchParams(location.search);
   const subscriptionSuccess = urlParams.get('subscription_success');
   const subscriptionCancelled = urlParams.get('subscription_cancelled');
-  const subscriptionId = urlParams.get('subscription_id');
+  
+  // PayPal returns subscription_id in the URL, but also check for ba_token as fallback
+  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
   // Memoize the subscription handler to avoid recreation on every render

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -233,10 +232,11 @@ serve(async (req) => {
         throw new Error("No approval URL found in PayPal response");
       }
       
+      // Store the subscription ID to be included in the return URL
+      const modifiedReturnUrl = `${returnUrl}&subscription_id=${subscription.id}&plan_type=${planType}`;
+      
       // Modify the approval URL to include the subscription ID in the return URL
       const urlObj = new URL(approvalUrl);
-      const originalReturnUrl = urlObj.searchParams.get('return_url') || returnUrl;
-      const modifiedReturnUrl = `${originalReturnUrl}&subscription_id=${subscription.id}&plan_type=${planType}`;
       urlObj.searchParams.set('return_url', modifiedReturnUrl);
       
       console.log("Subscription created successfully with approval URL:", urlObj.toString());
