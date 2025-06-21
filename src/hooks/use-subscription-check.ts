@@ -34,8 +34,20 @@ export function useSubscriptionCheck() {
     // Check if current route should be restricted
     const isUnrestrictedRoute = UNRESTRICTED_ROUTES.some(route => pathname.startsWith(route));
     
-    // Only restrict if not on an unrestricted route and subscription is not active
-    setShouldRestrict(!isUnrestrictedRoute && !isActive && !isTrialActive);
+    // User has access if they have an active subscription OR an active trial
+    const hasAccess = isActive || isTrialActive;
+    
+    // Only restrict if not on an unrestricted route AND user doesn't have access
+    setShouldRestrict(!isUnrestrictedRoute && !hasAccess);
+    
+    console.log("Subscription check:", {
+      pathname,
+      isUnrestrictedRoute,
+      isActive,
+      isTrialActive,
+      hasAccess,
+      shouldRestrict: !isUnrestrictedRoute && !hasAccess
+    });
   }, [isActive, isTrialActive, loading, initialized, pathname]);
 
   return {

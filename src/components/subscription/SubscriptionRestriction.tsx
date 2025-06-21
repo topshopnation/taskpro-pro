@@ -10,19 +10,19 @@ interface SubscriptionRestrictionProps {
 }
 
 export function SubscriptionRestriction({ children }: SubscriptionRestrictionProps) {
-  const { isActive, subscription, loading, daysRemaining } = useSubscription();
+  const { isActive, isTrialActive, subscription, loading, daysRemaining } = useSubscription();
   const navigate = useNavigate();
 
   if (loading) {
     return <>{children}</>;
   }
 
-  // If subscription is active, show the regular content
-  if (isActive) {
+  // If user has active subscription OR active trial, show the regular content
+  if (isActive || isTrialActive) {
     return <>{children}</>;
   }
 
-  // If subscription is not active, show restricted view
+  // If user doesn't have access, show restricted view
   return (
     <div className="relative">
       {/* Semi-transparent overlay */}
@@ -46,7 +46,7 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
             ) : subscription?.status === 'canceled' ? (
               <span>Your subscription has been canceled. Reactivate your subscription to continue using TaskPro.</span>
             ) : (
-              <span>A subscription is required to use this feature.</span>
+              <span>Start your free 14-day trial to access all TaskPro features. No payment required upfront!</span>
             )}
             <div className="mt-4">
               <Button 
@@ -54,7 +54,7 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white"
                 variant="default"
               >
-                View Subscription Options
+                Start Free Trial
               </Button>
             </div>
           </AlertDescription>
