@@ -176,6 +176,7 @@ serve(async (req) => {
     console.log("PayPal plan created:", paypalPlan);
     
     // Create PayPal subscription with the dynamic plan
+    // Fix: Remove invalid {subscription_id} placeholder from return URL
     const subscriptionData = {
       plan_id: paypalPlan.id,
       subscriber: {
@@ -193,7 +194,7 @@ serve(async (req) => {
           payer_selected: "PAYPAL",
           payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
         },
-        return_url: `${returnUrl}&subscription_id={subscription_id}`,
+        return_url: `${returnUrl}`, // Remove the invalid {subscription_id} placeholder
         cancel_url: cancelUrl
       },
       custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })
