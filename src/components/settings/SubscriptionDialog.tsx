@@ -1,4 +1,3 @@
-
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,23 +44,23 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     setPlansError(null);
     
     try {
-      console.log("Checking subscription plans...");
+      console.log("Checking subscription plans in dialog...");
       const activePlan = await subscriptionPlanService.getActivePlan();
-      console.log("Active plan check result:", activePlan);
+      console.log("Dialog: Active plan check result:", activePlan);
       
       if (!activePlan) {
         setPlansError("No paid subscription plans are currently available. Please contact support.");
       }
     } catch (error: any) {
-      console.error("Error loading subscription plans:", error);
-      const errorMsg = error.message || "Failed to load subscription plans";
+      console.error("Dialog: Error loading subscription plans:", error);
       
-      if (errorMsg.includes("infinite recursion") || errorMsg.includes("policy")) {
-        setPlansError("Database configuration issue. Please contact support or try again later.");
-      } else if (errorMsg.includes("No paid subscription plans")) {
+      // Provide more specific error messages
+      if (error.message?.includes("No paid subscription plans")) {
         setPlansError("No paid subscription plans are available. Please contact support.");
+      } else if (error.message?.includes("Database error")) {
+        setPlansError("Unable to connect to subscription service. Please try again in a moment.");
       } else {
-        setPlansError(`${errorMsg}. Please try refreshing or contact support if the issue persists.`);
+        setPlansError("Failed to load subscription options. Please try refreshing the page.");
       }
     } finally {
       setIsLoadingPlans(false);
@@ -93,10 +92,9 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       
       if (subscriptionUrl) {
         console.log("Opening PayPal subscription URL:", subscriptionUrl);
-        // Open in new tab for better user experience
         window.open(subscriptionUrl, "_blank");
         toast.info("Complete your subscription in the new tab to activate auto-renewal");
-        onOpenChange(false); // Close dialog after opening PayPal
+        onOpenChange(false);
       } else {
         throw new Error("Failed to generate subscription URL");
       }
