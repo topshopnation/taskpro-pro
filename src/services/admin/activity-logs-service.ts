@@ -32,14 +32,14 @@ export const activityLogsService = {
       // Get recent task activity
       const { data: tasks } = await supabase
         .from('tasks')
-        .select('*, profiles!tasks_user_id_fkey(email)')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(15);
 
       // Get recent project activity
       const { data: projects } = await supabase
         .from('projects')
-        .select('*, profiles!projects_user_id_fkey(email)')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(15);
 
@@ -134,12 +134,15 @@ export const activityLogsService = {
       // Process task activities
       if (tasks) {
         tasks.forEach(task => {
+          // Find the user email for this task
+          const userProfile = profiles?.find(p => p.id === task.user_id);
+          
           logs.push({
             id: `task-create-${task.id}`,
             type: 'task',
             action: 'Task Created',
             timestamp: task.created_at,
-            user_email: task.profiles?.email,
+            user_email: userProfile?.email,
             details: {
               user_id: task.user_id,
               task_title: task.title,
@@ -153,12 +156,15 @@ export const activityLogsService = {
       // Process project activities
       if (projects) {
         projects.forEach(project => {
+          // Find the user email for this project
+          const userProfile = profiles?.find(p => p.id === project.user_id);
+          
           logs.push({
             id: `project-create-${project.id}`,
             type: 'project',
             action: 'Project Created',
             timestamp: project.created_at,
-            user_email: project.profiles?.email,
+            user_email: userProfile?.email,
             details: {
               user_id: project.user_id,
               project_name: project.name,

@@ -30,7 +30,7 @@ export const adminService = {
   // User management
   getAllUsers: userManagementService.getAllUsers,
   updateUserProfile: userManagementService.updateUserProfile,
-  updateUserSubscription: userManagementService.updateUserSubscription,
+  updateUserSubscriptionStatus: userManagementService.updateUserSubscription,
   deleteUser: userManagementService.deleteUser,
   
   // Dashboard statistics
