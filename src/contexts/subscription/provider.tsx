@@ -40,22 +40,27 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       return null;
     }
 
-    // Prevent fetch spam with minimum time between fetches (unless forced)
-    const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchTime.current;
-    if (!force && timeSinceLastFetch < 3000 && lastFetchTime.current > 0) {
-      console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
-      return subscription;
-    }
+    // For forced refreshes, bypass throttling and locking
+    if (!force) {
+      // Prevent fetch spam with minimum time between fetches
+      const now = Date.now();
+      const timeSinceLastFetch = now - lastFetchTime.current;
+      if (timeSinceLastFetch < 3000 && lastFetchTime.current > 0) {
+        console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
+        return subscription;
+      }
 
-    // Use a ref-based lock to prevent concurrent fetches
-    if ((isFetching || fetchLock.current) && !force) {
-      console.log("Already fetching subscription, skipping");
-      return subscription;
+      // Use a ref-based lock to prevent concurrent fetches
+      if (isFetching || fetchLock.current) {
+        console.log("Already fetching subscription, skipping");
+        return subscription;
+      }
     }
 
     try {
-      fetchLock.current = true;
+      if (!force) {
+        fetchLock.current = true;
+      }
       setIsFetching(true);
       
       // Only show loading state on initial load
@@ -64,7 +69,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       }
       
       console.log("Fetching subscription for user:", user.id, force ? "(forced)" : "");
-      const data = await subscriptionService.fetchSubscription(user.id);
+      const data = await subscriptionService.fetchSubscription(user.id, force);
       console.log("Subscription data fetched:", data);
       
       // Update last fetch time
@@ -86,7 +91,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       initialLoadDone.current = true;
       return null;
     } finally {
-      fetchLock.current = false;
+      if (!force) {
+        fetchLock.current = false;
+      }
     }
   }, [user, setLoading, updateState, isFetching, subscription]);
 

@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Subscription, SubscriptionUpdate, SubscriptionStatus, SubscriptionPlanType } from "../types";
 
 export const subscriptionService = {
-  async fetchSubscription(userId: string): Promise<Subscription | null> {
+  async fetchSubscription(userId: string, force: boolean = false): Promise<Subscription | null> {
     try {
-      console.log("Fetching subscription for user:", userId);
+      console.log("Fetching subscription for user:", userId, force ? "(forced)" : "");
       
       const { data, error } = await supabase
         .from('subscriptions')

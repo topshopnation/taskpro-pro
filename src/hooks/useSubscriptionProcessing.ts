@@ -38,10 +38,13 @@ export function useSubscriptionProcessing() {
           console.log("Subscription activated successfully");
           toast.success("Subscription activated successfully! Your plan has been updated.");
           
-          // Fetch updated subscription data after a short delay
+          // Force refresh subscription data immediately and after a delay
+          await fetchSubscription(true); // Force refresh
+          
           setTimeout(async () => {
-            await fetchSubscription();
-          }, 2000);
+            console.log("Doing delayed subscription refresh");
+            await fetchSubscription(true); // Force refresh again after delay
+          }, 3000);
         } else {
           throw new Error("Subscription activation failed");
         }
