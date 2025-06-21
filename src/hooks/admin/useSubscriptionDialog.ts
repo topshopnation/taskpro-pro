@@ -43,17 +43,37 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
         if (success) {
           toast.success("Subscription plan updated successfully");
           setDialogOpen(false);
-          onSuccess(currentPlan as SubscriptionPlan);
+          // Convert the plan to proper SubscriptionPlan type for callback
+          const updatedPlan: SubscriptionPlan = {
+            ...success,
+            features: Array.isArray(success.features) ? success.features : []
+          };
+          onSuccess(updatedPlan);
         } else {
           toast.error("Failed to update subscription plan");
           return;
         }
       } else {
         console.log("Creating new plan:", currentPlan);
-        const newPlan = await subscriptionPlansService.createSubscriptionPlan(currentPlan);
+        // Ensure we have all required fields for creation
+        const planToCreate = {
+          name: currentPlan.name!,
+          description: currentPlan.description || "",
+          price_monthly: currentPlan.price_monthly!,
+          price_yearly: currentPlan.price_yearly!,
+          features: currentPlan.features || [],
+          is_active: currentPlan.is_active ?? true
+        };
+        
+        const newPlan = await subscriptionPlansService.createSubscriptionPlan(planToCreate);
         if (newPlan) {
           toast.success("Subscription plan created successfully");
-          onSuccess(newPlan);
+          // Convert the plan to proper SubscriptionPlan type for callback
+          const createdPlan: SubscriptionPlan = {
+            ...newPlan,
+            features: Array.isArray(newPlan.features) ? newPlan.features : []
+          };
+          onSuccess(createdPlan);
           setDialogOpen(false);
         } else {
           toast.error("Failed to create subscription plan");
