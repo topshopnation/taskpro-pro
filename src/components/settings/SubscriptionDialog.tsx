@@ -23,11 +23,11 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
   const [plansError, setPlansError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
   
   // Check if user has had a trial before (expired trial users cannot get another trial)
   const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
-  const canStartTrial = !subscription || (!hasExpiredTrial && !isTrialActive && subscription?.status !== 'active');
   
   // Reset plan type to monthly when dialog opens and check for plans
   useEffect(() => {
@@ -35,6 +35,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       setPlanType("monthly");
       setPaymentError(null);
       setPlansError(null);
+      setRetryCount(0);
       checkSubscriptionPlans();
     }
   }, [open]);
@@ -49,14 +50,27 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       console.log("Active plan check result:", activePlan);
       
       if (!activePlan) {
-        setPlansError("No subscription plans are currently available. Please contact support.");
+        setPlansError("No paid subscription plans are currently available. Please contact support.");
       }
     } catch (error: any) {
       console.error("Error loading subscription plans:", error);
-      setPlansError(error.message || "Failed to load subscription plans. Please try refreshing or contact support if the issue persists.");
+      const errorMsg = error.message || "Failed to load subscription plans";
+      
+      if (errorMsg.includes("infinite recursion") || errorMsg.includes("policy")) {
+        setPlansError("Database configuration issue. Please contact support or try again later.");
+      } else if (errorMsg.includes("No paid subscription plans")) {
+        setPlansError("No paid subscription plans are available. Please contact support.");
+      } else {
+        setPlansError(`${errorMsg}. Please try refreshing or contact support if the issue persists.`);
+      }
     } finally {
       setIsLoadingPlans(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    checkSubscriptionPlans();
   };
   
   const openSubscriptionLink = async () => {
@@ -118,9 +132,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     if (isTrialActive) {
       return 'Your trial is active! Upgrade now to continue enjoying TaskPro Pro features.';
     }
-    if (canStartTrial) {
-      return 'Start your free 14-day trial or subscribe to unlock unlimited projects, advanced features, and priority support.';
-    }
     return 'Subscribe to unlock unlimited projects, advanced features, and priority support.';
   };
 
@@ -159,16 +170,17 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           {plansError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {plansError}
+              <AlertDescription className="flex items-center justify-between">
+                <span>{plansError}</span>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={checkSubscriptionPlans}
+                  onClick={handleRetry}
                   className="ml-2"
+                  disabled={isLoadingPlans}
                 >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Retry
+                  <RefreshCw className={`h-3 w-3 mr-1 ${isLoadingPlans ? 'animate-spin' : ''}`} />
+                  Retry {retryCount > 0 && `(${retryCount})`}
                 </Button>
               </AlertDescription>
             </Alert>

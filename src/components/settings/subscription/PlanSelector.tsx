@@ -24,16 +24,22 @@ export default function PlanSelector({
       try {
         setIsLoading(true);
         setError(null);
+        console.log("PlanSelector: Fetching active paid plan...");
         const plan = await subscriptionPlanService.getActivePlan();
         
         if (plan) {
+          console.log("PlanSelector: Found paid plan:", plan);
           setActivePlan(plan);
         } else {
-          setError('No active subscription plan found. Please contact support.');
+          setError('No paid subscription plans found. Please contact support.');
         }
-      } catch (error) {
-        console.error('Error fetching subscription plan:', error);
-        setError('Failed to load subscription plans. Please try again.');
+      } catch (error: any) {
+        console.error('PlanSelector: Error fetching subscription plan:', error);
+        if (error.message?.includes("No paid subscription plans")) {
+          setError('No paid subscription plans are available. Please contact support.');
+        } else {
+          setError('Failed to load subscription plans. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }

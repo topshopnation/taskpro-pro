@@ -16,13 +16,14 @@ export interface SubscriptionPlanData {
 export const subscriptionPlanService = {
   async getActivePlan(): Promise<SubscriptionPlanData | null> {
     try {
-      console.log("Fetching active subscription plan...");
+      console.log("Fetching active subscription plan (excluding free trial)...");
       
-      // Get all active plans and use the most recent one
+      // Get active plans that are NOT free trials (have a price > 0)
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
+        .gt('price_monthly', 0) // Exclude free trial plans
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -32,17 +33,17 @@ export const subscriptionPlanService = {
       }
 
       if (!data || data.length === 0) {
-        console.log("No active subscription plan found");
-        throw new Error("No active subscription plans are currently available");
+        console.log("No active paid subscription plan found");
+        throw new Error("No paid subscription plans are currently available");
       }
 
       const plan = data[0];
-      console.log("Active plan found:", plan);
+      console.log("Active paid plan found:", plan);
       
       // Validate plan data
-      if (!plan.name || plan.price_monthly == null || plan.price_yearly == null) {
+      if (!plan.name || plan.price_monthly == null || plan.price_yearly == null || plan.price_monthly <= 0) {
         console.error("Invalid plan data:", plan);
-        throw new Error("Subscription plan data is incomplete");
+        throw new Error("Subscription plan data is incomplete or invalid");
       }
       
       return {
@@ -58,29 +59,16 @@ export const subscriptionPlanService = {
 
   async getAllPlans(): Promise<SubscriptionPlanData[]> {
     try {
-      console.log("Fetching all subscription plans...");
+      console.log("Fetching all paid subscription plans...");
       
-      // Check if user is admin to get all plans, otherwise only active ones
-      let isAdmin = false;
-      try {
-        const { data } = await supabase.rpc('is_current_user_admin');
-        isAdmin = data === true;
-      } catch (adminCheckError) {
-        console.log('Could not check admin status, proceeding as non-admin');
-        isAdmin = false;
-      }
-      
-      let query = supabase.from('subscription_plans').select('*');
-      
-      if (isAdmin) {
-        console.log("User is admin, fetching all plans");
-        query = query.order('created_at', { ascending: false });
-      } else {
-        console.log("User is not admin, fetching only active plans");
-        query = query.eq('is_active', true).order('created_at', { ascending: false });
-      }
-
-      const { data, error } = await query;
+      // Always filter out free trial plans for regular users
+      // Only show plans with price > 0
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .gt('price_monthly', 0) // Exclude free trial plans
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Database error fetching subscription plans:', error);
@@ -88,11 +76,25 @@ export const subscriptionPlanService = {
       }
 
       if (!data || data.length === 0) {
-        throw new Error("No subscription plans found");
+        console.log("No paid subscription plans found");
+        throw new Error("No paid subscription plans found");
       }
 
-      console.log("All plans found:", data);
-      return (data || []).map(plan => ({
+      console.log("Paid plans found:", data);
+      
+      // Validate and filter plans
+      const validPlans = data.filter(plan => 
+        plan.name && 
+        plan.price_monthly != null && 
+        plan.price_yearly != null && 
+        plan.price_monthly > 0
+      );
+
+      if (validPlans.length === 0) {
+        throw new Error("No valid paid subscription plans available");
+      }
+
+      return validPlans.map(plan => ({
         ...plan,
         description: plan.description || '',
         features: Array.isArray(plan.features) ? plan.features : []
