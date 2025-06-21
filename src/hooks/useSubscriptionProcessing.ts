@@ -19,14 +19,13 @@ export function useSubscriptionProcessing() {
     }
     
     // Prevent duplicate processing
-    if (subscriptionProcessed.current) {
-      console.log("Subscription already processed, skipping");
+    if (subscriptionProcessed.current || isProcessingSubscription) {
+      console.log("Subscription already processed or processing, skipping");
       return;
     }
     
     console.log("Starting subscription processing:", { subscriptionId, subscriptionStatus });
     setIsProcessingSubscription(true);
-    subscriptionProcessed.current = true; // Mark as processed immediately
 
     try {
       // Process the subscription based on status
@@ -41,7 +40,7 @@ export function useSubscriptionProcessing() {
           
           // Fetch updated subscription data after a short delay
           setTimeout(async () => {
-            await fetchSubscription(); // Remove the argument since it doesn't accept any
+            await fetchSubscription();
           }, 1000);
         } else {
           throw new Error("Subscription activation failed");

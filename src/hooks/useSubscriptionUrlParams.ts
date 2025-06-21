@@ -24,8 +24,13 @@ export const useSubscriptionUrlParams = (
 
   // Memoize the subscription handler to avoid recreation on every render
   const handleSubscription = useCallback(async () => {
+    if (subscriptionProcessed.current || isProcessingSubscription) {
+      console.log("Subscription already processed or processing, skipping");
+      return;
+    }
+
     try {
-      if (subscriptionSuccess === 'true' && !subscriptionProcessed.current && !isProcessingSubscription) {
+      if (subscriptionSuccess === 'true' && subscriptionId) {
         console.log("Processing PayPal subscription from URL params:", { 
           subscriptionId, 
           billingToken,
@@ -33,18 +38,16 @@ export const useSubscriptionUrlParams = (
           subscriptionProcessed: subscriptionProcessed.current 
         });
         
-        if (subscriptionId) {
-          console.log("Processing subscription with ID:", subscriptionId);
-          await processSubscription(subscriptionId, "completed");
-        } else {
-          console.error("No subscription ID or billing token found in URL parameters");
-          toast.error("Subscription activation failed - missing subscription information.");
-        }
+        subscriptionProcessed.current = true; // Mark as processed immediately
+        await processSubscription(subscriptionId, "completed");
         
         // Clean up URL parameters after processing
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, document.title, url.toString());
+      } else if (subscriptionSuccess === 'true' && !subscriptionId) {
+        console.error("No subscription ID or billing token found in URL parameters");
+        toast.error("Subscription activation failed - missing subscription information.");
       }
     } catch (error) {
       console.error("Error handling subscription from URL params:", error);
