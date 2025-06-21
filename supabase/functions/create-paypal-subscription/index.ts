@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -192,8 +193,7 @@ serve(async (req) => {
           payer_selected: "PAYPAL",
           payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
         },
-        // Include subscription ID in return URL for proper tracking
-        return_url: `${returnUrl}&subscription_id=${subscriptionId || 'PENDING'}`,
+        return_url: returnUrl,
         cancel_url: cancelUrl
       },
       custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })
