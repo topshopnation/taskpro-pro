@@ -41,7 +41,7 @@ export function useSubscriptionProcessing() {
           
           // Fetch updated subscription data after a short delay
           setTimeout(async () => {
-            await fetchSubscription(true); // Force refresh
+            await fetchSubscription(); // Remove the argument since it doesn't accept any
           }, 1000);
         } else {
           throw new Error("Subscription activation failed");
