@@ -41,7 +41,7 @@ export function CurrentPlanDisplay() {
     }
 
     if (subscription?.status === 'active') {
-      const hasAutoRenewal = subscription.paypal_subscription_id;
+      const hasAutoRenewal = Boolean(subscription.paypal_subscription_id);
       const currentDate = new Date();
       const endDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
       const isExpired = endDate && endDate < currentDate;

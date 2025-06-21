@@ -13,6 +13,7 @@ export interface Subscription {
   trial_end_date: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  paypal_subscription_id: string | null;
   created_at: string;
   updated_at: string;
 }
