@@ -10,7 +10,7 @@ import { SettingsContent } from "@/components/settings/SettingsContent";
 
 export default function Settings() {
   const { user } = useAuth();
-  const { subscription, loading, fetchSubscription, initialized } = useSubscription();
+  const { subscription, loading, fetchSubscription, initialized, updateSubscription } = useSubscription();
   const { isProcessingSubscription, processSubscription, subscriptionProcessed } = useSubscriptionProcessing();
 
   // Handle URL parameters for subscription processing (PayPal returns)
@@ -23,15 +23,27 @@ export default function Settings() {
       if (user && !loading && initialized && !subscription) {
         console.log("No subscription found, attempting to create trial for user:", user.id);
         try {
-          const created = await createTrialSubscription(user.id);
-          if (created) {
+          const result = await createTrialSubscription(user.id);
+          if (result.success && result.subscription) {
             console.log("Created trial subscription for new user");
-            // Wait a moment before fetching to ensure the trigger has processed
-            setTimeout(() => {
-              fetchSubscription();
-            }, 1000);
+            // Immediately update the subscription context with the new trial data
+            const trialSubscription = {
+              ...result.subscription,
+              status: result.subscription.status as any,
+              plan_type: result.subscription.plan_type as any
+            };
+            
+            // Update the subscription state immediately without waiting for fetch
+            await updateSubscription({
+              status: 'trial',
+              planType: 'monthly',
+              trialStartDate: result.subscription.trial_start_date,
+              trialEndDate: result.subscription.trial_end_date,
+              currentPeriodStart: result.subscription.current_period_start,
+              currentPeriodEnd: result.subscription.current_period_end
+            });
           } else {
-            console.log("Could not create trial - user may have had previous trial");
+            console.log("Could not create trial - user may have had previous subscription");
           }
         } catch (error) {
           console.error("Error creating trial subscription:", error);
@@ -40,7 +52,7 @@ export default function Settings() {
     };
     
     initializeTrialIfNeeded();
-  }, [user, subscription, loading, initialized, fetchSubscription]);
+  }, [user, subscription, loading, initialized, updateSubscription]);
 
   // Reset the subscription processed flag when unmounting
   useEffect(() => {

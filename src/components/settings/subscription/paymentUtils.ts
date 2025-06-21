@@ -1,11 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export async function createTrialSubscription(userId: string): Promise<boolean> {
+export async function createTrialSubscription(userId: string): Promise<{ success: boolean; subscription?: any }> {
   try {
     console.log("Checking for existing subscription for user:", userId);
     
-    // First check if user already has any subscription (trial or active)
+    // First check if user already has any subscription (trial, active, expired, or canceled)
     const { data: existingSubscription, error: checkError } = await supabase
       .from('subscriptions')
       .select('*')
@@ -16,12 +16,12 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
 
     if (checkError) {
       console.error('Error checking existing subscription:', checkError);
-      return false;
+      return { success: false };
     }
 
     if (existingSubscription) {
       console.log("User already has a subscription:", existingSubscription.status);
-      return false; // User already has a subscription, don't create trial
+      return { success: false }; // User already has a subscription, don't create trial
     }
 
     const now = new Date();
@@ -45,13 +45,13 @@ export async function createTrialSubscription(userId: string): Promise<boolean> 
 
     if (error) {
       console.error('Error creating trial subscription:', error);
-      return false;
+      return { success: false };
     }
 
     console.log("Trial subscription created successfully:", data);
-    return true;
+    return { success: true, subscription: data };
   } catch (error) {
     console.error('Exception creating trial subscription:', error);
-    return false;
+    return { success: false };
   }
 }
