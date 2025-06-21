@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/adminTypes";
+import type { User } from "@supabase/supabase-js";
 
 export const userManagementService = {
   async getAllUsers(): Promise<UserProfile[]> {
@@ -27,17 +28,19 @@ export const userManagementService = {
       }
 
       // Get auth users data through admin API
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         console.error('Error fetching auth users:', authError);
         // Continue without auth data if this fails
       }
 
+      const authUsers: User[] = authUsersData?.users || [];
+
       // Combine the data
       const users: UserProfile[] = (profiles || []).map(profile => {
         const userSubscription = subscriptions?.find(sub => sub.user_id === profile.id);
-        const authUser = authUsers?.users?.find(user => user.id === profile.id);
+        const authUser = authUsers.find(user => user.id === profile.id);
         
         return {
           id: profile.id,
@@ -56,10 +59,10 @@ export const userManagementService = {
       });
 
       // Also include any auth users that don't have profiles yet
-      if (authUsers?.users) {
+      if (authUsers.length > 0) {
         const profileIds = new Set(profiles?.map(p => p.id) || []);
         
-        authUsers.users.forEach(authUser => {
+        authUsers.forEach(authUser => {
           if (!profileIds.has(authUser.id)) {
             const userSubscription = subscriptions?.find(sub => sub.user_id === authUser.id);
             
