@@ -46,11 +46,11 @@ export const createPaymentUrl = async (planType: SubscriptionPlanType, userId: s
     if (process.env.NODE_ENV === 'development') {
       console.log("Development mode - simulating payment");
       
-      // Store test payment data
+      // Store test payment data with updated pricing
       const testPaymentData = {
         planType,
         userId,
-        amount: planType === 'yearly' ? 99.99 : 9.99,
+        amount: planType === 'yearly' ? 15.00 : 2.00,
         timestamp: new Date().toISOString()
       };
       

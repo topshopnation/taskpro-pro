@@ -25,26 +25,26 @@ export default function PlanSelector({
         if (plan) {
           setActivePlan(plan);
         } else {
-          // Fallback to default pricing
+          // Fallback to updated default pricing
           setActivePlan({
             id: 'default',
             name: 'TaskPro Pro',
             description: '',
-            price_monthly: 9.99,
-            price_yearly: 99.99,
+            price_monthly: 2.00,
+            price_yearly: 15.00,
             features: [],
             is_active: true
           });
         }
       } catch (error) {
         console.error('Error fetching subscription plan:', error);
-        // Fallback to default pricing
+        // Fallback to updated default pricing
         setActivePlan({
           id: 'default',
           name: 'TaskPro Pro',
           description: '',
-          price_monthly: 9.99,
-          price_yearly: 99.99,
+          price_monthly: 2.00,
+          price_yearly: 15.00,
           features: [],
           is_active: true
         });
