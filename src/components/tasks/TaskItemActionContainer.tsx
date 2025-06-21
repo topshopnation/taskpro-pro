@@ -42,21 +42,21 @@ export function TaskItemActionContainer({
       {/* Left side: Date and Project badges */}
       <div className="flex items-center gap-1 flex-wrap">
         {task.dueDate && (
-          <Badge variant="outline" className="text-xs px-1.5 py-0.5 whitespace-nowrap">
+          <Badge variant="outline" className="text-xs px-1 py-0.5 whitespace-nowrap text-[10px] sm:text-xs">
             {formatDueDate(task.dueDate)}
             {task.dueTime && ` ${task.dueTime}`}
           </Badge>
         )}
         
         {task.projectName && task.projectName !== "No Project" && (
-          <Badge variant="secondary" className="text-xs px-1.5 py-0.5 whitespace-nowrap">
+          <Badge variant="secondary" className="text-xs px-1 py-0.5 whitespace-nowrap text-[10px] sm:text-xs">
             {task.projectName}
           </Badge>
         )}
       </div>
 
       {/* Right side: Action icons */}
-      <div className="flex items-center space-x-1 flex-shrink-0">
+      <div className="flex items-center space-x-0.5 sm:space-x-1 flex-shrink-0">
         <TooltipProvider>
           <TaskItemDueDate
             dueDate={task.dueDate}
