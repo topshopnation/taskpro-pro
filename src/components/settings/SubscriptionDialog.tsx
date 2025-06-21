@@ -30,8 +30,9 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     if (open) {
       setPlanType("monthly");
       setPaymentError(null);
+      console.log("SubscriptionDialog opened - current subscription:", subscription);
     }
-  }, [open]);
+  }, [open, subscription]);
   
   const openSubscriptionLink = async () => {
     if (!user) {
@@ -106,8 +107,17 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{getDialogTitle()}</DialogTitle>
-          <DialogDescription>{getDialogDescription()}</DialogDescription>
+          <DialogTitle>
+            {subscription?.status === 'active' ? 'Manage Your Subscription' : 
+             hasExpiredTrial ? 'Upgrade to Paid Plan' :
+             isTrialActive ? 'Upgrade Your Trial' : 'Subscribe to TaskPro Pro'}
+          </DialogTitle>
+          <DialogDescription>
+            {subscription?.status === 'active' ? 'Change your subscription plan or manage billing details.' :
+             hasExpiredTrial ? 'Your trial has expired. Upgrade to a paid plan to continue using TaskPro Pro features.' :
+             isTrialActive ? 'Your trial is active! Upgrade now to continue enjoying TaskPro Pro features.' :
+             'Subscribe to unlock unlimited projects, advanced features, and priority support.'}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
@@ -141,7 +151,10 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             onClick={openSubscriptionLink} 
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : getButtonText()}
+            {isProcessing ? "Processing..." : 
+             subscription?.status === 'active' ? 'Update Plan' :
+             hasExpiredTrial ? 'Upgrade to Paid Plan' :
+             isTrialActive ? 'Upgrade Now' : 'Subscribe Now'}
           </Button>
         </DialogFooter>
       </DialogContent>

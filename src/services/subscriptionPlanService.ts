@@ -14,33 +14,55 @@ export interface SubscriptionPlanData {
 }
 
 export const subscriptionPlanService = {
-  async getActivePlan(): Promise<SubscriptionPlanData | null> {
+  async getActivePlans(): Promise<SubscriptionPlanData[]> {
     try {
-      console.log("Fetching active subscription plan...");
+      console.log("Fetching all active subscription plans...");
       
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
-        .gt('price_monthly', 0) // Only paid plans
-        .order('price_monthly', { ascending: true })
-        .limit(1)
-        .single();
+        .order('price_monthly', { ascending: true });
 
       if (error) {
-        console.error('Database error fetching active plan:', error);
-        return null;
+        console.error('Database error fetching plans:', error);
+        throw new Error(`Database error: ${error.message}`);
       }
 
-      console.log("Found active plan:", data);
-      
-      return {
-        ...data,
-        description: data.description || '',
-        features: Array.isArray(data.features) ? data.features : []
-      } as SubscriptionPlanData;
+      console.log("Raw plans data from database:", data);
+
+      if (!data || data.length === 0) {
+        console.log("No plans found in database");
+        return [];
+      }
+
+      // Filter out free plans and format the data
+      const validPlans = data
+        .filter(plan => {
+          const isValidPlan = plan.price_monthly > 0 || plan.price_yearly > 0;
+          console.log(`Plan ${plan.name}: monthly=${plan.price_monthly}, yearly=${plan.price_yearly}, valid=${isValidPlan}`);
+          return isValidPlan;
+        })
+        .map(plan => ({
+          ...plan,
+          description: plan.description || '',
+          features: Array.isArray(plan.features) ? plan.features : []
+        })) as SubscriptionPlanData[];
+
+      console.log("Filtered valid plans:", validPlans);
+      return validPlans;
     } catch (error) {
-      console.error('Error fetching active subscription plan:', error);
+      console.error('Error fetching subscription plans:', error);
+      throw error;
+    }
+  },
+
+  async getActivePlan(): Promise<SubscriptionPlanData | null> {
+    try {
+      const plans = await this.getActivePlans();
+      return plans.length > 0 ? plans[0] : null;
+    } catch (error) {
+      console.error('Error fetching active plan:', error);
       return null;
     }
   }
