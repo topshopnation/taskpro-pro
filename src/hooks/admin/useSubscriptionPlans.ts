@@ -17,7 +17,16 @@ export function useSubscriptionPlans() {
       const plansData = await subscriptionPlansService.getSubscriptionPlans();
       
       console.log("Fetched plans:", plansData);
-      setPlans(plansData || []);
+      
+      // Convert the database response to match our TypeScript types
+      const convertedPlans: SubscriptionPlan[] = (plansData || []).map(plan => ({
+        ...plan,
+        features: Array.isArray(plan.features) 
+          ? plan.features.filter((feature): feature is string => typeof feature === 'string')
+          : []
+      }));
+      
+      setPlans(convertedPlans);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
       toast.error("Failed to load subscription plans. Please check if you're logged in as an admin.");
