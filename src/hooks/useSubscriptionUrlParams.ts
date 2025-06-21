@@ -7,7 +7,7 @@ import { useSubscription } from "@/contexts/subscription";
 export const useSubscriptionUrlParams = (
   isProcessingSubscription: boolean,
   processSubscription: (subscriptionId: string, subscriptionStatus: string) => Promise<void>,
-  subscriptionProcessed: React.RefObject<boolean>
+  subscriptionProcessed: React.MutableRefObject<boolean>
 ) => {
   const location = useLocation();
   const { fetchSubscription } = useSubscription();
