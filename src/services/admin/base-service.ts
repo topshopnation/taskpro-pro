@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { AdminRole } from "@/types/adminTypes";
 
 /**
  * Base admin service for authentication and admin user management
@@ -90,7 +91,7 @@ export const adminBaseService = {
     }
   },
 
-  async addAdminUser(email: string, password: string, role: string = 'admin'): Promise<boolean> {
+  async addAdminUser(email: string, password: string, role: AdminRole = 'admin'): Promise<boolean> {
     try {
       console.log("Adding new admin user:", email);
       

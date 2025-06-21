@@ -52,7 +52,14 @@ export const subscriptionPlanService = {
       console.log("Fetching all subscription plans...");
       
       // Check if user is admin to get all plans, otherwise only active ones
-      const { data: isAdmin } = await supabase.rpc('is_current_user_admin').catch(() => ({ data: false }));
+      let isAdmin = false;
+      try {
+        const { data } = await supabase.rpc('is_current_user_admin');
+        isAdmin = data === true;
+      } catch (adminCheckError) {
+        console.log('Could not check admin status, proceeding as non-admin');
+        isAdmin = false;
+      }
       
       let query = supabase.from('subscription_plans').select('*');
       
