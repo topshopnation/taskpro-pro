@@ -61,41 +61,87 @@ serve(async (req) => {
       throw new Error("Failed to get PayPal access token");
     }
     
-    // Get subscription details from PayPal
-    const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${tokenData.access_token}`,
-        "Accept": "application/json"
-      }
-    });
-    
-    if (!subscriptionResponse.ok) {
-      const errorData = await subscriptionResponse.json();
-      console.error("Failed to get subscription details:", errorData);
-      throw new Error(`Failed to get subscription details: ${errorData.message || 'Unknown error'}`);
-    }
-    
-    const subscription = await subscriptionResponse.json();
-    console.log("PayPal subscription details:", JSON.stringify(subscription, null, 2));
-    
-    if (subscription.status !== "ACTIVE") {
-      throw new Error(`Subscription is not active. Status: ${subscription.status}`);
-    }
-    
-    // Extract custom data to get plan type
+    // Check if this is a billing agreement token (ba_token) or subscription ID
+    let subscription;
     let planType = 'monthly';
-    let dbPlanId = null;
     
-    try {
-      if (subscription.custom_id) {
-        const customData = JSON.parse(subscription.custom_id);
-        planType = customData.planType || 'monthly';
-        dbPlanId = customData.dbPlanId || null;
+    if (subscriptionId.startsWith('BA-')) {
+      // This is a billing agreement token, we need to convert it to a subscription
+      console.log("Processing billing agreement token:", subscriptionId);
+      
+      // For billing agreements, we'll create a subscription record based on the agreement
+      // First, let's get the billing agreement details
+      const agreementResponse = await fetch(`${baseUrl}/v1/billing-agreements/${subscriptionId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenData.access_token}`,
+          "Accept": "application/json"
+        }
+      });
+      
+      if (!agreementResponse.ok) {
+        const errorData = await agreementResponse.json();
+        console.error("Failed to get billing agreement details:", errorData);
+        throw new Error(`Failed to get billing agreement details: ${errorData.message || 'Unknown error'}`);
       }
-    } catch (e) {
-      console.warn("Could not parse custom_id, defaulting to monthly plan");
+      
+      const agreement = await agreementResponse.json();
+      console.log("PayPal billing agreement details:", JSON.stringify(agreement, null, 2));
+      
+      if (agreement.state !== "Active") {
+        throw new Error(`Billing agreement is not active. Status: ${agreement.state}`);
+      }
+      
+      // Extract plan information from agreement
+      if (agreement.plan && agreement.plan.payment_definitions) {
+        const paymentDef = agreement.plan.payment_definitions[0];
+        if (paymentDef && paymentDef.frequency === "Year") {
+          planType = 'yearly';
+        }
+      }
+      
+      // Use the billing agreement as our subscription reference
+      subscription = {
+        id: subscriptionId,
+        status: "ACTIVE",
+        plan_id: agreement.plan?.id || "",
+        billing_info: agreement
+      };
+      
+    } else {
+      // This should be a subscription ID, try to get it directly
+      const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenData.access_token}`,
+          "Accept": "application/json"
+        }
+      });
+      
+      if (!subscriptionResponse.ok) {
+        const errorData = await subscriptionResponse.json();
+        console.error("Failed to get subscription details:", errorData);
+        throw new Error(`Failed to get subscription details: ${errorData.message || 'Unknown error'}`);
+      }
+      
+      subscription = await subscriptionResponse.json();
+      console.log("PayPal subscription details:", JSON.stringify(subscription, null, 2));
+      
+      if (subscription.status !== "ACTIVE") {
+        throw new Error(`Subscription is not active. Status: ${subscription.status}`);
+      }
+      
+      // Extract custom data to get plan type
+      try {
+        if (subscription.custom_id) {
+          const customData = JSON.parse(subscription.custom_id);
+          planType = customData.planType || 'monthly';
+        }
+      } catch (e) {
+        console.warn("Could not parse custom_id, defaulting to monthly plan");
+      }
     }
     
     // Calculate period dates

@@ -18,8 +18,9 @@ export const useSubscriptionUrlParams = (
   const subscriptionCancelled = urlParams.get('subscription_cancelled');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
-  // Get the actual PayPal subscription ID from the URL fragment (PayPal redirects with subscription_id in URL)
-  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
+  // Get the billing agreement token from PayPal (this is what we use as subscription ID)
+  const billingToken = urlParams.get('ba_token') || urlParams.get('token');
+  const subscriptionId = urlParams.get('subscription_id') || billingToken;
 
   // Memoize the subscription handler to avoid recreation on every render
   const handleSubscription = useCallback(async () => {
@@ -27,6 +28,7 @@ export const useSubscriptionUrlParams = (
       if (subscriptionSuccess === 'true' && !subscriptionProcessed.current && !isProcessingSubscription) {
         console.log("Processing PayPal subscription from URL params:", { 
           subscriptionId, 
+          billingToken,
           planType, 
           subscriptionProcessed: subscriptionProcessed.current 
         });
@@ -35,7 +37,7 @@ export const useSubscriptionUrlParams = (
           console.log("Processing subscription with ID:", subscriptionId);
           await processSubscription(subscriptionId, "completed");
         } else {
-          console.error("No subscription ID found in URL parameters");
+          console.error("No subscription ID or billing token found in URL parameters");
           toast.error("Subscription activation failed - missing subscription information.");
         }
         
@@ -49,7 +51,7 @@ export const useSubscriptionUrlParams = (
       subscriptionProcessed.current = false; // Reset on error
       toast.error("Error processing subscription. Please contact support if the issue persists.");
     }
-  }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription]);
+  }, [subscriptionSuccess, subscriptionId, billingToken, planType, subscriptionProcessed, isProcessingSubscription, processSubscription]);
 
   useEffect(() => {
     if (subscriptionSuccess === 'true' && !subscriptionProcessed.current) {
