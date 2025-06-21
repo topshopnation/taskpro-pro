@@ -18,6 +18,7 @@ export const subscriptionPlanService = {
     try {
       console.log("Fetching all active subscription plans...");
       
+      // Simple query without any user-specific filtering since plans should be public
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -26,17 +27,24 @@ export const subscriptionPlanService = {
 
       if (error) {
         console.error('Database error fetching plans:', error);
+        
+        // If RLS is blocking, provide helpful error info
+        if (error.message.includes('policy')) {
+          console.error('RLS policy error - subscription plans should be publicly readable');
+          throw new Error('Subscription plans are not accessible. Please contact support.');
+        }
+        
         throw new Error(`Database error: ${error.message}`);
       }
 
       console.log("Raw plans data from database:", data);
 
       if (!data || data.length === 0) {
-        console.log("No plans found in database");
+        console.log("No active plans found in database");
         return [];
       }
 
-      // Filter out free plans and format the data
+      // Filter out free plans (plans with no pricing) and format the data
       const validPlans = data
         .filter(plan => {
           const isValidPlan = plan.price_monthly > 0 || plan.price_yearly > 0;
@@ -49,7 +57,7 @@ export const subscriptionPlanService = {
           features: Array.isArray(plan.features) ? plan.features : []
         })) as SubscriptionPlanData[];
 
-      console.log("Filtered valid plans:", validPlans);
+      console.log("Filtered valid plans for regular users:", validPlans);
       return validPlans;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
