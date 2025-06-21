@@ -53,17 +53,17 @@ export function useSubscriptionProcessing() {
           
           // Force immediate refresh of subscription data to update UI
           console.log("🔄 Refreshing subscription data immediately after activation");
-          await fetchSubscription(true); // Force refresh
+          await fetchSubscription(); // Remove force parameter
           
           // Force multiple refreshes to ensure database has fully updated
           setTimeout(async () => {
             console.log("🔄 Second subscription refresh to ensure UI is updated");
-            await fetchSubscription(true);
+            await fetchSubscription(); // Remove force parameter
           }, 1000);
           
           setTimeout(async () => {
             console.log("🔄 Third subscription refresh for final UI sync");
-            await fetchSubscription(true);
+            await fetchSubscription(); // Remove force parameter
           }, 3000);
           
         } else {

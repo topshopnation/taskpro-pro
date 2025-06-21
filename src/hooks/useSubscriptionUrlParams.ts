@@ -57,11 +57,11 @@ export const useSubscriptionUrlParams = (
         // Force multiple refreshes to ensure UI updates
         console.log("🔄 Force refreshing subscription data after URL processing");
         setTimeout(async () => {
-          await fetchSubscription(true); // Force refresh
+          await fetchSubscription(); // Remove force parameter
         }, 500);
         
         setTimeout(async () => {
-          await fetchSubscription(true); // Second force refresh
+          await fetchSubscription(); // Remove force parameter
         }, 2000);
         
         // Clean up URL parameters after successful processing
