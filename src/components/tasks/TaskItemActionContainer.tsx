@@ -6,6 +6,8 @@ import { TaskItemDueDate } from "./TaskItemDueDate";
 import { TaskItemProject } from "./TaskItemProject";
 import { TaskItemActions } from "./TaskItemActions";
 import { Task } from "./TaskItem";
+import { Badge } from "@/components/ui/badge";
+import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface TaskItemActionContainerProps {
   task: Task;
@@ -28,38 +30,64 @@ export function TaskItemActionContainer({
   onProjectChange,
   onFavoriteToggle
 }: TaskItemActionContainerProps) {
+  const formatDueDate = (date: Date) => {
+    if (isToday(date)) return "Today";
+    if (isTomorrow(date)) return "Tomorrow";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, "MMM d");
+  };
+
   return (
-    <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
-      <TooltipProvider>
-        <TaskItemDueDate
-          dueDate={task.dueDate}
-          onDateChange={onDateChange}
-          isUpdating={isUpdating}
-        />
-        
-        {onProjectChange && (
-          <TaskItemProject
-            taskId={task.id}
-            projectId={task.projectId}
-            isUpdating={isUpdating}
-            onProjectChange={onProjectChange}
-          />
+    <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+      {/* Left side: Date and Project badges */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {task.dueDate && (
+          <Badge variant="outline" className="text-xs px-1.5 py-0.5 whitespace-nowrap">
+            {formatDueDate(task.dueDate)}
+            {task.dueTime && ` ${task.dueTime}`}
+          </Badge>
         )}
         
-        <TaskItemPriority 
-          priority={task.priority} 
-          onPriorityChange={onPriorityChange}
-          isUpdating={isUpdating}
-        />
-        
-        <TaskItemActions
-          task={task}
-          onDeleteClick={onDeleteClick}
-          onEditClick={onEditClick}
-          isUpdating={isUpdating}
-          onFavoriteToggle={onFavoriteToggle}
-        />
-      </TooltipProvider>
+        {task.projectName && task.projectName !== "No Project" && (
+          <Badge variant="secondary" className="text-xs px-1.5 py-0.5 whitespace-nowrap">
+            {task.projectName}
+          </Badge>
+        )}
+      </div>
+
+      {/* Right side: Action icons */}
+      <div className="flex items-center space-x-1 flex-shrink-0">
+        <TooltipProvider>
+          <TaskItemDueDate
+            dueDate={task.dueDate}
+            onDateChange={onDateChange}
+            isUpdating={isUpdating}
+          />
+          
+          {onProjectChange && (
+            <TaskItemProject
+              taskId={task.id}
+              projectId={task.projectId}
+              isUpdating={isUpdating}
+              onProjectChange={onProjectChange}
+            />
+          )}
+          
+          <TaskItemPriority 
+            priority={task.priority} 
+            onPriorityChange={onPriorityChange}
+            isUpdating={isUpdating}
+          />
+          
+          <TaskItemActions
+            task={task}
+            onDeleteClick={onDeleteClick}
+            onEditClick={onEditClick}
+            isUpdating={isUpdating}
+            onFavoriteToggle={onFavoriteToggle}
+          />
+        </TooltipProvider>
+      </div>
     </div>
   );
 }

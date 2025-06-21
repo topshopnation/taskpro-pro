@@ -90,11 +90,9 @@ export function TaskItem({
     try {
       setIsUpdating(true);
       
-      // Call the parent component's handler if provided
       if (onProjectChange) {
         onProjectChange(task.id, projectId);
       } else {
-        // Otherwise, perform the update directly
         const { error } = await supabase
           .from('tasks')
           .update({ project_id: projectId })
@@ -122,11 +120,12 @@ export function TaskItem({
       >
         {/* Top row: Checkbox and task details */}
         <div className="flex items-start gap-3">
-          <div className="mt-1" onClick={e => e.stopPropagation()}>
+          <div className="mt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
             <Checkbox 
               checked={task.completed} 
               onCheckedChange={handleCompletionToggle}
               disabled={isUpdating}
+              className="md:h-4 md:w-4 h-3.5 w-3.5"
             />
           </div>
           
@@ -141,8 +140,8 @@ export function TaskItem({
           />
         </div>
         
-        {/* Bottom row: All actions in one line */}
-        <div className="pl-8">
+        {/* Bottom row: All actions and badges in one line */}
+        <div className="pl-6">
           <TaskItemActionContainer
             task={task}
             onDeleteClick={() => setIsDeleteDialogOpen(true)}
