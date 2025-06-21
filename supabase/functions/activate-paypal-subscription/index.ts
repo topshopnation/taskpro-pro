@@ -27,15 +27,20 @@ serve(async (req) => {
     // Get PayPal configuration
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "production"; // Changed default to production
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
     }
     
-    const baseUrl = environment === "sandbox" 
-      ? "https://api-m.sandbox.paypal.com" 
-      : "https://api-m.paypal.com";
+    console.log("🔧 PayPal Environment:", environment);
+    console.log("🔧 Using PayPal Client ID:", clientId.substring(0, 10) + "...");
+    
+    const baseUrl = environment === "production" 
+      ? "https://api-m.paypal.com" 
+      : "https://api-m.sandbox.paypal.com";
+    
+    console.log("🌐 PayPal Base URL:", baseUrl);
     
     // Get PayPal access token
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -47,33 +52,47 @@ serve(async (req) => {
       body: 'grant_type=client_credentials'
     });
     
+    console.log("🔑 Token response status:", tokenResponse.status);
+    
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to get PayPal access token: ${tokenResponse.statusText}`);
+      const errorText = await tokenResponse.text();
+      console.error("❌ Failed to get PayPal access token:", errorText);
+      throw new Error(`Failed to get PayPal access token: ${tokenResponse.status} ${errorText}`);
     }
     
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
     
+    console.log("✅ Successfully obtained PayPal access token");
+    
     // Get subscription details from PayPal
+    console.log("📋 Fetching subscription details for ID:", subscriptionId);
+    
     const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     });
     
+    console.log("📋 Subscription response status:", subscriptionResponse.status);
+    
     if (!subscriptionResponse.ok) {
-      throw new Error(`Failed to get subscription details: ${subscriptionResponse.statusText}`);
+      const errorText = await subscriptionResponse.text();
+      console.error("❌ Failed to get subscription details:", errorText);
+      throw new Error(`Failed to get subscription details: ${subscriptionResponse.status} ${errorText}`);
     }
     
     const subscriptionData = await subscriptionResponse.json();
-    console.log("💾 PayPal subscription data:", subscriptionData);
+    console.log("💾 PayPal subscription data:", JSON.stringify(subscriptionData, null, 2));
     
     // Extract plan details from custom_id
     let planType = 'monthly';
     try {
       const customData = JSON.parse(subscriptionData.custom_id || '{}');
       planType = customData.planType || 'monthly';
+      console.log("📦 Extracted plan type:", planType);
     } catch (e) {
       console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
     }
@@ -87,6 +106,12 @@ serve(async (req) => {
     } else {
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
     }
+    
+    console.log("📅 Subscription period:", {
+      start: currentDate.toISOString(),
+      end: periodEnd.toISOString(),
+      planType
+    });
     
     // First, get the most recent subscription for this user
     const { data: existingSubscriptions, error: fetchError } = await supabase
