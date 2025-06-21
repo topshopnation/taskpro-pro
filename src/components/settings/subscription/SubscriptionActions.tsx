@@ -1,7 +1,9 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CreditCard, ExternalLink } from "lucide-react";
+import { CreditCard, ExternalLink, X } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription";
+import { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 
 interface SubscriptionActionsProps {
   onUpgrade: () => void;
@@ -9,6 +11,7 @@ interface SubscriptionActionsProps {
 
 export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
   const { subscription, isTrialActive, daysRemaining } = useSubscription();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const getButtonConfig = () => {
     // Check if user has expired trial
@@ -87,6 +90,11 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
   const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
+  
+  // Show cancel button for active paid subscriptions with PayPal subscription ID
+  const showCancelButton = subscription?.status === 'active' && 
+                           subscription?.paypal_subscription_id && 
+                           !isTrialActive;
 
   return (
     <div className="flex flex-col gap-2">
@@ -100,6 +108,18 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
         {buttonConfig.text}
       </Button>
       
+      {showCancelButton && (
+        <Button 
+          onClick={() => setShowCancelDialog(true)}
+          variant="outline"
+          size="sm"
+          className="text-xs h-8 text-destructive hover:text-destructive"
+        >
+          <X className="mr-1.5 h-3.5 w-3.5" />
+          Cancel Subscription
+        </Button>
+      )}
+      
       {buttonConfig.urgent && (
         <p className="text-xs text-muted-foreground text-center">
           {isTrialActive && daysRemaining <= 3 
@@ -109,6 +129,11 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
             : "Renew to restore access to premium features"}
         </p>
       )}
+      
+      <CancelSubscriptionDialog 
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+      />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const createSubscriptionUrl = async (planType: 'monthly' | 'yearly', userId: string): Promise<string | null> => {
@@ -64,6 +63,35 @@ export const activateSubscription = async (subscriptionId: string, userId: strin
     return true;
   } catch (error: any) {
     console.error("Error in activateSubscription:", error);
+    throw error;
+  }
+};
+
+export const cancelSubscription = async (subscriptionId: string, userId: string): Promise<boolean> => {
+  try {
+    console.log("Canceling subscription:", { subscriptionId, userId });
+    
+    const { data, error } = await supabase.functions.invoke('cancel-paypal-subscription', {
+      body: {
+        subscriptionId,
+        userId
+      }
+    });
+
+    if (error) {
+      console.error("Error calling cancel-paypal-subscription function:", error);
+      throw new Error(`Failed to cancel subscription: ${error.message}`);
+    }
+
+    if (!data?.success) {
+      console.error("Subscription cancellation was not successful:", data);
+      throw new Error(data?.error || "Subscription cancellation failed");
+    }
+
+    console.log("Subscription canceled successfully:", data);
+    return true;
+  } catch (error: any) {
+    console.error("Error in cancelSubscription:", error);
     throw error;
   }
 };
