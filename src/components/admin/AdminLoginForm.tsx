@@ -39,8 +39,9 @@ export function AdminLoginForm() {
           timestamp: new Date().toISOString()
         }));
         
-        // Navigate to admin dashboard
-        navigate('/admin');
+        console.log('Admin session stored, navigating to admin dashboard...');
+        // Navigate to admin dashboard with replace to prevent back navigation to login
+        navigate('/admin', { replace: true });
       }
     } catch (error) {
       console.error('Unexpected error during login:', error);

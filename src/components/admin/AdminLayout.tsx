@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 import { useEffect, useState } from "react";
-import { adminService } from "@/services/admin-service";
 import { toast } from "sonner";
 
 interface AdminLayoutProps {
@@ -25,7 +24,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         
         if (!adminSessionStr) {
           console.log('No admin session found, redirecting to admin login');
-          navigate('/admin/login');
+          navigate('/admin/login', { replace: true });
           return;
         }
         
@@ -36,16 +35,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         if (!adminSession.email) {
           console.error('Invalid admin session');
           localStorage.removeItem('admin_session');
-          navigate('/admin/login');
+          navigate('/admin/login', { replace: true });
           return;
         }
         
+        console.log('Valid admin session found for:', adminSession.email);
         setAdminEmail(adminSession.email);
         setIsAdmin(true);
       } catch (error) {
         console.error('Error checking admin status:', error);
         toast.error("Authentication error");
-        navigate('/admin/login');
+        localStorage.removeItem('admin_session');
+        navigate('/admin/login', { replace: true });
       } finally {
         setIsLoading(false);
       }

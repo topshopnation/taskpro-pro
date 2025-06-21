@@ -38,7 +38,15 @@ const AppRoutes = () => {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          
+          {/* Admin Routes - Outside of ProtectedRoute */}
           <Route path="/admin/login" element={<AdminAuth />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<UsersAdmin />} />
+          <Route path="/admin/subscriptions" element={<SubscriptionsAdmin />} />
+          <Route path="/admin/activity" element={<ActivityAdmin />} />
+          
+          {/* Regular User Protected Routes */}
           <Route path="*" element={<ProtectedRoute />}>
             <Route path="today" element={<TodayView />} />
             <Route path="projects" element={<ProjectsPage />} />
@@ -51,12 +59,6 @@ const AppRoutes = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="settings" element={<Settings />} />
             <Route path="stats" element={<Stats />} />
-            
-            {/* Admin Routes */}
-            <Route path="admin" element={<AdminDashboard />} />
-            <Route path="admin/users" element={<UsersAdmin />} />
-            <Route path="admin/subscriptions" element={<SubscriptionsAdmin />} />
-            <Route path="admin/activity" element={<ActivityAdmin />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
