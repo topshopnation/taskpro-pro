@@ -10,7 +10,7 @@ import { SettingsContent } from "@/components/settings/SettingsContent";
 
 export default function Settings() {
   const { user } = useAuth();
-  const { subscription, loading, fetchSubscription, initialized, updateSubscription } = useSubscription();
+  const { subscription, loading, fetchSubscription, initialized } = useSubscription();
   const { isProcessingSubscription, processSubscription, subscriptionProcessed } = useSubscriptionProcessing();
 
   // Handle URL parameters for subscription processing (PayPal returns)
@@ -26,22 +26,8 @@ export default function Settings() {
           const result = await createTrialSubscription(user.id);
           if (result.success && result.subscription) {
             console.log("Created trial subscription for new user");
-            // Immediately update the subscription context with the new trial data
-            const trialSubscription = {
-              ...result.subscription,
-              status: result.subscription.status as any,
-              plan_type: result.subscription.plan_type as any
-            };
-            
-            // Update the subscription state immediately without waiting for fetch
-            await updateSubscription({
-              status: 'trial',
-              planType: 'monthly',
-              trialStartDate: result.subscription.trial_start_date,
-              trialEndDate: result.subscription.trial_end_date,
-              currentPeriodStart: result.subscription.current_period_start,
-              currentPeriodEnd: result.subscription.current_period_end
-            });
+            // Force refresh subscription data to get the new trial
+            await fetchSubscription(true); // Force refresh to bypass cache
           } else {
             console.log("Could not create trial - user may have had previous subscription");
           }
@@ -52,7 +38,7 @@ export default function Settings() {
     };
     
     initializeTrialIfNeeded();
-  }, [user, subscription, loading, initialized, updateSubscription]);
+  }, [user, subscription, loading, initialized, fetchSubscription]);
 
   // Reset the subscription processed flag when unmounting
   useEffect(() => {
