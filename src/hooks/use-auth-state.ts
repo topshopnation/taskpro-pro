@@ -41,13 +41,12 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        // Handle signed out events
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-          if (isSubscribed) {
-            console.log(`${event} event detected, clearing all user data`);
-            clearAllUserData();
-            window.location.href = '/';
-          }
+        // Handle cases where there's no session (signed out, initial load without session)
+        if (!newSession && isSubscribed) {
+          console.log("No session detected, clearing user data but not forcing redirect");
+          setSession(null);
+          resetUser();
+          setIsLoading(false);
         } else if (newSession?.user && isSubscribed) {
           setSession(newSession);
           
@@ -63,16 +62,10 @@ export const useAuthState = () => {
             }
           }, 0);
         } else if (isSubscribed) {
-          // No active session, ensure user data is cleared only if it's a genuine sign out
-          if (event === 'SIGNED_OUT') {
-            console.log("No active session after sign out, clearing user data");
-            clearAllUserData();
-          } else {
-            // For other events like TOKEN_REFRESHED, just update session state
-            setSession(null);
-            resetUser();
-            setIsLoading(false);
-          }
+          // Fallback case
+          setSession(null);
+          resetUser();
+          setIsLoading(false);
         }
       }
     );
