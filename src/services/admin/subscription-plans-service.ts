@@ -8,7 +8,6 @@ import { SubscriptionPlan } from "@/types/adminTypes";
 export const subscriptionPlansService = {
   async getSubscriptionPlans() {
     try {
-      // Use a direct query without admin user checks to avoid RLS issues
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -19,7 +18,6 @@ export const subscriptionPlansService = {
         throw error;
       }
       
-      // Transform the data to ensure all plans have description and features
       return (data || []).map(plan => ({
         ...plan,
         description: plan.description || '',
@@ -33,7 +31,6 @@ export const subscriptionPlansService = {
   
   async createSubscriptionPlan(plan: Partial<SubscriptionPlan>) {
     try {
-      // Ensure required fields are present
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan');
       }
@@ -69,7 +66,6 @@ export const subscriptionPlansService = {
   
   async updateSubscriptionPlan(id: string, plan: Partial<SubscriptionPlan>) {
     try {
-      // Ensure we have the required fields
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan update');
       }

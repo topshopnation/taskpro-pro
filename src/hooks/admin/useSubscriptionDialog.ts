@@ -39,6 +39,7 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
         const success = await adminService.updateSubscriptionPlan(currentPlan.id, currentPlan);
         if (success) {
           toast.success("Subscription plan updated successfully");
+          setDialogOpen(false);
         } else {
           toast.error("Failed to update subscription plan");
           return;
@@ -48,12 +49,12 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
         if (newPlan) {
           toast.success("Subscription plan created successfully");
           onSuccess(newPlan);
+          setDialogOpen(false);
         } else {
           toast.error("Failed to create subscription plan");
           return;
         }
       }
-      setDialogOpen(false);
     } catch (error) {
       console.error("Error saving plan:", error);
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";

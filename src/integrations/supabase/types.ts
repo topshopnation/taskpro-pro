@@ -340,6 +340,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       update_admin_password: {
         Args: {
           admin_email: string

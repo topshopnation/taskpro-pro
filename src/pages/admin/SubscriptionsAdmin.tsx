@@ -28,7 +28,7 @@ export default function SubscriptionsAdmin() {
     handleFormSubmit 
   } = useSubscriptionDialog((newPlan) => {
     setPlans(prev => [...prev, newPlan]);
-    fetchPlans(); // Refresh the list after adding
+    fetchPlans();
   });
 
   const filteredPlans = plans.filter(
@@ -84,7 +84,6 @@ export default function SubscriptionsAdmin() {
 
   const handleFormSubmitWithRefresh = async (e: React.FormEvent) => {
     await handleFormSubmit(e);
-    // Refresh the plans list after successful creation/update
     fetchPlans();
   };
 

@@ -1,3 +1,4 @@
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,25 +30,21 @@ export default function UsersAdmin() {
     try {
       setLoading(true);
       
-      // Get profiles with email and role
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
       if (profilesError) throw profilesError;
 
-      // Get subscriptions with more details
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('*');
 
       if (subsError) throw subsError;
 
-      // Match subscriptions to profiles
       const formattedUsers: UserProfile[] = profiles.map(profile => {
         const userSubscription = subscriptions.find(sub => sub.user_id === profile.id);
         
-        // Use optional chaining to safely access properties
         return {
           id: profile.id,
           email: profile.email || '',
@@ -60,7 +57,7 @@ export default function UsersAdmin() {
           role: profile.role || 'user',
           created_at: profile.created_at,
           updated_at: profile.updated_at,
-          last_login: profile.updated_at // Using updated_at as fallback for last_login
+          last_login: profile.updated_at
         };
       });
 
@@ -95,21 +92,19 @@ export default function UsersAdmin() {
     if (!selectedUser || !newRole) return;
     
     try {
-      // Update the user in the database if they're an admin
       const { error } = await supabase
         .from('admin_users')
         .upsert({
           id: selectedUser.id,
           email: selectedUser.email || '',
           role: newRole,
-          password_hash: 'placeholder', // Would be set properly in a real scenario
+          password_hash: 'placeholder',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
       
       if (error) throw error;
       
-      // Update local state
       setUsers(prev => 
         prev.map(user => 
           user.id === selectedUser.id ? { ...user, role: newRole } : user
