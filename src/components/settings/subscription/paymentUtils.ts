@@ -34,7 +34,12 @@ export const createTrialSubscription = async (userId: string): Promise<boolean> 
 };
 
 export const createPaymentUrl = async (planType: SubscriptionPlanType, userId: string): Promise<string | null> => {
-  // For now, redirect to the new subscription URL creation
+  // Type guard to ensure planType is valid for subscription creation
+  if (planType === 'none') {
+    console.error('Cannot create subscription URL for plan type "none"');
+    return null;
+  }
+  
   const { createSubscriptionUrl } = await import('./subscriptionUtils');
   return createSubscriptionUrl(planType, userId);
 };
