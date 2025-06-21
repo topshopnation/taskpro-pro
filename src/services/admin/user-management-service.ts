@@ -5,30 +5,45 @@ import { UserProfile } from "@/types/adminTypes";
 export const userManagementService = {
   async getAllUsers(): Promise<UserProfile[]> {
     try {
-      // Get all profiles
+      // First, get all profiles with their basic info
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
       // Get all subscriptions
       const { data: subscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('*');
 
-      if (subsError) throw subsError;
+      if (subsError) {
+        console.error('Error fetching subscriptions:', subsError);
+        throw subsError;
+      }
+
+      // Get auth users data through admin API
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        // Continue without auth data if this fails
+      }
 
       // Combine the data
       const users: UserProfile[] = (profiles || []).map(profile => {
         const userSubscription = subscriptions?.find(sub => sub.user_id === profile.id);
+        const authUser = authUsers?.users?.find(user => user.id === profile.id);
         
         return {
           id: profile.id,
-          email: profile.email || '',
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
+          email: profile.email || authUser?.email || '',
+          first_name: profile.first_name || authUser?.user_metadata?.first_name || '',
+          last_name: profile.last_name || authUser?.user_metadata?.last_name || '',
           subscription_status: userSubscription?.status || 'none',
           plan_type: userSubscription?.plan_type || 'none',
           current_period_end: userSubscription?.current_period_end,
@@ -36,10 +51,37 @@ export const userManagementService = {
           role: profile.role || 'user',
           created_at: profile.created_at,
           updated_at: profile.updated_at,
-          last_login: profile.updated_at
+          last_login: authUser?.last_sign_in_at || profile.updated_at
         };
       });
 
+      // Also include any auth users that don't have profiles yet
+      if (authUsers?.users) {
+        const profileIds = new Set(profiles?.map(p => p.id) || []);
+        
+        authUsers.users.forEach(authUser => {
+          if (!profileIds.has(authUser.id)) {
+            const userSubscription = subscriptions?.find(sub => sub.user_id === authUser.id);
+            
+            users.push({
+              id: authUser.id,
+              email: authUser.email || '',
+              first_name: authUser.user_metadata?.first_name || '',
+              last_name: authUser.user_metadata?.last_name || '',
+              subscription_status: userSubscription?.status || 'none',
+              plan_type: userSubscription?.plan_type || 'none',
+              current_period_end: userSubscription?.current_period_end,
+              trial_end_date: userSubscription?.trial_end_date,
+              role: 'user',
+              created_at: authUser.created_at,
+              updated_at: authUser.updated_at,
+              last_login: authUser.last_sign_in_at
+            });
+          }
+        });
+      }
+
+      console.log('Fetched users:', users);
       return users;
     } catch (error) {
       console.error('Error fetching users:', error);
