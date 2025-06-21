@@ -1,3 +1,4 @@
+
 import { PayPalTokenResponse, PayPalProduct, PayPalPlan, PayPalSubscription } from './types.ts';
 
 export const getPayPalAccessToken = async (
@@ -5,12 +6,12 @@ export const getPayPalAccessToken = async (
   clientId: string, 
   clientSecret: string
 ): Promise<string> => {
-  console.log("Attempting to get PayPal access token...");
-  console.log("Base URL:", baseUrl);
-  console.log("Client ID (first 10 chars):", clientId.substring(0, 10) + "...");
+  console.log("🔑 Attempting to get PayPal access token...");
+  console.log("🌐 Base URL:", baseUrl);
+  console.log("🔧 Client ID (first 10 chars):", clientId.substring(0, 10) + "...");
   
   const auth = btoa(`${clientId}:${clientSecret}`);
-  console.log("Authorization header created");
+  console.log("✅ Authorization header created");
   
   const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: "POST",
@@ -23,17 +24,17 @@ export const getPayPalAccessToken = async (
     body: "grant_type=client_credentials",
   });
   
-  console.log("Token response status:", tokenResponse.status);
+  console.log("📡 Token response status:", tokenResponse.status);
   
   const tokenData: PayPalTokenResponse = await tokenResponse.json();
-  console.log("Token response data:", tokenData);
+  console.log("📄 Token response received");
   
   if (!tokenResponse.ok || !tokenData.access_token) {
-    console.error("PayPal token response:", tokenData);
+    console.error("❌ PayPal token response:", tokenData);
     throw new Error(`Failed to get PayPal access token: ${tokenData.error_description || tokenData.error || 'Unknown error'}`);
   }
   
-  console.log("Successfully obtained PayPal access token");
+  console.log("✅ Successfully obtained PayPal access token");
   return tokenData.access_token;
 };
 
@@ -43,6 +44,8 @@ export const createPayPalProduct = async (
   plan: any,
   userId: string
 ): Promise<PayPalProduct> => {
+  console.log("🏭 Creating PayPal product...");
+  
   const productData = {
     name: plan.name,
     description: plan.description || `${plan.name} subscription`,
@@ -61,14 +64,16 @@ export const createPayPalProduct = async (
     body: JSON.stringify(productData),
   });
   
+  console.log("📦 Product response status:", productResponse.status);
+  
   const product = await productResponse.json();
   
   if (!productResponse.ok) {
-    console.error("PayPal product creation failed:", product);
+    console.error("❌ PayPal product creation failed:", product);
     throw new Error(`PayPal product creation failed: ${product.message || 'Unknown error'}`);
   }
   
-  console.log("PayPal product created:", product);
+  console.log("✅ PayPal product created:", product.id);
   return product;
 };
 
@@ -80,6 +85,8 @@ export const createPayPalBillingPlan = async (
   planType: 'monthly' | 'yearly',
   userId: string
 ): Promise<PayPalPlan> => {
+  console.log("📋 Creating PayPal billing plan for:", planType);
+  
   const interval = planType === 'yearly' ? 'YEAR' : 'MONTH';
   const planPrice = planType === 'yearly' ? plan.price_yearly : plan.price_monthly;
   
@@ -124,14 +131,16 @@ export const createPayPalBillingPlan = async (
     body: JSON.stringify(billingPlanData),
   });
   
+  console.log("📋 Plan response status:", planResponse.status);
+  
   const paypalPlan = await planResponse.json();
   
   if (!planResponse.ok) {
-    console.error("PayPal plan creation failed:", paypalPlan);
+    console.error("❌ PayPal plan creation failed:", paypalPlan);
     throw new Error(`PayPal plan creation failed: ${paypalPlan.message || 'Unknown error'}`);
   }
   
-  console.log("PayPal plan created:", paypalPlan);
+  console.log("✅ PayPal plan created:", paypalPlan.id);
   return paypalPlan;
 };
 
@@ -145,6 +154,8 @@ export const createPayPalSubscription = async (
   planType: 'monthly' | 'yearly',
   dbPlanId: string
 ): Promise<PayPalSubscription> => {
+  console.log("💳 Creating PayPal subscription...");
+  
   const subscriptionData = {
     plan_id: paypalPlan.id,
     subscriber: {
@@ -168,7 +179,7 @@ export const createPayPalSubscription = async (
     custom_id: JSON.stringify({ userId, planType, dbPlanId })
   };
   
-  console.log("Creating subscription with data:", JSON.stringify(subscriptionData, null, 2));
+  console.log("📝 Creating subscription with data:", JSON.stringify(subscriptionData, null, 2));
   
   const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions`, {
     method: "POST",
@@ -182,13 +193,16 @@ export const createPayPalSubscription = async (
     body: JSON.stringify(subscriptionData),
   });
   
+  console.log("💳 Subscription response status:", subscriptionResponse.status);
+  
   const subscription = await subscriptionResponse.json();
-  console.log("PayPal subscription response:", JSON.stringify(subscription, null, 2));
+  console.log("📄 PayPal subscription response received");
   
   if (!subscriptionResponse.ok) {
-    console.error("PayPal subscription creation failed:", subscription);
+    console.error("❌ PayPal subscription creation failed:", subscription);
     throw new Error(`PayPal subscription creation failed: ${subscription.message || 'Unknown error'}`);
   }
   
+  console.log("✅ PayPal subscription created:", subscription.id);
   return subscription;
 };

@@ -26,7 +26,7 @@ serve(async (req) => {
   try {
     const { planType, userId }: SubscriptionRequest = await req.json();
     
-    console.log("Creating PayPal subscription for:", { planType, userId });
+    console.log("🚀 Creating PayPal subscription for:", { planType, userId });
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -35,15 +35,14 @@ serve(async (req) => {
     
     // Get subscription plan and validate pricing
     const plan = await getSubscriptionPlan(supabase);
-    console.log('Using paid subscription plan from database:', plan);
+    console.log('📋 Using paid subscription plan from database:', plan.name);
     
     const planPrice = validatePlanPricing(plan, planType);
+    console.log(`💰 Plan price for ${planType}:`, planPrice);
     
     // Get PayPal configuration
     const { clientId, clientSecret, baseUrl } = getPayPalConfig();
     const { returnUrl, cancelUrl } = getReturnUrls();
-    
-    console.log("Using return URLs:", { returnUrl, cancelUrl });
     
     // Get PayPal access token
     const accessToken = await getPayPalAccessToken(baseUrl, clientId, clientSecret);
@@ -87,9 +86,9 @@ serve(async (req) => {
       const urlObj = new URL(approvalUrl);
       urlObj.searchParams.set('return_url', completeReturnUrl);
       
-      console.log("Subscription created successfully with approval URL:", urlObj.toString());
-      console.log("PayPal subscription ID:", subscription.id);
-      console.log("Return URL will be:", completeReturnUrl);
+      console.log("✅ Subscription created successfully");
+      console.log("🔗 PayPal subscription ID:", subscription.id);
+      console.log("🔙 Return URL will be:", completeReturnUrl);
       
       return new Response(
         JSON.stringify({ 
@@ -107,7 +106,7 @@ serve(async (req) => {
     }
     
   } catch (error) {
-    console.error("Error creating PayPal subscription:", error);
+    console.error("💥 Error creating PayPal subscription:", error);
     return new Response(
       JSON.stringify({ 
         error: error.message,

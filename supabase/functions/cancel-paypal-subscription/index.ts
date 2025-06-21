@@ -12,6 +12,9 @@ function getPayPalConfig() {
   const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
   const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "production"; // Changed default to production
   
+  console.log("🔧 PayPal Environment:", environment);
+  console.log("🔧 Using PayPal Client ID:", clientId?.substring(0, 10) + "...");
+  
   if (!clientId || !clientSecret) {
     throw new Error("PayPal credentials not configured");
   }
@@ -19,6 +22,8 @@ function getPayPalConfig() {
   const baseUrl = environment === "production" 
     ? "https://api-m.paypal.com" 
     : "https://api-m.sandbox.paypal.com";
+  
+  console.log("🌐 PayPal Base URL:", baseUrl);
   
   return { clientId, clientSecret, baseUrl };
 }
@@ -32,7 +37,7 @@ serve(async (req) => {
   try {
     const { subscriptionId, userId } = await req.json();
     
-    console.log("Canceling PayPal subscription:", { subscriptionId, userId });
+    console.log("🚫 Canceling PayPal subscription:", { subscriptionId, userId });
 
     if (!subscriptionId || !userId) {
       throw new Error("Missing subscriptionId or userId");
@@ -48,16 +53,21 @@ serve(async (req) => {
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       body: 'grant_type=client_credentials'
     });
 
+    console.log("🔑 Token response status:", tokenResponse.status);
+
     const tokenData = await tokenResponse.json();
     
     if (!tokenResponse.ok) {
-      console.error("PayPal token error:", tokenData);
-      throw new Error("Failed to get PayPal access token");
+      console.error("❌ PayPal token error:", tokenData);
+      throw new Error(`Failed to get PayPal access token: ${tokenResponse.status} ${tokenData.error_description || tokenData.error}`);
     }
+
+    console.log("✅ Successfully obtained PayPal access token");
 
     // Cancel the subscription with PayPal
     const cancelResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}/cancel`, {
@@ -65,19 +75,22 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         reason: 'User requested cancellation'
       })
     });
 
+    console.log("🚫 Cancel response status:", cancelResponse.status);
+
     if (!cancelResponse.ok) {
       const errorData = await cancelResponse.text();
-      console.error("PayPal cancellation error:", errorData);
-      throw new Error("Failed to cancel PayPal subscription");
+      console.error("❌ PayPal cancellation error:", errorData);
+      throw new Error(`Failed to cancel PayPal subscription: ${cancelResponse.status} ${errorData}`);
     }
 
-    console.log("PayPal subscription canceled successfully");
+    console.log("✅ PayPal subscription canceled successfully");
 
     // Update subscription status in database
     const supabase = createClient(
@@ -97,11 +110,11 @@ serve(async (req) => {
       .single();
 
     if (error) {
-      console.error("Database update error:", error);
-      throw new Error("Failed to update subscription status");
+      console.error("❌ Database update error:", error);
+      throw new Error(`Failed to update subscription status: ${error.message}`);
     }
 
-    console.log("Subscription status updated in database:", data);
+    console.log("✅ Subscription status updated in database:", data);
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -111,7 +124,7 @@ serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("Error canceling subscription:", error);
+    console.error("💥 Error canceling subscription:", error);
     return new Response(JSON.stringify({ 
       success: false,
       error: error.message 
