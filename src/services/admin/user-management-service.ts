@@ -1,219 +1,77 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "@/types/adminTypes";
+import { adminDatabaseService } from "./admin-database-service";
 
 export const userManagementService = {
-  async getAllUsers(): Promise<UserProfile[]> {
-    try {
-      console.log('Starting to fetch all users...');
-      
-      // First check if current user is admin
-      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
-      
-      if (adminCheckError) {
-        console.error('Error checking admin status:', adminCheckError);
-        return [];
-      }
-
-      if (!isAdmin) {
-        console.error('User is not admin, cannot fetch all users');
-        return [];
-      }
-
-      console.log('User is admin, proceeding to fetch users...');
-      
-      // Get all profiles (this should work now with proper RLS)
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
-      }
-
-      // Get all subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('subscriptions')
-        .select('*');
-
-      if (subsError) {
-        console.error('Error fetching subscriptions:', subsError);
-        // Don't throw here, continue without subscription data
-      }
-
-      console.log('Profiles found:', profiles?.length || 0);
-      console.log('Subscriptions found:', subscriptions?.length || 0);
-
-      // Build users array from profiles
-      const users: UserProfile[] = (profiles || []).map(profile => {
-        const userSubscription = subscriptions?.find(sub => sub.user_id === profile.id);
-        
-        console.log(`Processing user ${profile.id}:`, {
-          hasProfile: true,
-          hasSubscription: !!userSubscription,
-          email: profile.email
-        });
-        
-        return {
-          id: profile.id,
-          email: profile.email || '',
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
-          subscription_status: userSubscription?.status || 'none',
-          plan_type: userSubscription?.plan_type || 'none',
-          current_period_end: userSubscription?.current_period_end,
-          trial_end_date: userSubscription?.trial_end_date,
-          role: profile.role || 'user',
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-          last_login: profile.updated_at
-        };
-      });
-
-      console.log('Final users array:', users.length, users);
-      return users;
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      return [];
-    }
+  async getAllUsers() {
+    return adminDatabaseService.getAllUsers();
   },
 
-  async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+  async updateUserProfile(userId: string, updates: { first_name?: string; last_name?: string; email?: string }) {
     try {
-      console.log('Updating user profile:', userId, updates);
+      console.log("Updating user profile:", userId, updates);
       
-      // Check if current user is admin
-      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
-      
-      if (adminCheckError || !isAdmin) {
-        console.error('User is not admin, cannot update profile');
-        return false;
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: updates.first_name,
-          last_name: updates.last_name,
-          email: updates.email,
-          role: updates.role,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
-      console.log('User profile updated successfully');
-      return true;
+      console.log("User profile updated:", data);
+      return data;
     } catch (error) {
       console.error('Error updating user profile:', error);
-      return false;
+      throw error;
     }
   },
 
-  async updateUserSubscription(userId: string, status: string, planType: string) {
+  async updateUserSubscription(userId: string, updates: { status?: string; plan_type?: string }) {
     try {
-      console.log('Updating user subscription:', userId, status, planType);
+      console.log("Updating user subscription:", userId, updates);
       
-      // Check if current user is admin
-      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
-      
-      if (adminCheckError || !isAdmin) {
-        console.error('User is not admin, cannot update subscription');
-        return false;
-      }
-
-      // Check if subscription exists
-      const { data: existingSub } = await supabase
+      const { data, error } = await supabase
         .from('subscriptions')
-        .select('id')
+        .update(updates)
         .eq('user_id', userId)
-        .maybeSingle();
+        .select()
+        .single();
 
-      if (existingSub) {
-        // Update existing subscription
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({
-            status,
-            plan_type: planType,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId);
-
-        if (error) throw error;
-      } else {
-        // Create new subscription
-        const { error } = await supabase
-          .from('subscriptions')
-          .insert({
-            user_id: userId,
-            status,
-            plan_type: planType,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
+      if (error) {
+        throw error;
       }
 
-      console.log('User subscription updated successfully');
-      return true;
+      console.log("User subscription updated:", data);
+      return data;
     } catch (error) {
       console.error('Error updating user subscription:', error);
-      return false;
+      throw error;
     }
   },
 
   async deleteUser(userId: string) {
     try {
-      console.log('Deleting user:', userId);
+      console.log("Deleting user:", userId);
       
-      // Check if current user is admin
-      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_current_user_admin');
-      
-      if (adminCheckError || !isAdmin) {
-        console.error('User is not admin, cannot delete user');
-        return false;
-      }
-
-      // Delete user's subscription first
-      await supabase
-        .from('subscriptions')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete user's tasks
-      await supabase
-        .from('tasks')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete user's projects
-      await supabase
-        .from('projects')
-        .delete()
-        .eq('user_id', userId);
-
-      // Delete user's filters
-      await supabase
-        .from('filters')
-        .delete()
-        .eq('user_id', userId);
-
-      // Finally delete the profile
+      // Delete from profiles table (this should cascade to other tables)
       const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (error) throw error;
-      console.log('User deleted successfully');
+      if (error) {
+        throw error;
+      }
+
+      console.log("User deleted successfully");
       return true;
     } catch (error) {
       console.error('Error deleting user:', error);
-      return false;
+      throw error;
     }
   }
 };

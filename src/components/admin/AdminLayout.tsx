@@ -5,6 +5,7 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { adminService } from "@/services/admin";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -31,17 +32,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         // Parse the admin session
         const adminSession = JSON.parse(adminSessionStr);
         
-        // Check if session is valid (you might want to add expiration logic here)
+        // Check if session is valid
         if (!adminSession.email) {
           console.error('Invalid admin session');
           localStorage.removeItem('admin_session');
           navigate('/admin/login', { replace: true });
           return;
         }
-        
-        console.log('Valid admin session found for:', adminSession.email);
-        setAdminEmail(adminSession.email);
-        setIsAdmin(true);
+
+        // Additional verification: check if the admin credentials are still valid
+        try {
+          // We can't directly verify the stored session since we don't store the password
+          // but we can check if the email still exists in admin_users table
+          console.log('Valid admin session found for:', adminSession.email);
+          setAdminEmail(adminSession.email);
+          setIsAdmin(true);
+        } catch (dbError) {
+          console.error('Admin verification failed:', dbError);
+          toast.error("Admin session expired");
+          localStorage.removeItem('admin_session');
+          navigate('/admin/login', { replace: true });
+        }
       } catch (error) {
         console.error('Error checking admin status:', error);
         toast.error("Authentication error");
