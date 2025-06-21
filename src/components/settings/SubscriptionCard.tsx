@@ -57,13 +57,19 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     return <SubscriptionCardSkeleton />;
   }
 
-  const buttonText = isSubscriptionActive 
-    ? showRenewButton 
-      ? 'Renew Subscription'
-      : 'Manage Subscription' 
-    : isTrialActive
-      ? 'Upgrade Now'
-      : 'Subscribe Now';
+  // Determine button text based on subscription state
+  const getButtonText = () => {
+    if (isTrialActive) {
+      return 'Upgrade Now';
+    }
+    if (isSubscriptionActive && showRenewButton) {
+      return 'Renew Subscription';
+    }
+    if (isSubscriptionActive && !showRenewButton) {
+      return 'Manage Subscription';
+    }
+    return 'Subscribe Now';
+  };
 
   const yearlyDiscount = activePlan ? Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100) : 0;
 
@@ -125,7 +131,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           disabled={!activePlan}
         >
           <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-          {buttonText}
+          {getButtonText()}
         </Button>
       </CardFooter>
     </Card>

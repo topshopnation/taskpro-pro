@@ -29,6 +29,19 @@ export function SubscriptionStatus({
     : null;
   const isExpired = expiryDate && expiryDate < currentDate;
   
+  // Check if subscription expires within 60 days
+  const isExpiringSoon = subscription?.status === 'active' && (() => {
+    try {
+      const endDate = new Date(subscription.current_period_end ?? '');
+      const now = new Date();
+      const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 60 && daysUntilExpiry > 0;
+    } catch (err) {
+      console.error("Error calculating expiry status:", err);
+      return false;
+    }
+  })();
+  
   // Determine proper plan name and status badge based on subscription state
   let planName: string;
   let statusElement: React.ReactNode;
@@ -43,11 +56,19 @@ export function SubscriptionStatus({
     );
   } else if (subscription?.status === 'active' && !isExpired) {
     planName = subscription.plan_type === 'monthly' ? "TaskPro Pro Monthly" : "TaskPro Pro Annual";
-    statusElement = (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-        Active
-      </Badge>
-    );
+    if (isExpiringSoon) {
+      statusElement = (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+          Expires Soon
+        </Badge>
+      );
+    } else {
+      statusElement = (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+          Active
+        </Badge>
+      );
+    }
   } else if (isExpired || subscription?.status === 'expired') {
     planName = "Subscription Expired";
     statusElement = (
@@ -79,7 +100,9 @@ export function SubscriptionStatus({
         {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && (
           <p className="text-xs text-muted-foreground mt-0.5">
             {subscription?.status === 'active' && !isExpired
-              ? `Renews on ${formattedExpiryDate}`
+              ? isExpiringSoon
+                ? `Expires ${formattedExpiryDate} - Renew now!`
+                : `Renews on ${formattedExpiryDate}`
               : isExpired || subscription?.status === 'expired'
                 ? `Expired on ${
                     formattedExpiryDate || 
