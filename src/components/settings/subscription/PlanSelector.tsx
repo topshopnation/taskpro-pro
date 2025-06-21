@@ -15,58 +15,47 @@ export default function PlanSelector({
   planType, 
   onPlanTypeChange 
 }: PlanSelectorProps) {
-  const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<SubscriptionPlanData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchActivePlan() {
+    async function fetchPlan() {
       try {
-        setIsLoading(true);
-        setError(null);
-        console.log("PlanSelector: Fetching active paid plan...");
-        const plan = await subscriptionPlanService.getActivePlan();
-        
-        if (plan) {
-          console.log("PlanSelector: Found paid plan:", plan);
-          setActivePlan(plan);
-        } else {
-          setError('No paid subscription plans found. Please contact support.');
-        }
-      } catch (error: any) {
-        console.error('PlanSelector: Error fetching subscription plan:', error);
-        if (error.message?.includes("No paid subscription plans")) {
-          setError('No paid subscription plans are available. Please contact support.');
-        } else {
-          setError('Failed to load subscription plans. Please try again.');
-        }
+        setLoading(true);
+        console.log("PlanSelector: Fetching plan...");
+        const activePlan = await subscriptionPlanService.getActivePlan();
+        console.log("PlanSelector: Got plan:", activePlan);
+        setPlan(activePlan);
+      } catch (error) {
+        console.error('PlanSelector: Error fetching plan:', error);
+        setPlan(null);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     }
 
-    fetchActivePlan();
+    fetchPlan();
   }, []);
 
-  if (isLoading) {
+  if (loading) {
     return <div className="animate-pulse h-32 bg-muted rounded-md" />;
   }
 
-  if (error || !activePlan) {
+  if (!plan) {
     return (
       <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-md">
-        <p className="text-sm text-destructive">{error || 'Unable to load subscription plans'}</p>
+        <p className="text-sm text-destructive">No subscription plans available</p>
       </div>
     );
   }
 
-  const yearlyDiscount = Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100);
+  const yearlyDiscount = Math.round(((plan.price_monthly * 12 - plan.price_yearly) / (plan.price_monthly * 12)) * 100);
 
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium">Select your billing cycle</h3>
       
-      <RadioGroup value={planType} className="grid gap-4">
+      <RadioGroup value={planType} onValueChange={(value) => onPlanTypeChange(value as "monthly" | "yearly")}>
         <div className="grid grid-cols-2 gap-4">
           <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "monthly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("monthly")}>
             <RadioGroupItem value="monthly" id="monthly" className="absolute right-3 top-3" />
@@ -78,13 +67,9 @@ export default function PlanSelector({
                 )}
               </div>
               <div className="text-sm">
-                <div className="font-semibold">${activePlan.price_monthly.toFixed(2)}/month</div>
+                <div className="font-semibold">${plan.price_monthly.toFixed(2)}/month</div>
                 <div className="text-muted-foreground text-xs">Billed monthly</div>
               </div>
-            </div>
-            
-            <div className="absolute -top-2 left-3 bg-muted-foreground/10 text-xs px-2 py-0.5 rounded text-muted-foreground">
-              Standard
             </div>
           </div>
             
@@ -106,17 +91,28 @@ export default function PlanSelector({
                 )}
               </div>
               <div className="text-sm">
-                <div className="font-semibold">${activePlan.price_yearly.toFixed(2)}/year</div>
+                <div className="font-semibold">${plan.price_yearly.toFixed(2)}/year</div>
                 <div className="text-muted-foreground text-xs">Billed annually</div>
               </div>
-            </div>
-            
-            <div className="absolute -top-2 left-3 bg-green-100 text-xs px-2 py-0.5 rounded text-green-700 dark:bg-green-900 dark:text-green-300">
-              Best Value
             </div>
           </div>
         </div>
       </RadioGroup>
+
+      {/* Plan Features */}
+      {plan.features && plan.features.length > 0 && (
+        <div className="mt-4 p-3 bg-muted/30 rounded-md">
+          <h4 className="text-sm font-medium mb-2">Included features:</h4>
+          <ul className="text-xs space-y-1">
+            {plan.features.map((feature, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <BadgeCheck className="h-3 w-3 text-green-600" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

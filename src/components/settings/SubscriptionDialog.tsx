@@ -1,3 +1,4 @@
+
 import { useSubscription } from "@/contexts/subscription";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,9 +7,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
 import { createSubscriptionUrl } from "./subscription/subscriptionUtils";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { subscriptionPlanService } from "@/services/subscriptionPlanService";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -20,66 +20,22 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { subscription, isTrialActive } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
-  const [plansError, setPlansError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
   
   // Check if user has had a trial before (expired trial users cannot get another trial)
   const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
   
-  // Reset plan type to monthly when dialog opens and check for plans
+  // Reset plan type to monthly when dialog opens
   useEffect(() => {
     if (open) {
       setPlanType("monthly");
       setPaymentError(null);
-      setPlansError(null);
-      setRetryCount(0);
-      checkSubscriptionPlans();
     }
   }, [open]);
-
-  const checkSubscriptionPlans = async () => {
-    setIsLoadingPlans(true);
-    setPlansError(null);
-    
-    try {
-      console.log("Checking subscription plans in dialog...");
-      const activePlan = await subscriptionPlanService.getActivePlan();
-      console.log("Dialog: Active plan check result:", activePlan);
-      
-      if (!activePlan) {
-        setPlansError("No paid subscription plans are currently available. Please contact support.");
-      }
-    } catch (error: any) {
-      console.error("Dialog: Error loading subscription plans:", error);
-      
-      // Provide more specific error messages
-      if (error.message?.includes("No paid subscription plans")) {
-        setPlansError("No paid subscription plans are available. Please contact support.");
-      } else if (error.message?.includes("Database error")) {
-        setPlansError("Unable to connect to subscription service. Please try again in a moment.");
-      } else {
-        setPlansError("Failed to load subscription options. Please try refreshing the page.");
-      }
-    } finally {
-      setIsLoadingPlans(false);
-    }
-  };
-
-  const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
-    checkSubscriptionPlans();
-  };
   
   const openSubscriptionLink = async () => {
     if (!user) {
       toast.error("You must be signed in to subscribe");
-      return;
-    }
-
-    if (plansError) {
-      toast.error("Cannot proceed without subscription plans. Please try refreshing.");
       return;
     }
     
@@ -145,9 +101,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
     return 'Subscribe Now';
   };
-
-  const hasErrors = paymentError || plansError;
-  const canProceed = !isLoadingPlans && !plansError && !isProcessing;
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,32 +111,6 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
-          {isLoadingPlans && (
-            <Alert>
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              <AlertDescription>Loading subscription plans...</AlertDescription>
-            </Alert>
-          )}
-
-          {plansError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>{plansError}</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleRetry}
-                  className="ml-2"
-                  disabled={isLoadingPlans}
-                >
-                  <RefreshCw className={`h-3 w-3 mr-1 ${isLoadingPlans ? 'animate-spin' : ''}`} />
-                  Retry {retryCount > 0 && `(${retryCount})`}
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
           {paymentError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -200,12 +127,10 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             </Alert>
           )}
           
-          {!isLoadingPlans && !plansError && (
-            <PlanSelector 
-              planType={planType} 
-              onPlanTypeChange={setPlanType} 
-            />
-          )}
+          <PlanSelector 
+            planType={planType} 
+            onPlanTypeChange={setPlanType} 
+          />
         </div>
         
         <DialogFooter>
@@ -214,7 +139,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           </Button>
           <Button 
             onClick={openSubscriptionLink} 
-            disabled={!canProceed}
+            disabled={isProcessing}
           >
             {isProcessing ? "Processing..." : getButtonText()}
           </Button>
