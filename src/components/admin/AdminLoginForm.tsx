@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
 export function AdminLoginForm() {
-  const [email, setEmail] = useState('admin@taskpro.pro');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -74,7 +74,7 @@ export function AdminLoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
-              placeholder="admin@taskpro.pro"
+              placeholder="Enter admin email"
             />
           </div>
           <div className="space-y-2">
@@ -103,12 +103,6 @@ export function AdminLoginForm() {
             {loading ? "Logging in..." : "Login to Admin"}
           </Button>
         </form>
-        
-        <div className="mt-4 text-sm text-muted-foreground text-center">
-          <p>Test credentials:</p>
-          <p>Email: admin@taskpro.pro</p>
-          <p>Password: admin123</p>
-        </div>
       </CardContent>
     </Card>
   );
