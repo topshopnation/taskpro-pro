@@ -25,25 +25,44 @@ export const adminBaseService = {
   // Admin authentication functions
   async loginAdmin(email: string, password: string): Promise<boolean> {
     try {
+      console.log('Attempting admin login for:', email);
+      
+      // First, let's try to verify credentials using the database function
       const { data, error } = await supabase.rpc('verify_admin_credentials', {
         input_email: email,
         input_password: password
       });
 
-      if (error || !data) {
+      console.log('Admin login response:', { data, error });
+
+      if (error) {
+        console.error('Admin login error:', error);
+        toast.error('Login failed: ' + error.message);
+        return false;
+      }
+
+      if (!data) {
+        console.log('Invalid credentials - no match found');
         toast.error('Invalid admin credentials');
         return false;
       }
 
-      await supabase
+      // Update last login timestamp
+      const { error: updateError } = await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
         .eq('email', email);
 
+      if (updateError) {
+        console.error('Error updating last login:', updateError);
+        // Don't fail login for this error
+      }
+
+      console.log('Admin login successful');
       return true;
     } catch (error) {
       console.error('Admin login error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred during login');
       return false;
     }
   },
