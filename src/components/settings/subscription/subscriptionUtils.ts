@@ -30,6 +30,34 @@ export const activateSubscription = async (subscriptionId: string, userId: strin
   }
 };
 
+export const cancelSubscription = async (subscriptionId: string, userId: string): Promise<void> => {
+  try {
+    console.log("Canceling subscription:", { subscriptionId, userId });
+    
+    const { data, error } = await supabase.functions.invoke('cancel-paypal-subscription', {
+      body: {
+        subscriptionId,
+        userId
+      }
+    });
+
+    if (error) {
+      console.error('Error canceling subscription:', error);
+      throw new Error(error.message || 'Failed to cancel subscription');
+    }
+
+    if (!data?.success) {
+      console.error('Subscription cancellation failed:', data);
+      throw new Error('Subscription cancellation was not successful');
+    }
+
+    console.log('Subscription canceled successfully:', data);
+  } catch (error) {
+    console.error('Error in cancelSubscription:', error);
+    throw error;
+  }
+};
+
 export const createSubscriptionUrl = async (planType: "monthly" | "yearly", userId: string): Promise<string | null> => {
   try {
     console.log("Creating subscription URL for:", { planType, userId });
