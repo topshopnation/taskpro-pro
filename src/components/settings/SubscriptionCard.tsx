@@ -8,8 +8,8 @@ import { SubscriptionStatus } from "./subscription/SubscriptionStatus";
 import { SubscriptionFeatures } from "./subscription/SubscriptionFeatures";
 import { SubscriptionCardProps } from "@/types/subscriptionTypes";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { subscriptionPlanService, SubscriptionPlanData } from "@/services/subscriptionPlanService";
 
 export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
   const {
@@ -24,49 +24,51 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
     isSubscriptionActive
   } = useSubscriptionCard();
 
-  const [prices, setPrices] = useState<{ monthly: number; yearly: number }>({ monthly: 9.99, yearly: 99.99 });
+  const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [pricesError, setPricesError] = useState<string | null>(null);
-  const [yearlyDiscount, setYearlyDiscount] = useState(17);
 
   useEffect(() => {
-    async function fetchPrices() {
+    async function fetchActivePlan() {
       try {
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('price_monthly, price_yearly')
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (error) {
-          console.warn('Could not fetch subscription prices from database:', error);
-          // Use default prices if database fetch fails
-          setPricesError("Using default pricing");
-        } else if (data) {
-          const monthly = data.price_monthly;
-          const yearly = data.price_yearly;
-          
-          const calculatedDiscount = Math.round(
-            ((monthly * 12 - yearly) / (monthly * 12)) * 100
-          );
-          
-          setPrices({ monthly, yearly });
-          setYearlyDiscount(calculatedDiscount);
+        setPricesLoading(true);
+        const plan = await subscriptionPlanService.getActivePlan();
+        
+        if (plan) {
+          setActivePlan(plan);
           setPricesError(null);
         } else {
-          // No data found, use defaults
-          console.warn('No subscription plan found in database, using defaults');
-          setPricesError("Using default pricing");
+          // Fallback to default if no active plan found
+          setActivePlan({
+            id: 'default',
+            name: 'TaskPro Pro',
+            description: 'Premium features for productivity',
+            price_monthly: 9.99,
+            price_yearly: 99.99,
+            features: [],
+            is_active: true
+          });
+          setPricesError("Using default pricing - no active plan configured");
         }
       } catch (error) {
-        console.error('Error fetching subscription prices:', error);
+        console.error('Error fetching active subscription plan:', error);
         setPricesError("Could not load pricing");
+        // Use fallback plan
+        setActivePlan({
+          id: 'default',
+          name: 'TaskPro Pro',
+          description: 'Premium features for productivity',
+          price_monthly: 9.99,
+          price_yearly: 99.99,
+          features: [],
+          is_active: true
+        });
       } finally {
         setPricesLoading(false);
       }
     }
 
-    fetchPrices();
+    fetchActivePlan();
   }, []);
 
   if (!hasRendered || !isStable || pricesLoading) {
@@ -78,6 +80,8 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
       ? 'Renew Subscription'
       : 'Currently Subscribed' 
     : 'Subscribe Now';
+
+  const yearlyDiscount = activePlan ? Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100) : 0;
 
   return (
     <Card className="overflow-hidden">
@@ -107,23 +111,25 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           error={error}
         />
 
-        <div className="flex items-center justify-between border rounded-md p-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-1.5 rounded-md">
-              <BadgeCheck className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h4 className="text-xs font-medium">TaskPro Pro</h4>
-              <div className="text-xs text-muted-foreground">
-                <p>Choose between:</p>
-                <ul className="pl-3 mt-0.5 space-y-0.5">
-                  <li>${prices.monthly.toFixed(2)} per month</li>
-                  <li>${prices.yearly.toFixed(2)} per year (save {yearlyDiscount}%)</li>
-                </ul>
+        {activePlan && (
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary/10 p-1.5 rounded-md">
+                <BadgeCheck className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-xs font-medium">{activePlan.name}</h4>
+                <div className="text-xs text-muted-foreground">
+                  <p>Choose between:</p>
+                  <ul className="pl-3 mt-0.5 space-y-0.5">
+                    <li>${activePlan.price_monthly.toFixed(2)} per month</li>
+                    <li>${activePlan.price_yearly.toFixed(2)} per year {yearlyDiscount > 0 && `(save ${yearlyDiscount}%)`}</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
         
         <SubscriptionFeatures />
       </CardContent>

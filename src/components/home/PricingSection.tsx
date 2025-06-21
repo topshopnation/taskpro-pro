@@ -3,57 +3,72 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { subscriptionPlanService, SubscriptionPlanData } from "@/services/subscriptionPlanService";
 
 export const PricingSection = () => {
   const navigate = useNavigate();
-  const [subscriptionPrices, setSubscriptionPrices] = useState({
-    monthly: 0,
-    yearly: 0,
-    yearlyDiscount: 0
-  });
+  const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
   const [pricesLoading, setPricesLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchSubscriptionPrices() {
+    async function fetchActivePlan() {
       try {
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('price_monthly, price_yearly')
-          .eq('is_active', true)
-          .single();
-
-        if (error) {
-          console.error('Error fetching subscription prices:', error);
-          return;
-        }
-
-        if (data) {
-          // Force recalculation with fresh data
-          const monthly = data.price_monthly;
-          const yearly = data.price_yearly;
-          
-          const calculatedDiscount = Math.round(
-            ((monthly * 12 - yearly) / (monthly * 12)) * 100
-          );
-          
-          setSubscriptionPrices({
-            monthly,
-            yearly,
-            yearlyDiscount: calculatedDiscount
+        const plan = await subscriptionPlanService.getActivePlan();
+        if (plan) {
+          setActivePlan(plan);
+        } else {
+          // Fallback to default pricing
+          setActivePlan({
+            id: 'default',
+            name: 'Pro Plan',
+            description: 'Premium features for productivity',
+            price_monthly: 9.99,
+            price_yearly: 99.99,
+            features: [
+              "Unlimited tasks and projects",
+              "Custom filters and favorites", 
+              "Priority task management",
+              "Analytics and reports"
+            ],
+            is_active: true
           });
-          
-          console.log("PricingSection - calculated discount:", calculatedDiscount);
         }
       } catch (error) {
         console.error('Error in subscription price fetch:', error);
+        // Fallback to default pricing
+        setActivePlan({
+          id: 'default',
+          name: 'Pro Plan',
+          description: 'Premium features for productivity',
+          price_monthly: 9.99,
+          price_yearly: 99.99,
+          features: [
+            "Unlimited tasks and projects",
+            "Custom filters and favorites",
+            "Priority task management", 
+            "Analytics and reports"
+          ],
+          is_active: true
+        });
       } finally {
         setPricesLoading(false);
       }
     }
 
-    fetchSubscriptionPrices();
+    fetchActivePlan();
   }, []);
+
+  const yearlyDiscount = activePlan ? Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100) : 0;
+
+  // Use hardcoded features if plan doesn't have any configured
+  const features = activePlan?.features && activePlan.features.length > 0 
+    ? activePlan.features 
+    : [
+        "Unlimited tasks and projects",
+        "Custom filters and favorites",
+        "Priority task management",
+        "Analytics and reports"
+      ];
 
   return (
     <section className="py-20 bg-gray-50 dark:bg-gray-900">
@@ -68,7 +83,7 @@ export const PricingSection = () => {
         <div className="max-w-lg mx-auto">
           <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-lg overflow-hidden border-2 border-primary">
             <div className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">Pro Plan</h3>
+              <h3 className="text-2xl font-bold mb-4">{activePlan?.name || "Pro Plan"}</h3>
               {pricesLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
@@ -76,13 +91,13 @@ export const PricingSection = () => {
               ) : (
                 <>
                   <div className="flex items-center justify-center">
-                    <span className="text-5xl font-bold">${subscriptionPrices.monthly}</span>
+                    <span className="text-5xl font-bold">${activePlan?.price_monthly || 9.99}</span>
                     <span className="text-xl ml-1 text-gray-600 dark:text-gray-400">/month</span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 mt-2">
-                    Billed monthly or ${subscriptionPrices.yearly} annually
-                    {subscriptionPrices.yearlyDiscount > 0 && (
-                      <span className="ml-1">(save {subscriptionPrices.yearlyDiscount}%)</span>
+                    Billed monthly or ${activePlan?.price_yearly || 99.99} annually
+                    {yearlyDiscount > 0 && (
+                      <span className="ml-1">(save {yearlyDiscount}%)</span>
                     )}
                   </p>
                 </>
@@ -90,12 +105,7 @@ export const PricingSection = () => {
             </div>
             <div className="p-8 bg-gray-50 dark:bg-gray-900">
               <ul className="space-y-4">
-                {[
-                  "Unlimited tasks and projects",
-                  "Custom filters and favorites",
-                  "Priority task management",
-                  "Analytics and reports"
-                ].map((feature, index) => (
+                {features.map((feature, index) => (
                   <li key={index} className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
                     <span>{feature}</span>

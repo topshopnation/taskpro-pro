@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Check, BadgeCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { subscriptionPlanService, SubscriptionPlanData } from "@/services/subscriptionPlanService";
 
 interface PlanSelectorProps {
   planType: "monthly" | "yearly";
@@ -15,50 +15,52 @@ export default function PlanSelector({
   planType, 
   onPlanTypeChange 
 }: PlanSelectorProps) {
-  const [subscriptionPrices, setSubscriptionPrices] = useState({
-    monthly: 0,
-    yearly: 0,
-    yearlyDiscount: 0
-  });
+  const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchPrices() {
+    async function fetchActivePlan() {
       try {
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('price_monthly, price_yearly')
-          .eq('is_active', true)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          // Force recalculation with fresh data
-          const monthly = data.price_monthly;
-          const yearly = data.price_yearly;
-          
-          const calculatedDiscount = Math.round(
-            ((monthly * 12 - yearly) / (monthly * 12)) * 100
-          );
-          
-          setSubscriptionPrices({
-            monthly,
-            yearly,
-            yearlyDiscount: calculatedDiscount
+        const plan = await subscriptionPlanService.getActivePlan();
+        if (plan) {
+          setActivePlan(plan);
+        } else {
+          // Fallback to default pricing
+          setActivePlan({
+            id: 'default',
+            name: 'TaskPro Pro',
+            description: '',
+            price_monthly: 9.99,
+            price_yearly: 99.99,
+            features: [],
+            is_active: true
           });
-          
-          console.log("PlanSelector - calculated discount:", calculatedDiscount);
         }
       } catch (error) {
-        console.error('Error fetching subscription prices:', error);
+        console.error('Error fetching subscription plan:', error);
+        // Fallback to default pricing
+        setActivePlan({
+          id: 'default',
+          name: 'TaskPro Pro',
+          description: '',
+          price_monthly: 9.99,
+          price_yearly: 99.99,
+          features: [],
+          is_active: true
+        });
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchPrices();
+    fetchActivePlan();
   }, []);
+
+  if (isLoading || !activePlan) {
+    return <div className="animate-pulse h-32 bg-muted rounded-md" />;
+  }
+
+  const yearlyDiscount = Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100);
 
   return (
     <div className="space-y-4">
@@ -76,7 +78,7 @@ export default function PlanSelector({
                 )}
               </div>
               <div className="text-sm">
-                <div className="font-semibold">${subscriptionPrices.monthly.toFixed(2)}/month</div>
+                <div className="font-semibold">${activePlan.price_monthly.toFixed(2)}/month</div>
                 <div className="text-muted-foreground text-xs">Billed monthly</div>
               </div>
             </div>
@@ -88,10 +90,10 @@ export default function PlanSelector({
             
             <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "yearly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("yearly")}>
               <RadioGroupItem value="yearly" id="yearly" className="absolute right-3 top-3" />
-              {subscriptionPrices.yearlyDiscount > 0 && (
+              {yearlyDiscount > 0 && (
                 <div className="absolute -right-1 -top-3">
                   <div className="bg-primary flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white shadow-sm">
-                    Save {subscriptionPrices.yearlyDiscount}%
+                    Save {yearlyDiscount}%
                   </div>
                 </div>
               )}
@@ -104,7 +106,7 @@ export default function PlanSelector({
                   )}
                 </div>
                 <div className="text-sm">
-                  <div className="font-semibold">${subscriptionPrices.yearly.toFixed(2)}/year</div>
+                  <div className="font-semibold">${activePlan.price_yearly.toFixed(2)}/year</div>
                   <div className="text-muted-foreground text-xs">Billed annually</div>
                 </div>
               </div>
