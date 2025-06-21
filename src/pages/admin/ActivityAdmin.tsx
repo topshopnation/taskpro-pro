@@ -5,17 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertCircle, UserCheck, CreditCard } from "lucide-react";
+import { RefreshCw, AlertCircle, UserCheck, CreditCard, FileText, Folder } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { adminService } from "@/services/admin-service";
-
-type ActivityLog = {
-  type: 'auth' | 'profile' | 'subscription';
-  timestamp: string;
-  details: any;
-};
+import { adminService } from "@/services/admin";
+import { ActivityLog } from "@/services/admin/activity-logs-service";
 
 export default function ActivityAdmin() {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
@@ -63,6 +58,10 @@ export default function ActivityAdmin() {
         return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Profile</Badge>;
       case 'subscription':
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Subscription</Badge>;
+      case 'task':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Task</Badge>;
+      case 'project':
+        return <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">Project</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -76,23 +75,26 @@ export default function ActivityAdmin() {
         return <UserCheck className="h-4 w-4 text-purple-500" />;
       case 'subscription':
         return <CreditCard className="h-4 w-4 text-green-500" />;
+      case 'task':
+        return <FileText className="h-4 w-4 text-orange-500" />;
+      case 'project':
+        return <Folder className="h-4 w-4 text-cyan-500" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
     }
   };
-  
-  const getEventDescription = (log: ActivityLog) => {
-    switch (log.type) {
-      case 'auth':
-        return `User signup: ${log.details.email || log.details.user_id}`;
-      case 'profile':
-        return `Profile updated: ${log.details.first_name || ''} ${log.details.last_name || ''} (${log.details.email || 'No email'})`;
-      case 'subscription':
-        return `Subscription ${log.details.status}: ${log.details.plan_type} plan`;
-      default:
-        return 'Unknown event';
-    }
+
+  const getActivityStats = () => {
+    const total = activityLogs.length;
+    const byType = activityLogs.reduce((acc, log) => {
+      acc[log.type] = (acc[log.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return { total, byType };
   };
+
+  const stats = getActivityStats();
 
   return (
     <AdminLayout>
@@ -100,13 +102,47 @@ export default function ActivityAdmin() {
         <div>
           <h1 className="text-2xl font-bold">Activity Monitoring</h1>
           <p className="text-muted-foreground">
-            Track user activities and system events
+            Track user activities and system events ({stats.total} total activities)
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
+      </div>
+
+      {/* Activity Stats */}
+      <div className="grid gap-4 md:grid-cols-5 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">Total Activities</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.byType.auth || 0}</div>
+            <p className="text-xs text-muted-foreground">Authentication</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.byType.subscription || 0}</div>
+            <p className="text-xs text-muted-foreground">Subscriptions</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.byType.task || 0}</div>
+            <p className="text-xs text-muted-foreground">Tasks</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.byType.project || 0}</div>
+            <p className="text-xs text-muted-foreground">Projects</p>
+          </CardContent>
+        </Card>
       </div>
       
       <Card>
@@ -117,10 +153,11 @@ export default function ActivityAdmin() {
           </CardDescription>
           <Tabs defaultValue="all" className="mt-3" onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="all">All Events</TabsTrigger>
-              <TabsTrigger value="auth">Authentication</TabsTrigger>
-              <TabsTrigger value="profile">Profile Updates</TabsTrigger>
-              <TabsTrigger value="subscription">Subscriptions</TabsTrigger>
+              <TabsTrigger value="all">All Events ({stats.total})</TabsTrigger>
+              <TabsTrigger value="auth">Authentication ({stats.byType.auth || 0})</TabsTrigger>
+              <TabsTrigger value="subscription">Subscriptions ({stats.byType.subscription || 0})</TabsTrigger>
+              <TabsTrigger value="task">Tasks ({stats.byType.task || 0})</TabsTrigger>
+              <TabsTrigger value="project">Projects ({stats.byType.project || 0})</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -132,26 +169,43 @@ export default function ActivityAdmin() {
           ) : filteredLogs.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <p>No activity logs found.</p>
+              {activeTab !== "all" && <p className="text-sm mt-2">Try switching to "All Events" or check a different category.</p>}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Type</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead className="w-[180px]">Timestamp</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs.map((log, index) => (
-                  <TableRow key={index}>
+                {filteredLogs.map((log) => (
+                  <TableRow key={log.id}>
                     <TableCell>
                       <div className="flex items-center">
                         {getEventIcon(log.type)}
                         <span className="ml-2">{getEventTypeBadge(log.type)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{getEventDescription(log)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{log.action}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {log.details.task_title && `Task: ${log.details.task_title}`}
+                          {log.details.project_name && `Project: ${log.details.project_name}`}
+                          {log.details.status && `Status: ${log.details.status}`}
+                          {log.details.plan_type && `Plan: ${log.details.plan_type}`}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {log.user_email || 'Unknown User'}
+                      </div>
+                    </TableCell>
                     <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
                   </TableRow>
                 ))}

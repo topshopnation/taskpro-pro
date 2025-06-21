@@ -12,7 +12,7 @@ import { UserRoleDialog } from "@/components/admin/users/UserRoleDialog";
 import { UserPagination } from "@/components/admin/users/UserPagination";
 import { EditUserDialog } from "@/components/admin/users/EditUserDialog";
 import { EditSubscriptionDialog } from "@/components/admin/users/subscription/EditSubscriptionDialog";
-import { supabase } from "@/integrations/supabase/client";
+import { adminService } from "@/services/admin";
 
 export default function UsersAdmin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -29,39 +29,8 @@ export default function UsersAdmin() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('subscriptions')
-        .select('*');
-
-      if (subsError) throw subsError;
-
-      const formattedUsers: UserProfile[] = profiles.map(profile => {
-        const userSubscription = subscriptions.find(sub => sub.user_id === profile.id);
-        
-        return {
-          id: profile.id,
-          email: profile.email || '',
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
-          subscription_status: userSubscription?.status || 'none',
-          plan_type: userSubscription?.plan_type || 'none',
-          current_period_end: userSubscription?.current_period_end,
-          trial_end_date: userSubscription?.trial_end_date,
-          role: profile.role || 'user',
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-          last_login: profile.updated_at
-        };
-      });
-
-      setUsers(formattedUsers);
+      const usersData = await adminService.getAllUsers();
+      setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to load users");
@@ -92,27 +61,21 @@ export default function UsersAdmin() {
     if (!selectedUser || !newRole) return;
     
     try {
-      const { error } = await supabase
-        .from('admin_users')
-        .upsert({
-          id: selectedUser.id,
-          email: selectedUser.email || '',
-          role: newRole,
-          password_hash: 'placeholder',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      const success = await adminService.updateUserProfile(selectedUser.id, { 
+        role: newRole 
+      });
       
-      if (error) throw error;
-      
-      setUsers(prev => 
-        prev.map(user => 
-          user.id === selectedUser.id ? { ...user, role: newRole } : user
-        )
-      );
-      
-      toast.success(`Updated ${selectedUser.email} role to ${newRole}`);
-      setShowRoleDialog(false);
+      if (success) {
+        setUsers(prev => 
+          prev.map(user => 
+            user.id === selectedUser.id ? { ...user, role: newRole } : user
+          )
+        );
+        toast.success(`Updated ${selectedUser.email} role to ${newRole}`);
+        setShowRoleDialog(false);
+      } else {
+        toast.error("Failed to update user role");
+      }
     } catch (error) {
       console.error("Error updating user role:", error);
       toast.error("Failed to update user role");
@@ -125,7 +88,7 @@ export default function UsersAdmin() {
         <div>
           <h1 className="text-2xl font-bold">User Management</h1>
           <p className="text-muted-foreground">
-            View and manage user accounts
+            View and manage user accounts ({users.length} total users)
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" disabled={loading}>
@@ -150,6 +113,7 @@ export default function UsersAdmin() {
           ) : paginatedUsers.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <p>No users found.</p>
+              {searchQuery && <p className="text-sm mt-2">Try adjusting your search query.</p>}
             </div>
           ) : (
             <>
@@ -175,7 +139,7 @@ export default function UsersAdmin() {
                 setPage={setPage}
                 totalPages={totalPages}
                 startIdx={startIdx}
-                endIdx={endIdx}
+                endIdx={Math.min(endIdx, filteredUsers.length)}
                 totalItems={filteredUsers.length}
               />
             </>
