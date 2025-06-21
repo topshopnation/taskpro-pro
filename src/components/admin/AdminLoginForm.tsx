@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
 export function AdminLoginForm() {
-  const [email, setEmail] = useState('admin@taskpro.pro'); // Pre-fill for testing
-  const [password, setPassword] = useState('admin123'); // Pre-fill for testing
+  const [email, setEmail] = useState('admin@taskpro.pro');
+  const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -41,9 +41,6 @@ export function AdminLoginForm() {
         
         // Navigate to admin dashboard
         navigate('/admin');
-      } else {
-        console.log('Login failed');
-        // Error message is already shown by the service
       }
     } catch (error) {
       console.error('Unexpected error during login:', error);
@@ -107,7 +104,7 @@ export function AdminLoginForm() {
         </form>
         
         <div className="mt-4 text-sm text-muted-foreground text-center">
-          <p>Default credentials:</p>
+          <p>Test credentials:</p>
           <p>Email: admin@taskpro.pro</p>
           <p>Password: admin123</p>
         </div>
