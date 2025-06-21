@@ -31,11 +31,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Get the active subscription plans from database - handle multiple plans
+    // Get ONLY paid subscription plans from database
     const { data: plans, error: planError } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('is_active', true)
+      .gt('price_monthly', 0) // Only get plans with actual pricing
       .order('created_at', { ascending: false });
     
     if (planError) {
@@ -44,13 +45,20 @@ serve(async (req) => {
     }
     
     if (!plans || plans.length === 0) {
-      console.error('No active subscription plans found');
-      throw new Error('No active subscription plans found');
+      console.error('No paid subscription plans found');
+      throw new Error('No paid subscription plans are currently available');
     }
     
-    // Use the most recent active plan (or you could filter by a specific criteria)
+    // Use the most recent paid plan
     const plan = plans[0];
-    console.log('Using subscription plan from database:', plan);
+    console.log('Using paid subscription plan from database:', plan);
+    
+    // Verify the plan has valid pricing for the requested plan type
+    const planPrice = planType === 'yearly' ? plan.price_yearly : plan.price_monthly;
+    if (!planPrice || planPrice <= 0) {
+      console.error(`Invalid pricing for ${planType} plan:`, planPrice);
+      throw new Error(`${planType} plan pricing is not available`);
+    }
     
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
@@ -86,7 +94,6 @@ serve(async (req) => {
     }
     
     // Create PayPal plan dynamically based on database values
-    const planPrice = planType === 'yearly' ? plan.price_yearly : plan.price_monthly;
     const interval = planType === 'yearly' ? 'YEAR' : 'MONTH';
     
     // First create a PayPal product

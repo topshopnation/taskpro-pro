@@ -16,48 +16,35 @@ export interface SubscriptionPlanData {
 export const subscriptionPlanService = {
   async getActivePlans(): Promise<SubscriptionPlanData[]> {
     try {
-      console.log("Fetching all active subscription plans...");
+      console.log("Fetching paid subscription plans...");
       
-      // Simple query without any user-specific filtering since plans should be public
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
+        .gt('price_monthly', 0) // Only get plans with actual pricing
         .order('price_monthly', { ascending: true });
 
       if (error) {
         console.error('Database error fetching plans:', error);
-        
-        // If RLS is blocking, provide helpful error info
-        if (error.message.includes('policy')) {
-          console.error('RLS policy error - subscription plans should be publicly readable');
-          throw new Error('Subscription plans are not accessible. Please contact support.');
-        }
-        
         throw new Error(`Database error: ${error.message}`);
       }
 
-      console.log("Raw plans data from database:", data);
+      console.log("Raw paid plans data from database:", data);
 
       if (!data || data.length === 0) {
-        console.log("No active plans found in database");
+        console.log("No paid plans found in database");
         return [];
       }
 
-      // Filter out free plans (plans with no pricing) and format the data
-      const validPlans = data
-        .filter(plan => {
-          const isValidPlan = plan.price_monthly > 0 || plan.price_yearly > 0;
-          console.log(`Plan ${plan.name}: monthly=${plan.price_monthly}, yearly=${plan.price_yearly}, valid=${isValidPlan}`);
-          return isValidPlan;
-        })
-        .map(plan => ({
-          ...plan,
-          description: plan.description || '',
-          features: Array.isArray(plan.features) ? plan.features : []
-        })) as SubscriptionPlanData[];
+      // Format the data
+      const validPlans = data.map(plan => ({
+        ...plan,
+        description: plan.description || '',
+        features: Array.isArray(plan.features) ? plan.features : []
+      })) as SubscriptionPlanData[];
 
-      console.log("Filtered valid plans for regular users:", validPlans);
+      console.log("Valid paid plans:", validPlans);
       return validPlans;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);

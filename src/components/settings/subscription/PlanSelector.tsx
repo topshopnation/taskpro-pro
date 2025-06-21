@@ -23,13 +23,13 @@ export default function PlanSelector({
       try {
         setLoading(true);
         setError(null);
-        console.log("PlanSelector: Fetching plans...");
+        console.log("PlanSelector: Fetching paid plans...");
         
         const availablePlans = await subscriptionPlanService.getActivePlans();
-        console.log("PlanSelector: Got plans:", availablePlans);
+        console.log("PlanSelector: Got paid plans:", availablePlans);
         
         if (availablePlans.length === 0) {
-          setError("No subscription plans are currently available. Please contact support.");
+          setError("No paid subscription plans are currently available. The free trial will continue until paid plans are configured.");
         } else {
           setPlans(availablePlans);
         }
@@ -52,8 +52,13 @@ export default function PlanSelector({
     return (
       <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-md">
         <p className="text-sm text-destructive">
-          {error || "No subscription plans available"}
+          {error || "No paid subscription plans available"}
         </p>
+        {plans.length === 0 && !error && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Your free trial will continue until paid plans are set up.
+          </p>
+        )}
       </div>
     );
   }
