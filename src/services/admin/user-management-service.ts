@@ -6,7 +6,25 @@ import type { User } from "@supabase/supabase-js";
 export const userManagementService = {
   async getAllUsers(): Promise<UserProfile[]> {
     try {
-      // First, get all profiles with their basic info
+      console.log('Starting to fetch all users...');
+      
+      // Get all auth users first (this is the source of truth for all users)
+      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
+      }
+
+      const authUsers: User[] = authUsersData?.users || [];
+      console.log('Auth users found:', authUsers.length);
+
+      if (authUsers.length === 0) {
+        console.log('No auth users found');
+        return [];
+      }
+
+      // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -14,7 +32,7 @@ export const userManagementService = {
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
+        // Don't throw here, continue without profiles data
       }
 
       // Get all subscriptions
@@ -24,67 +42,40 @@ export const userManagementService = {
 
       if (subsError) {
         console.error('Error fetching subscriptions:', subsError);
-        throw subsError;
+        // Don't throw here, continue without subscription data
       }
 
-      // Get auth users data through admin API
-      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        // Continue without auth data if this fails
-      }
+      console.log('Profiles found:', profiles?.length || 0);
+      console.log('Subscriptions found:', subscriptions?.length || 0);
 
-      const authUsers: User[] = authUsersData?.users || [];
-
-      // Combine the data
-      const users: UserProfile[] = (profiles || []).map(profile => {
-        const userSubscription = subscriptions?.find(sub => sub.user_id === profile.id);
-        const authUser = authUsers.find(user => user.id === profile.id);
+      // Build users array starting from auth users (source of truth)
+      const users: UserProfile[] = authUsers.map(authUser => {
+        const profile = profiles?.find(p => p.id === authUser.id);
+        const userSubscription = subscriptions?.find(sub => sub.user_id === authUser.id);
+        
+        console.log(`Processing user ${authUser.id}:`, {
+          hasProfile: !!profile,
+          hasSubscription: !!userSubscription,
+          email: authUser.email
+        });
         
         return {
-          id: profile.id,
-          email: profile.email || authUser?.email || '',
-          first_name: profile.first_name || authUser?.user_metadata?.first_name || '',
-          last_name: profile.last_name || authUser?.user_metadata?.last_name || '',
+          id: authUser.id,
+          email: authUser.email || '',
+          first_name: profile?.first_name || authUser.user_metadata?.first_name || '',
+          last_name: profile?.last_name || authUser.user_metadata?.last_name || '',
           subscription_status: userSubscription?.status || 'none',
           plan_type: userSubscription?.plan_type || 'none',
           current_period_end: userSubscription?.current_period_end,
           trial_end_date: userSubscription?.trial_end_date,
-          role: profile.role || 'user',
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-          last_login: authUser?.last_sign_in_at || profile.updated_at
+          role: profile?.role || 'user',
+          created_at: authUser.created_at,
+          updated_at: profile?.updated_at || authUser.updated_at,
+          last_login: authUser.last_sign_in_at || profile?.updated_at
         };
       });
 
-      // Also include any auth users that don't have profiles yet
-      if (authUsers.length > 0) {
-        const profileIds = new Set(profiles?.map(p => p.id) || []);
-        
-        authUsers.forEach(authUser => {
-          if (!profileIds.has(authUser.id)) {
-            const userSubscription = subscriptions?.find(sub => sub.user_id === authUser.id);
-            
-            users.push({
-              id: authUser.id,
-              email: authUser.email || '',
-              first_name: authUser.user_metadata?.first_name || '',
-              last_name: authUser.user_metadata?.last_name || '',
-              subscription_status: userSubscription?.status || 'none',
-              plan_type: userSubscription?.plan_type || 'none',
-              current_period_end: userSubscription?.current_period_end,
-              trial_end_date: userSubscription?.trial_end_date,
-              role: 'user',
-              created_at: authUser.created_at,
-              updated_at: authUser.updated_at,
-              last_login: authUser.last_sign_in_at
-            });
-          }
-        });
-      }
-
-      console.log('Fetched users:', users);
+      console.log('Final users array:', users.length, users);
       return users;
     } catch (error) {
       console.error('Error fetching users:', error);
