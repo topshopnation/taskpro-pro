@@ -41,17 +41,11 @@ export const useAuthState = () => {
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "session exists" : "no session");
         
-        // Fix the type error by using a string literal type check instead of a direct comparison
-        // This avoids TypeScript error with event types that might not be in the current union type
-        const eventType = event as string; // Cast to string to handle all possible event types
-        
-        if (eventType === 'SIGNED_OUT' || eventType === 'USER_DELETED') {
+        // Handle signed out events
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
           if (isSubscribed) {
-            // Make sure we fully clear user data on sign out
-            console.log(`${eventType} event detected, clearing all user data`);
+            console.log(`${event} event detected, clearing all user data`);
             clearAllUserData();
-            
-            // Redirect to home page after sign out
             window.location.href = '/';
           }
         } else if (newSession?.user && isSubscribed) {
@@ -65,15 +59,20 @@ export const useAuthState = () => {
                 newSession.user.email,
                 newSession.user.user_metadata?.avatar_url
               );
-              
-              // Don't redirect here - let the router handle redirects
               setIsLoading(false);
             }
           }, 0);
         } else if (isSubscribed) {
-          // No active session, ensure user data is cleared
-          console.log("No active session, clearing user data");
-          clearAllUserData();
+          // No active session, ensure user data is cleared only if it's a genuine sign out
+          if (event === 'SIGNED_OUT') {
+            console.log("No active session after sign out, clearing user data");
+            clearAllUserData();
+          } else {
+            // For other events like TOKEN_REFRESHED, just update session state
+            setSession(null);
+            resetUser();
+            setIsLoading(false);
+          }
         }
       }
     );
@@ -87,7 +86,9 @@ export const useAuthState = () => {
         if (error) {
           console.error("Error getting session:", error);
           if (isSubscribed) {
-            clearAllUserData();
+            setSession(null);
+            resetUser();
+            setIsLoading(false);
           }
           return;
         }
@@ -101,16 +102,18 @@ export const useAuthState = () => {
             data.session.user.user_metadata?.avatar_url
           );
         } else if (isSubscribed) {
-          // No active session, make sure user data is cleared
-          console.log("No existing session found, clearing user data");
-          clearAllUserData();
+          console.log("No existing session found");
+          setSession(null);
+          resetUser();
         }
         
         if (isSubscribed) setIsLoading(false);
       } catch (error) {
         console.error("Error initializing auth:", error);
         if (isSubscribed) {
-          clearAllUserData();
+          setSession(null);
+          resetUser();
+          setIsLoading(false);
         }
       }
     };

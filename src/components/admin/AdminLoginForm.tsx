@@ -31,12 +31,14 @@ export function AdminLoginForm() {
       const loginSuccess = await adminService.loginAdmin(email, password);
       
       if (loginSuccess) {
-        console.log('Login successful, storing session and redirecting...');
+        console.log('Login successful, storing persistent session and redirecting...');
         
-        // Store admin session
+        // Store persistent admin session (no expiry)
         localStorage.setItem('admin_session', JSON.stringify({
           email,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          persistent: true,
+          manualLogout: false
         }));
         
         toast.success("Admin login successful!");

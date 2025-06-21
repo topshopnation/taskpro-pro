@@ -32,27 +32,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         // Parse the admin session
         const adminSession = JSON.parse(adminSessionStr);
         
-        // Check if session is valid
-        if (!adminSession.email) {
-          console.error('Invalid admin session');
+        // Check if session is valid and not manually expired
+        if (!adminSession.email || adminSession.manualLogout) {
+          console.error('Invalid admin session or manual logout detected');
           localStorage.removeItem('admin_session');
           navigate('/admin/login', { replace: true });
           return;
         }
 
-        // Additional verification: check if the admin credentials are still valid
-        try {
-          // We can't directly verify the stored session since we don't store the password
-          // but we can check if the email still exists in admin_users table
-          console.log('Valid admin session found for:', adminSession.email);
-          setAdminEmail(adminSession.email);
-          setIsAdmin(true);
-        } catch (dbError) {
-          console.error('Admin verification failed:', dbError);
-          toast.error("Admin session expired");
-          localStorage.removeItem('admin_session');
-          navigate('/admin/login', { replace: true });
-        }
+        // Admin sessions are now persistent - no time-based expiry check
+        console.log('Valid admin session found for:', adminSession.email);
+        setAdminEmail(adminSession.email);
+        setIsAdmin(true);
       } catch (error) {
         console.error('Error checking admin status:', error);
         toast.error("Authentication error");

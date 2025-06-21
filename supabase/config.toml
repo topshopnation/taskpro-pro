@@ -32,7 +32,7 @@ file_size_limit = "50MiB"
 enabled = true
 site_url = "http://localhost:5173"
 additional_redirect_urls = ["https://localhost:5173"]
-jwt_expiry = 3600
+jwt_expiry = 31536000
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
@@ -40,4 +40,3 @@ enable_signup = true
 [functions]
 [functions.paypal-webhook]
 verify_jwt = false
-
