@@ -18,8 +18,8 @@ export const useSubscriptionUrlParams = (
   const subscriptionCancelled = urlParams.get('subscription_cancelled');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
-  // Get subscription ID from PayPal's return parameters
-  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('token') || urlParams.get('ba_token');
+  // Get the actual PayPal subscription ID from the URL fragment (PayPal redirects with subscription_id in URL)
+  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
 
   // Memoize the subscription handler to avoid recreation on every render
   const handleSubscription = useCallback(async () => {
@@ -38,11 +38,12 @@ export const useSubscriptionUrlParams = (
           console.log("Processing subscription with ID:", subscriptionId);
           await processSubscription(subscriptionId, "completed");
           
-          // Force immediate refresh of subscription data after processing
-          console.log("Refreshing subscription data after successful activation");
-          await fetchSubscription(); // Force refresh
-          
-          toast.success("Subscription activated successfully! Your plan has been updated.");
+          // Single refresh after successful processing with a delay
+          setTimeout(async () => {
+            console.log("Refreshing subscription data after successful activation");
+            await fetchSubscription();
+            toast.success("Subscription activated successfully! Your plan has been updated.");
+          }, 1000);
         } else {
           console.error("No subscription ID found in URL parameters");
           toast.error("Subscription activation failed - missing subscription information.");
@@ -61,7 +62,7 @@ export const useSubscriptionUrlParams = (
   }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription, fetchSubscription]);
 
   useEffect(() => {
-    if (subscriptionSuccess === 'true') {
+    if (subscriptionSuccess === 'true' && !subscriptionProcessed.current) {
       // Add a small delay to ensure the component is fully mounted
       const timeoutId = setTimeout(() => {
         handleSubscription();

@@ -43,7 +43,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent fetch spam with minimum time between fetches (unless forced)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    if (!force && timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
+    if (!force && timeSinceLastFetch < 2000 && lastFetchTime.current > 0) { // Increased to 2 seconds
       console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
       return subscription;
     }
@@ -113,7 +113,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent update spam with minimum time between updates
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTime.current;
-    if (timeSinceLastUpdate < 500 && lastUpdateTime.current > 0) {
+    if (timeSinceLastUpdate < 1000 && lastUpdateTime.current > 0) { // Increased to 1 second
       console.log("Throttling subscription update, last update was", timeSinceLastUpdate, "ms ago");
       throw new Error("Please wait a moment before updating your subscription again.");
     }
@@ -126,14 +126,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       lastUpdateTime.current = Date.now();
       console.log("Subscription updated successfully:", updatedSubscription);
       
-      // Update immediately and force a refresh to ensure latest data
+      // Update immediately but don't trigger additional fetches
       updateState(updatedSubscription);
-      
-      // Force refresh after a short delay to ensure database consistency
-      setTimeout(() => {
-        fetchSubscription(true);
-      }, 500);
-      
       setLoading(false);
       return updatedSubscription;
     } catch (error) {
@@ -141,18 +135,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       setLoading(false);
       throw error;
     }
-  }, [user, updateState, setLoading, fetchSubscription]);
+  }, [user, updateState, setLoading]);
 
-  // Setup realtime subscription updates with enhanced handling
+  // Setup realtime subscription updates with throttled handling
   const handleSubscriptionUpdate = useCallback((updatedSubscription) => {
     console.log("Realtime subscription update received:", updatedSubscription);
     updateState(updatedSubscription);
-    
-    // Trigger additional refresh after realtime update to ensure consistency
-    setTimeout(() => {
-      fetchSubscription(true);
-    }, 1000);
-  }, [updateState, fetchSubscription]);
+    // Remove automatic fetch on realtime updates to prevent loops
+  }, [updateState]);
   
   useSubscriptionRealtime(user?.id, handleSubscriptionUpdate);
 

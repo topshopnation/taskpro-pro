@@ -228,12 +228,14 @@ serve(async (req) => {
         throw new Error("No approval URL found in PayPal response");
       }
       
-      // Modify approval URL to include subscription ID for proper tracking
+      // Modify the approval URL to include the subscription ID in the return URL
       const urlObj = new URL(approvalUrl);
-      const modifiedReturnUrl = `${returnUrl}&subscription_id=${subscription.id}`;
+      const originalReturnUrl = urlObj.searchParams.get('return_url') || returnUrl;
+      const modifiedReturnUrl = `${originalReturnUrl}${originalReturnUrl.includes('?') ? '&' : '?'}subscription_id=${subscription.id}&subscription_success=true&plan_type=${planType}`;
       urlObj.searchParams.set('return_url', modifiedReturnUrl);
       
       console.log("Subscription created successfully with approval URL:", urlObj.toString());
+      console.log("PayPal subscription ID:", subscription.id);
       
       return new Response(
         JSON.stringify({ 
