@@ -25,7 +25,7 @@ export function useSubscriptionCheck() {
   }, [fetchSubscription, loading, initialized]);
 
   useEffect(() => {
-    // Wait until initialization and loading are complete
+    // Always allow access while loading or not initialized to prevent flashing
     if (loading || !initialized) {
       setShouldRestrict(false);
       return;
@@ -38,7 +38,10 @@ export function useSubscriptionCheck() {
     const hasAccess = isActive || isTrialActive;
     
     // Only restrict if not on an unrestricted route AND user doesn't have access
-    setShouldRestrict(!isUnrestrictedRoute && !hasAccess);
+    // AND we're sure the data has loaded (to prevent false positives)
+    const shouldRestrictAccess = !isUnrestrictedRoute && !hasAccess && initialized && !loading;
+    
+    setShouldRestrict(shouldRestrictAccess);
     
     console.log("Subscription check:", {
       pathname,
@@ -46,7 +49,9 @@ export function useSubscriptionCheck() {
       isActive,
       isTrialActive,
       hasAccess,
-      shouldRestrict: !isUnrestrictedRoute && !hasAccess
+      initialized,
+      loading,
+      shouldRestrictAccess
     });
   }, [isActive, isTrialActive, loading, initialized, pathname]);
 

@@ -10,15 +10,22 @@ interface SubscriptionRestrictionProps {
 }
 
 export function SubscriptionRestriction({ children }: SubscriptionRestrictionProps) {
-  const { isActive, isTrialActive, subscription, loading, daysRemaining } = useSubscription();
+  const { isActive, isTrialActive, subscription, loading, daysRemaining, initialized } = useSubscription();
   const navigate = useNavigate();
 
-  if (loading) {
+  // Always show content while loading or not initialized to prevent flashing
+  if (loading || !initialized) {
     return <>{children}</>;
   }
 
   // If user has active subscription OR active trial, show the regular content
   if (isActive || isTrialActive) {
+    return <>{children}</>;
+  }
+
+  // Only show restriction if we're absolutely sure user doesn't have access
+  // and the subscription data has been properly loaded
+  if (!initialized) {
     return <>{children}</>;
   }
 
