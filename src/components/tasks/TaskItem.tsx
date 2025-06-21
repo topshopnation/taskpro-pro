@@ -120,12 +120,12 @@ export function TaskItem({
       >
         {/* Top row: Checkbox and task details */}
         <div className="flex items-start gap-3">
-          <div className="mt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <div className="mt-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
             <Checkbox 
               checked={task.completed} 
               onCheckedChange={handleCompletionToggle}
               disabled={isUpdating}
-              className="md:h-4 md:w-4 h-3.5 w-3.5"
+              className="h-4 w-4"
             />
           </div>
           
