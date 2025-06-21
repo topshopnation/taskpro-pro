@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Github } from "lucide-react";
+import { Github, CheckCircle, Mail } from "lucide-react";
 
 interface SignUpFormProps {
   email: string;
@@ -13,6 +13,8 @@ interface SignUpFormProps {
   loading: boolean;
   handleEmailSignUp: (e: React.FormEvent) => Promise<void>;
   handleProviderSignIn: (provider: "google" | "github") => Promise<void>;
+  showConfirmation?: boolean;
+  confirmationEmail?: string;
 }
 
 export function SignUpForm({
@@ -22,14 +24,45 @@ export function SignUpForm({
   setPassword,
   loading,
   handleEmailSignUp,
-  handleProviderSignIn
+  handleProviderSignIn,
+  showConfirmation = false,
+  confirmationEmail
 }: SignUpFormProps) {
+  if (showConfirmation) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+            <CheckCircle className="h-6 w-6 text-green-600" />
+          </div>
+          <CardTitle className="text-green-600">Check Your Email!</CardTitle>
+          <CardDescription>
+            We've sent a confirmation link to <strong>{confirmationEmail}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg bg-blue-50 p-4 text-center">
+            <Mail className="mx-auto mb-2 h-8 w-8 text-blue-600" />
+            <p className="text-sm text-blue-700">
+              Please check your email and click the confirmation link to activate your account and start your free 14-day trial.
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">
+              Didn't receive the email? Check your spam folder or try signing up again.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Sign Up</CardTitle>
         <CardDescription>
-          Create a new account to get started
+          Create a new account to start your free 14-day trial
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -63,7 +96,7 @@ export function SignUpForm({
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing up..." : "Sign Up with Email"}
+            {loading ? "Creating Account..." : "Start Free Trial"}
           </Button>
         </form>
         

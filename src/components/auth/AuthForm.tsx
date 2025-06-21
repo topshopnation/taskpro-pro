@@ -18,6 +18,8 @@ export function AuthForm({ defaultTab = "signin" }: AuthFormProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSignUpConfirmation, setShowSignUpConfirmation] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState("");
   const { signIn, signUp, signInWithProvider } = useAuth();
   const navigate = useNavigate();
 
@@ -40,6 +42,9 @@ export function AuthForm({ defaultTab = "signin" }: AuthFormProps) {
     setError(null);
     try {
       await signUp(email, password);
+      // Show confirmation screen instead of toast
+      setConfirmationEmail(email);
+      setShowSignUpConfirmation(true);
     } catch (error: any) {
       setError(error.message || "Failed to sign up. Please try again.");
     } finally {
@@ -94,6 +99,8 @@ export function AuthForm({ defaultTab = "signin" }: AuthFormProps) {
             loading={loading}
             handleEmailSignUp={handleEmailSignUp}
             handleProviderSignIn={handleProviderSignIn}
+            showConfirmation={showSignUpConfirmation}
+            confirmationEmail={confirmationEmail}
           />
         </TabsContent>
       </Tabs>
