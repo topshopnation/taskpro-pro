@@ -1,4 +1,3 @@
-
 import { PayPalTokenResponse, PayPalProduct, PayPalPlan, PayPalSubscription } from './types.ts';
 
 export const getPayPalAccessToken = async (
@@ -6,24 +5,35 @@ export const getPayPalAccessToken = async (
   clientId: string, 
   clientSecret: string
 ): Promise<string> => {
+  console.log("Attempting to get PayPal access token...");
+  console.log("Base URL:", baseUrl);
+  console.log("Client ID (first 10 chars):", clientId.substring(0, 10) + "...");
+  
+  const auth = btoa(`${clientId}:${clientSecret}`);
+  console.log("Authorization header created");
+  
   const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       "Accept": "application/json",
       "Accept-Language": "en_US",
-      "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+      "Authorization": `Basic ${auth}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: "grant_type=client_credentials",
   });
   
-  const tokenData: PayPalTokenResponse = await tokenResponse.json();
+  console.log("Token response status:", tokenResponse.status);
   
-  if (!tokenData.access_token) {
+  const tokenData: PayPalTokenResponse = await tokenResponse.json();
+  console.log("Token response data:", tokenData);
+  
+  if (!tokenResponse.ok || !tokenData.access_token) {
     console.error("PayPal token response:", tokenData);
-    throw new Error("Failed to get PayPal access token");
+    throw new Error(`Failed to get PayPal access token: ${tokenData.error_description || tokenData.error || 'Unknown error'}`);
   }
   
+  console.log("Successfully obtained PayPal access token");
   return tokenData.access_token;
 };
 
