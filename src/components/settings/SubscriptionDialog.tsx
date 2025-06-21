@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
 import { createSubscriptionUrl } from "./subscription/subscriptionUtils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { subscriptionPlanService } from "@/services/subscriptionPlanService";
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -20,19 +21,45 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
   const { subscription, isTrialActive } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [plansError, setPlansError] = useState<string | null>(null);
   const { user } = useAuth();
   
-  // Reset plan type to monthly when dialog opens
+  // Reset plan type to monthly when dialog opens and check for plans
   useEffect(() => {
     if (open) {
       setPlanType("monthly");
       setPaymentError(null);
+      setPlansError(null);
+      checkSubscriptionPlans();
     }
   }, [open]);
+
+  const checkSubscriptionPlans = async () => {
+    setIsLoadingPlans(true);
+    setPlansError(null);
+    
+    try {
+      const activePlan = await subscriptionPlanService.getActivePlan();
+      if (!activePlan) {
+        setPlansError("No subscription plans are currently available. Please contact support.");
+      }
+    } catch (error: any) {
+      console.error("Error loading subscription plans:", error);
+      setPlansError("Failed to load subscription plans. Please try refreshing or contact support if the issue persists.");
+    } finally {
+      setIsLoadingPlans(false);
+    }
+  };
   
   const openSubscriptionLink = async () => {
     if (!user) {
       toast.error("You must be signed in to subscribe");
+      return;
+    }
+
+    if (plansError) {
+      toast.error("Cannot proceed without subscription plans. Please try refreshing.");
       return;
     }
     
@@ -90,6 +117,9 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
     return 'Subscribe Now';
   };
+
+  const hasErrors = paymentError || plansError;
+  const canProceed = !isLoadingPlans && !plansError && !isProcessing;
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,6 +130,31 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
+          {isLoadingPlans && (
+            <Alert>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <AlertDescription>Loading subscription plans...</AlertDescription>
+            </Alert>
+          )}
+
+          {plansError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {plansError}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={checkSubscriptionPlans}
+                  className="ml-2"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {paymentError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -107,17 +162,22 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             </Alert>
           )}
           
-          <PlanSelector 
-            planType={planType} 
-            onPlanTypeChange={setPlanType} 
-          />
+          {!isLoadingPlans && !plansError && (
+            <PlanSelector 
+              planType={planType} 
+              onPlanTypeChange={setPlanType} 
+            />
+          )}
         </div>
         
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={openSubscriptionLink} disabled={isProcessing}>
+          <Button 
+            onClick={openSubscriptionLink} 
+            disabled={!canProceed}
+          >
             {isProcessing ? "Processing..." : getButtonText()}
           </Button>
         </DialogFooter>

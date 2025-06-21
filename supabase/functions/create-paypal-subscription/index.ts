@@ -31,18 +31,25 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Get the active subscription plan from database
-    const { data: plan, error: planError } = await supabase
+    // Get the active subscription plans from database - handle multiple plans
+    const { data: plans, error: planError } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('is_active', true)
-      .single();
+      .order('created_at', { ascending: false });
     
-    if (planError || !plan) {
-      console.error('Error fetching subscription plan:', planError);
-      throw new Error('No active subscription plan found');
+    if (planError) {
+      console.error('Error fetching subscription plans:', planError);
+      throw new Error('Failed to fetch subscription plans');
     }
     
+    if (!plans || plans.length === 0) {
+      console.error('No active subscription plans found');
+      throw new Error('No active subscription plans found');
+    }
+    
+    // Use the most recent active plan (or you could filter by a specific criteria)
+    const plan = plans[0];
     console.log('Using subscription plan from database:', plan);
     
     // Get PayPal credentials from environment

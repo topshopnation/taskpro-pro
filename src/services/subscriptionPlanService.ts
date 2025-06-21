@@ -18,28 +18,30 @@ export const subscriptionPlanService = {
     try {
       console.log("Fetching active subscription plan...");
       
-      // This query should work with the new RLS policy that allows anyone to view active plans
+      // Get all active plans and use the most recent one
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error('Database error fetching active plan:', error);
         throw error;
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         console.log("No active subscription plan found");
         return null;
       }
 
-      console.log("Active plan found:", data);
+      const plan = data[0];
+      console.log("Active plan found:", plan);
       return {
-        ...data,
-        description: data.description || '',
-        features: Array.isArray(data.features) ? data.features : []
+        ...plan,
+        description: plan.description || '',
+        features: Array.isArray(plan.features) ? plan.features : []
       } as SubscriptionPlanData;
     } catch (error) {
       console.error('Error fetching active subscription plan:', error);
