@@ -10,7 +10,6 @@ import { adminService } from "@/services/admin";
 
 export function SecuritySettingsCard() {
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: ""
   });
@@ -21,7 +20,7 @@ export function SecuritySettingsCard() {
       e.preventDefault();
     }
 
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
       toast.error("Please fill in all password fields");
       return;
     }
@@ -45,21 +44,21 @@ export function SecuritySettingsCard() {
       }
 
       const { email } = JSON.parse(adminSession);
+      // Use empty string for current password since we're removing that requirement
       const success = await adminService.changeAdminPassword(
         email,
-        passwordData.currentPassword,
+        "", // No current password required
         passwordData.newPassword
       );
 
       if (success) {
         toast.success("Password changed successfully");
         setPasswordData({
-          currentPassword: "",
           newPassword: "",
           confirmPassword: ""
         });
       } else {
-        toast.error("Failed to change password. Please check your current password.");
+        toast.error("Failed to change password");
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -95,18 +94,6 @@ export function SecuritySettingsCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handlePasswordChange} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
-              onKeyPress={handlePasswordKeyPress}
-              placeholder="Enter current password"
-            />
-          </div>
-          
           <div className="grid gap-2">
             <Label htmlFor="newPassword">New Password</Label>
             <Input
