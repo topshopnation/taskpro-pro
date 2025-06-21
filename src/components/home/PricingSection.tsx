@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,9 @@ export const PricingSection = () => {
               "Priority task management",
               "Analytics and reports"
             ],
-            is_active: true
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
         }
       } catch (error) {
@@ -48,7 +49,9 @@ export const PricingSection = () => {
             "Priority task management", 
             "Analytics and reports"
           ],
-          is_active: true
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
       } finally {
         setPricesLoading(false);
