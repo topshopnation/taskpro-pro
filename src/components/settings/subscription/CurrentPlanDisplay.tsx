@@ -21,6 +21,8 @@ export function CurrentPlanDisplay() {
   const getCurrentStatus = () => {
     if (isTrialActive) {
       const isExpiringSoon = daysRemaining <= 3;
+      const expirationDate = subscription?.trial_end_date || subscription?.current_period_end;
+      
       return {
         planName: "Free Trial",
         statusBadge: isExpiringSoon ? (
@@ -34,7 +36,9 @@ export function CurrentPlanDisplay() {
             Active Trial
           </Badge>
         ),
-        details: `${daysRemaining} days remaining`,
+        details: expirationDate 
+          ? `Trial expires on ${format(new Date(expirationDate), 'MMM d, yyyy')} (${daysRemaining} days remaining)`
+          : `${daysRemaining} days remaining`,
         isExpired: false,
         hasAutoRenewal: false
       };
@@ -86,7 +90,7 @@ export function CurrentPlanDisplay() {
             ? `Auto-renews on ${format(endDate, 'MMM d, yyyy')}`
             : isExpiringSoon 
               ? `Expires ${format(endDate, 'MMM d, yyyy')} - Renew now!`
-              : `Renews on ${format(endDate, 'MMM d, yyyy')}`
+              : `Expires on ${format(endDate, 'MMM d, yyyy')}`
         ) : 'Active subscription',
         isExpired: false,
         hasAutoRenewal
