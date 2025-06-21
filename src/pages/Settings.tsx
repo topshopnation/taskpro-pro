@@ -4,17 +4,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useSubscription } from "@/contexts/subscription";
 import { createTrialSubscription } from "@/components/settings/subscription/paymentUtils";
-import { usePaymentProcessing } from "@/hooks/usePaymentProcessing";
-import { usePaymentUrlParams } from "@/hooks/usePaymentUrlParams";
+import { useSubscriptionProcessing } from "@/hooks/useSubscriptionProcessing";
+import { useSubscriptionUrlParams } from "@/hooks/useSubscriptionUrlParams";
 import { SettingsContent } from "@/components/settings/SettingsContent";
 
 export default function Settings() {
   const { user } = useAuth();
   const { subscription, loading, fetchSubscription } = useSubscription();
-  const { isProcessingPayment, processPayment, handleTestPayment, paymentProcessed } = usePaymentProcessing();
+  const { isProcessingSubscription, processSubscription, subscriptionProcessed } = useSubscriptionProcessing();
 
-  // Handle URL parameters for payment processing
-  usePaymentUrlParams(isProcessingPayment, processPayment, paymentProcessed);
+  // Handle URL parameters for subscription processing
+  useSubscriptionUrlParams(isProcessingSubscription, processSubscription, subscriptionProcessed);
 
   // Check if user needs a trial subscription
   useEffect(() => {
@@ -32,27 +32,6 @@ export default function Settings() {
     initializeTrialIfNeeded();
   }, [user, subscription, loading, fetchSubscription]);
 
-  // Check for test payment in localStorage on mount and after URL changes
-  useEffect(() => {
-    const checkForTestPayment = async () => {
-      const testPaymentData = localStorage.getItem('taskpro_test_payment');
-      if (testPaymentData && !paymentProcessed.current && user) {
-        try {
-          console.log("Found test payment data in localStorage");
-          await handleTestPayment(testPaymentData);
-          // Ensure subscription state is updated after payment
-          await fetchSubscription();
-        } catch (error) {
-          console.error("Error handling test payment:", error);
-        }
-      }
-    };
-    
-    if (user && !isProcessingPayment) {
-      checkForTestPayment();
-    }
-  }, [user, handleTestPayment, isProcessingPayment, fetchSubscription]);
-
   // Refresh subscription data when the component mounts
   useEffect(() => {
     if (user && !loading) {
@@ -61,10 +40,10 @@ export default function Settings() {
     }
   }, []);
 
-  // Reset the payment processed flag when unmounting
+  // Reset the subscription processed flag when unmounting
   useEffect(() => {
     return () => {
-      paymentProcessed.current = false;
+      subscriptionProcessed.current = false;
     };
   }, []);
 
