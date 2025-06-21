@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
 import { createPaymentUrl } from "./subscription/paymentUtils";
@@ -18,10 +17,9 @@ interface SubscriptionDialogProps {
 
 export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionDialogProps) {
   const [planType, setPlanType] = useState<"monthly" | "yearly">("monthly");
-  const { updateSubscription, subscription, fetchSubscription } = useSubscription();
+  const { subscription, isTrialActive } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const location = useLocation();
   const { user } = useAuth();
   
   // Reset plan type to monthly when dialog opens
@@ -45,20 +43,13 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     try {
       const paymentUrl = await createPaymentUrl(planType, user.id);
       
-      // Only open if we got a valid URL (user ID was present)
       if (paymentUrl) {
-        // In test mode, the URL contains test client id
         if (paymentUrl.includes("client-id=test")) {
-          // For test mode, we don't actually navigate to PayPal
-          // The createPaymentUrl function will handle the redirection to settings page
           console.log("Test mode payment - simulated PayPal redirect");
-          
-          // Close the dialog since we're handling it automatically
           onOpenChange(false);
         } else {
-          // For production, open in new window/tab
           window.open(paymentUrl, "_blank");
-          toast.info("After completing payment, return to this page to activate your subscription");
+          toast.info("Complete your payment in the new tab to activate your subscription");
         }
       }
     } catch (error) {
@@ -68,19 +59,43 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
       setIsProcessing(false);
     }
   };
+
+  const getDialogTitle = () => {
+    if (subscription?.status === 'active') {
+      return 'Manage Your Subscription';
+    }
+    if (isTrialActive) {
+      return 'Upgrade Your Trial';
+    }
+    return 'Subscribe to TaskPro Pro';
+  };
+
+  const getDialogDescription = () => {
+    if (subscription?.status === 'active') {
+      return 'Change your subscription plan or manage billing details.';
+    }
+    if (isTrialActive) {
+      return 'Your trial is active! Upgrade now to continue enjoying TaskPro Pro features.';
+    }
+    return 'Unlock unlimited projects, advanced features, and priority support.';
+  };
+
+  const getButtonText = () => {
+    if (subscription?.status === 'active') {
+      return 'Update Plan';
+    }
+    if (isTrialActive) {
+      return 'Upgrade Now';
+    }
+    return 'Subscribe Now';
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {subscription?.status === 'active' ? 'Renew Your Subscription' : 'Upgrade Your Subscription'}
-          </DialogTitle>
-          <DialogDescription>
-            {subscription?.status === 'active' 
-              ? 'Choose a plan to renew your subscription.' 
-              : 'Choose a plan that works for you and unlock all TaskPro features.'}
-          </DialogDescription>
+          <DialogTitle>{getDialogTitle()}</DialogTitle>
+          <DialogDescription>{getDialogDescription()}</DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
@@ -102,7 +117,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
             Cancel
           </Button>
           <Button onClick={openPaymentLink} disabled={isProcessing}>
-            {isProcessing ? "Processing..." : subscription?.status === 'active' ? 'Renew Now' : 'Subscribe Now'}
+            {isProcessing ? "Processing..." : getButtonText()}
           </Button>
         </DialogFooter>
       </DialogContent>

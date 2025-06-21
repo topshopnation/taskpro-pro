@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { BadgeCheck, Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubscriptionStatusProps } from "@/types/subscriptionTypes";
@@ -17,7 +17,7 @@ export function SubscriptionStatus({
     return (
       <Alert variant="destructive" className="mb-2">
         <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription className="text-xs">{error}</AlertDescription>
       </Alert>
     );
   }
@@ -34,7 +34,7 @@ export function SubscriptionStatus({
   let statusElement: React.ReactNode;
   
   if (isTrialActive) {
-    planName = "Trial Subscription";
+    planName = "Free Trial";
     statusElement = (
       <div className="flex flex-col items-end">
         <span className="text-xs text-amber-600 font-medium mb-0.5">{daysRemaining} days left</span>
@@ -42,21 +42,21 @@ export function SubscriptionStatus({
       </div>
     );
   } else if (subscription?.status === 'active' && !isExpired) {
-    planName = subscription.plan_type === 'monthly' ? "Monthly Subscription" : "Annual Subscription";
+    planName = subscription.plan_type === 'monthly' ? "TaskPro Pro Monthly" : "TaskPro Pro Annual";
     statusElement = (
       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
         Active
       </Badge>
     );
   } else if (isExpired || subscription?.status === 'expired') {
-    planName = "Expired Subscription";
+    planName = "Subscription Expired";
     statusElement = (
       <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
         Expired
       </Badge>
     );
   } else if (subscription?.status === 'canceled') {
-    planName = "Canceled Subscription";
+    planName = "Subscription Canceled";
     statusElement = (
       <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
         Canceled
@@ -65,7 +65,7 @@ export function SubscriptionStatus({
   } else {
     planName = "No Active Subscription";
     statusElement = (
-      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
+      <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30 text-xs">
         Inactive
       </Badge>
     );
@@ -79,17 +79,17 @@ export function SubscriptionStatus({
         {(formattedExpiryDate || (subscription?.status === 'expired' && subscription?.current_period_end)) && (
           <p className="text-xs text-muted-foreground mt-0.5">
             {subscription?.status === 'active' && !isExpired
-              ? `License expires on ${formattedExpiryDate}`
+              ? `Renews on ${formattedExpiryDate}`
               : isExpired || subscription?.status === 'expired'
-                ? `License expired on ${
+                ? `Expired on ${
                     formattedExpiryDate || 
                     (subscription?.current_period_end 
                       ? format(new Date(subscription.current_period_end), "MMM d, yyyy") 
                       : 'Unknown Date')
                   }`
                 : isTrialActive
-                  ? `Trial ends on ${formattedExpiryDate}`
-                  : `Expired on ${formattedExpiryDate}`
+                  ? `Trial ends ${formattedExpiryDate}`
+                  : `Ended on ${formattedExpiryDate}`
             }
           </p>
         )}
