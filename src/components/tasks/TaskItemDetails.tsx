@@ -19,7 +19,7 @@ export function TaskItemDetails({
   return (
     <div className="flex-1 min-w-0">
       <h3 className={cn(
-        "font-medium text-xs sm:text-sm leading-4 sm:leading-5 break-words",
+        "font-medium text-xs leading-4 break-words",
         completed && "line-through text-muted-foreground"
       )}>
         {title}
