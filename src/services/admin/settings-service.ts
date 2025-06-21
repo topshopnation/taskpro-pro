@@ -7,8 +7,6 @@ export interface AdminSettings {
   userRegistration: boolean;
   emailNotifications: boolean;
   backupFrequency: string;
-  sessionTimeout: string;
-  maxUsersPerPlan: string;
 }
 
 export const settingsService = {
@@ -20,9 +18,7 @@ export const settingsService = {
       maintenanceMode: false,
       userRegistration: true,
       emailNotifications: true,
-      backupFrequency: "daily",
-      sessionTimeout: "unlimited",
-      maxUsersPerPlan: "unlimited"
+      backupFrequency: "daily"
     };
   },
 

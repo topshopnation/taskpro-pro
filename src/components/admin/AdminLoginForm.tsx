@@ -107,14 +107,6 @@ export function AdminLoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Logging in..." : "Login to Admin"}
           </Button>
-          
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="text-sm text-muted-foreground">
-              <strong>Test Credentials:</strong><br />
-              Email: admin@taskpro.pro<br />
-              Password: admin123
-            </p>
-          </div>
         </form>
       </CardContent>
     </Card>

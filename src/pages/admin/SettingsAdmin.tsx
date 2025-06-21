@@ -18,9 +18,7 @@ export default function SettingsAdmin() {
     maintenanceMode: false,
     userRegistration: true,
     emailNotifications: true,
-    backupFrequency: "daily",
-    sessionTimeout: "unlimited",
-    maxUsersPerPlan: "unlimited"
+    backupFrequency: "daily"
   });
 
   const [loading, setLoading] = useState(false);
@@ -86,7 +84,11 @@ export default function SettingsAdmin() {
     }
   };
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       toast.error("Please fill in all password fields");
       return;
@@ -148,6 +150,12 @@ export default function SettingsAdmin() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePasswordChange();
+    }
   };
 
   if (initialLoading) {
@@ -247,7 +255,7 @@ export default function SettingsAdmin() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4">
+            <form onSubmit={handlePasswordChange} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <Input
@@ -255,6 +263,7 @@ export default function SettingsAdmin() {
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
+                  onKeyPress={handlePasswordKeyPress}
                   placeholder="Enter current password"
                 />
               </div>
@@ -266,6 +275,7 @@ export default function SettingsAdmin() {
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
+                  onKeyPress={handlePasswordKeyPress}
                   placeholder="Enter new password"
                 />
               </div>
@@ -277,18 +287,19 @@ export default function SettingsAdmin() {
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
+                  onKeyPress={handlePasswordKeyPress}
                   placeholder="Confirm new password"
                 />
               </div>
               
               <Button 
-                onClick={handlePasswordChange} 
+                type="submit"
                 disabled={passwordLoading}
                 className="w-fit"
               >
                 {passwordLoading ? "Changing Password..." : "Change Password"}
               </Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
 
