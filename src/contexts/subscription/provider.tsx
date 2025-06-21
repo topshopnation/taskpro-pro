@@ -43,7 +43,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent fetch spam with minimum time between fetches (unless forced)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    if (!force && timeSinceLastFetch < 2000 && lastFetchTime.current > 0) { // Increased to 2 seconds
+    if (!force && timeSinceLastFetch < 3000 && lastFetchTime.current > 0) {
       console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
       return subscription;
     }
@@ -113,7 +113,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent update spam with minimum time between updates
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTime.current;
-    if (timeSinceLastUpdate < 1000 && lastUpdateTime.current > 0) { // Increased to 1 second
+    if (timeSinceLastUpdate < 2000 && lastUpdateTime.current > 0) {
       console.log("Throttling subscription update, last update was", timeSinceLastUpdate, "ms ago");
       throw new Error("Please wait a moment before updating your subscription again.");
     }
@@ -140,9 +140,11 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   // Setup realtime subscription updates with throttled handling
   const handleSubscriptionUpdate = useCallback((updatedSubscription) => {
     console.log("Realtime subscription update received:", updatedSubscription);
-    updateState(updatedSubscription);
-    // Remove automatic fetch on realtime updates to prevent loops
-  }, [updateState]);
+    // Only update if this is more recent than what we have
+    if (!subscription || new Date(updatedSubscription.updated_at) > new Date(subscription.updated_at)) {
+      updateState(updatedSubscription);
+    }
+  }, [updateState, subscription]);
   
   useSubscriptionRealtime(user?.id, handleSubscriptionUpdate);
 

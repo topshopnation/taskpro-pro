@@ -38,7 +38,6 @@ export const useSubscriptionUrlParams = (
           subscriptionProcessed: subscriptionProcessed.current 
         });
         
-        subscriptionProcessed.current = true; // Mark as processed immediately
         await processSubscription(subscriptionId, "completed");
         
         // Clean up URL parameters after processing

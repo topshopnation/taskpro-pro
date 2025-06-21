@@ -11,7 +11,7 @@ export const subscriptionService = {
         .from('subscriptions')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -44,11 +44,13 @@ export const subscriptionService = {
     try {
       console.log("Updating subscription for user:", userId, "with:", update);
 
-      // Check if subscription exists
+      // Check if subscription exists and get the most recent one
       const { data: existingSubscription } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       const updateData = {
@@ -59,6 +61,7 @@ export const subscriptionService = {
         trial_end_date: update.trialEndDate,
         current_period_start: update.currentPeriodStart,
         current_period_end: update.currentPeriodEnd,
+        paypal_subscription_id: update.paypalSubscriptionId,
         updated_at: new Date().toISOString()
       };
 
@@ -68,7 +71,7 @@ export const subscriptionService = {
         const { data, error } = await supabase
           .from('subscriptions')
           .update(updateData)
-          .eq('user_id', userId)
+          .eq('id', existingSubscription.id)
           .select()
           .single();
 
