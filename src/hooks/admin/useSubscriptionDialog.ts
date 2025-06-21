@@ -46,7 +46,9 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
           // Convert the plan to proper SubscriptionPlan type for callback
           const updatedPlan: SubscriptionPlan = {
             ...success,
-            features: Array.isArray(success.features) ? success.features : []
+            features: Array.isArray(success.features) 
+              ? success.features.filter((feature): feature is string => typeof feature === 'string')
+              : []
           };
           onSuccess(updatedPlan);
         } else {
@@ -71,7 +73,9 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
           // Convert the plan to proper SubscriptionPlan type for callback
           const createdPlan: SubscriptionPlan = {
             ...newPlan,
-            features: Array.isArray(newPlan.features) ? newPlan.features : []
+            features: Array.isArray(newPlan.features) 
+              ? newPlan.features.filter((feature): feature is string => typeof feature === 'string')
+              : []
           };
           onSuccess(createdPlan);
           setDialogOpen(false);

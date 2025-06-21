@@ -25,7 +25,6 @@ export const adminService = {
   
   // User subscriptions management
   getUserSubscriptions: userSubscriptionsService.getUserSubscriptions,
-  updateUserSubscription: userSubscriptionsService.updateUserSubscription,
   
   // User management
   getAllUsers: userManagementService.getAllUsers,

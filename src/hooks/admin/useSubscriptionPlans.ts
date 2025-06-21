@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { SubscriptionPlan } from "@/types/adminTypes";
-import { subscriptionPlanService } from "@/services/subscriptionPlanService";
+import { subscriptionPlansService } from "@/services/admin/subscription-plans-service";
 import { toast } from "sonner";
 
 export function useSubscriptionPlans() {
@@ -11,10 +11,10 @@ export function useSubscriptionPlans() {
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      console.log("Fetching subscription plans via subscriptionPlanService...");
+      console.log("Fetching subscription plans via admin service...");
       
-      // Use the regular subscription plan service instead of direct Supabase query
-      const plansData = await subscriptionPlanService.getAllPlans();
+      // Use the admin subscription plans service
+      const plansData = await subscriptionPlansService.getSubscriptionPlans();
       
       console.log("Fetched plans:", plansData);
       setPlans(plansData || []);
