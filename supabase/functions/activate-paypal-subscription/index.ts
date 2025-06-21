@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 // CORS headers for all responses
 const corsHeaders = {
@@ -8,14 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function getSupabaseClient() {
-  return createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
-}
-
-interface ActivateRequest {
+interface ActivationRequest {
   subscriptionId: string;
   userId: string;
 }
@@ -27,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { subscriptionId, userId }: ActivateRequest = await req.json();
+    const { subscriptionId, userId }: ActivationRequest = await req.json();
     
     console.log("Activating PayPal subscription:", { subscriptionId, userId });
     
@@ -63,60 +56,81 @@ serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${tokenData.access_token}`,
-      },
+        "Accept": "application/json"
+      }
     });
     
-    const subscriptionDetails = await subscriptionResponse.json();
-    console.log("PayPal subscription details:", subscriptionDetails);
+    const subscription = await subscriptionResponse.json();
+    console.log("PayPal subscription details:", subscription);
     
-    if (subscriptionDetails.status === "ACTIVE") {
-      // Extract plan information
-      const customData = JSON.parse(subscriptionDetails.custom_id || '{}');
-      const planType = customData.planType || 'monthly';
-      
-      // Calculate next billing date
-      const currentDate = new Date();
-      const nextBillingDate = new Date(subscriptionDetails.billing_info?.next_billing_time || currentDate);
-      
-      // Update subscription in database
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert({
-          user_id: userId,
-          status: 'active',
-          plan_type: planType,
-          paypal_subscription_id: subscriptionId,
-          current_period_start: currentDate.toISOString(),
-          current_period_end: nextBillingDate.toISOString(),
-          updated_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('Error updating subscription:', error);
-        throw new Error('Failed to update subscription');
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          planType,
-          subscriptionId,
-          nextBillingDate: nextBillingDate.toISOString()
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200 
-        }
-      );
-    } else {
-      throw new Error(`PayPal subscription not active: ${subscriptionDetails.status}`);
+    if (subscription.status !== "ACTIVE") {
+      throw new Error(`Subscription is not active. Status: ${subscription.status}`);
     }
+    
+    // Extract custom data to get plan type
+    const customData = JSON.parse(subscription.custom_id || '{}');
+    const planType = customData.planType || 'monthly';
+    
+    // Calculate period dates
+    const currentDate = new Date();
+    const periodEnd = new Date(currentDate);
+    
+    if (planType === 'monthly') {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    } else {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    }
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Update subscription in database
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'active',
+        plan_type: planType,
+        paypal_subscription_id: subscriptionId,
+        current_period_start: currentDate.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        updated_at: currentDate.toISOString()
+      })
+      .eq('user_id', userId)
+      .select();
+      
+    if (error) {
+      console.error('Error updating subscription:', error);
+      throw new Error(`Failed to update subscription: ${error.message}`);
+    }
+    
+    console.log('Subscription activated successfully:', data);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        subscription: data[0],
+        message: 'Subscription activated successfully'
+      }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200 
+      }
+    );
     
   } catch (error) {
     console.error("Error activating PayPal subscription:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500 

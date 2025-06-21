@@ -177,6 +177,7 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          paypal_subscription_id: string | null
           plan_type: string
           status: string
           trial_end_date: string | null
@@ -189,6 +190,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          paypal_subscription_id?: string | null
           plan_type: string
           status: string
           trial_end_date?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          paypal_subscription_id?: string | null
           plan_type?: string
           status?: string
           trial_end_date?: string | null
