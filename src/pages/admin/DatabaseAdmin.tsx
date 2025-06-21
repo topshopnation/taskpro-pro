@@ -20,29 +20,77 @@ export default function DatabaseAdmin() {
     try {
       setLoading(true);
       
-      // Get table statistics
-      const tables = ['profiles', 'subscriptions', 'subscription_plans', 'admin_users'];
       const stats: TableInfo[] = [];
       
-      for (const table of tables) {
-        try {
-          const { count, error } = await supabase
-            .from(table)
-            .select('*', { count: 'exact', head: true });
-            
-          if (!error) {
-            stats.push({
-              table_name: table,
-              row_count: count || 0
-            });
-          }
-        } catch (err) {
-          console.error(`Error fetching ${table} count:`, err);
-          stats.push({
-            table_name: table,
-            row_count: 0
-          });
-        }
+      // Fetch count for each table explicitly to avoid TypeScript issues
+      try {
+        const { count: profilesCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'profiles', row_count: profilesCount || 0 });
+      } catch (err) {
+        console.error('Error fetching profiles count:', err);
+        stats.push({ table_name: 'profiles', row_count: 0 });
+      }
+
+      try {
+        const { count: subscriptionsCount } = await supabase
+          .from('subscriptions')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'subscriptions', row_count: subscriptionsCount || 0 });
+      } catch (err) {
+        console.error('Error fetching subscriptions count:', err);
+        stats.push({ table_name: 'subscriptions', row_count: 0 });
+      }
+
+      try {
+        const { count: plansCount } = await supabase
+          .from('subscription_plans')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'subscription_plans', row_count: plansCount || 0 });
+      } catch (err) {
+        console.error('Error fetching subscription_plans count:', err);
+        stats.push({ table_name: 'subscription_plans', row_count: 0 });
+      }
+
+      try {
+        const { count: adminCount } = await supabase
+          .from('admin_users')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'admin_users', row_count: adminCount || 0 });
+      } catch (err) {
+        console.error('Error fetching admin_users count:', err);
+        stats.push({ table_name: 'admin_users', row_count: 0 });
+      }
+
+      try {
+        const { count: tasksCount } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'tasks', row_count: tasksCount || 0 });
+      } catch (err) {
+        console.error('Error fetching tasks count:', err);
+        stats.push({ table_name: 'tasks', row_count: 0 });
+      }
+
+      try {
+        const { count: projectsCount } = await supabase
+          .from('projects')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'projects', row_count: projectsCount || 0 });
+      } catch (err) {
+        console.error('Error fetching projects count:', err);
+        stats.push({ table_name: 'projects', row_count: 0 });
+      }
+
+      try {
+        const { count: filtersCount } = await supabase
+          .from('filters')
+          .select('*', { count: 'exact', head: true });
+        stats.push({ table_name: 'filters', row_count: filtersCount || 0 });
+      } catch (err) {
+        console.error('Error fetching filters count:', err);
+        stats.push({ table_name: 'filters', row_count: 0 });
       }
       
       setTableStats(stats);
@@ -68,6 +116,12 @@ export default function DatabaseAdmin() {
         return <Table className="h-5 w-5 text-purple-500" />;
       case 'admin_users':
         return <Users className="h-5 w-5 text-red-500" />;
+      case 'tasks':
+        return <Table className="h-5 w-5 text-orange-500" />;
+      case 'projects':
+        return <Table className="h-5 w-5 text-cyan-500" />;
+      case 'filters':
+        return <Table className="h-5 w-5 text-pink-500" />;
       default:
         return <Table className="h-5 w-5 text-gray-500" />;
     }
