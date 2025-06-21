@@ -88,7 +88,28 @@ serve(async (req) => {
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
     }
     
-    // Update subscription in database
+    // First, get the most recent subscription for this user
+    const { data: existingSubscriptions, error: fetchError } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (fetchError) {
+      console.error("❌ Error fetching subscriptions:", fetchError);
+      throw new Error(`Failed to fetch subscriptions: ${fetchError.message}`);
+    }
+    
+    console.log("📋 Found existing subscriptions:", existingSubscriptions?.length || 0);
+    
+    if (!existingSubscriptions || existingSubscriptions.length === 0) {
+      throw new Error("No subscription found for user");
+    }
+    
+    // Use the most recent subscription
+    const targetSubscription = existingSubscriptions[0];
+    
+    // Update subscription data
     const subscriptionUpdateData = {
       status: 'active',
       plan_type: planType,
@@ -99,11 +120,12 @@ serve(async (req) => {
     };
     
     console.log("📝 Updating subscription in database:", subscriptionUpdateData);
+    console.log("🎯 Targeting subscription ID:", targetSubscription.id);
     
     const { data: updatedSubscription, error: updateError } = await supabase
       .from('subscriptions')
       .update(subscriptionUpdateData)
-      .eq('user_id', userId)
+      .eq('id', targetSubscription.id)
       .select()
       .single();
     
@@ -113,6 +135,24 @@ serve(async (req) => {
     }
     
     console.log("✅ Subscription updated successfully:", updatedSubscription);
+    
+    // If there are multiple subscriptions, clean up old trial ones
+    if (existingSubscriptions.length > 1) {
+      console.log("🧹 Cleaning up old trial subscriptions...");
+      const oldSubscriptionIds = existingSubscriptions.slice(1).map(sub => sub.id);
+      
+      const { error: deleteError } = await supabase
+        .from('subscriptions')
+        .delete()
+        .in('id', oldSubscriptionIds);
+      
+      if (deleteError) {
+        console.warn("⚠️ Error cleaning up old subscriptions:", deleteError);
+        // Don't fail the main operation for cleanup errors
+      } else {
+        console.log("✅ Cleaned up old subscriptions");
+      }
+    }
     
     return new Response(
       JSON.stringify({ 
