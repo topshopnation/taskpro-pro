@@ -1,4 +1,5 @@
 
+
 -- Install the pgcrypto extension if not already available
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -71,8 +72,7 @@ EXCEPTION
 END;
 $$;
 
--- Update the existing admin user's password to be properly hashed
--- This will hash the current plain text password 'admin123'
-UPDATE admin_users 
-SET password_hash = crypt('admin123', gen_salt('bf'))
-WHERE email = 'admin@taskpro.pro' AND password_hash = 'admin123';
+-- Note: Any existing admin passwords that were stored as plain text 
+-- will need to be reset through the admin interface since we can't 
+-- automatically detect and convert them without knowing the original values.
+
