@@ -112,6 +112,7 @@ export const adminBaseService = {
   async changeAdminPassword(email: string, oldPassword: string, newPassword: string): Promise<boolean> {
     try {
       console.log("Changing password for admin:", email);
+      console.log("Calling update_admin_password function...");
       
       const { data: success, error } = await supabase.rpc('update_admin_password', {
         admin_email: email,
@@ -124,6 +125,7 @@ export const adminBaseService = {
         return false;
       }
 
+      console.log("Function returned:", success);
       console.log("Admin password changed successfully");
       return success;
     } catch (error) {
