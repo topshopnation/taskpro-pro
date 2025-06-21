@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,17 +25,9 @@ export const adminBaseService = {
   // Admin authentication functions
   async loginAdmin(email: string, password: string): Promise<boolean> {
     try {
-      console.log('Attempting admin login for:', email);
+      console.log('Admin login attempt for:', email);
       
-      // First, let's check if any admin users exist
-      const { data: allAdmins, error: listError } = await supabase
-        .from('admin_users')
-        .select('email, password_hash')
-        .limit(10);
-
-      console.log('All admin users in database:', allAdmins, 'Error:', listError);
-
-      // Now try to get the specific admin user
+      // Check if the admin user exists
       const { data: adminUser, error: fetchError } = await supabase
         .from('admin_users')
         .select('email, password_hash')
@@ -44,49 +37,46 @@ export const adminBaseService = {
       console.log('Admin user fetch result:', { adminUser, fetchError });
 
       if (fetchError) {
-        console.error('Error fetching admin user:', fetchError);
-        toast.error('Login failed: ' + fetchError.message);
+        console.error('Database error:', fetchError);
+        toast.error('Login failed: Database error');
         return false;
       }
 
       if (!adminUser) {
-        console.log('No admin user found with email:', email);
-        console.log('Available admin emails:', allAdmins?.map(u => u.email));
+        console.log('Admin user not found, creating default admin...');
         
-        // If no admin user exists at all, create one for testing
-        if (!allAdmins || allAdmins.length === 0) {
-          console.log('No admin users exist, creating default admin...');
-          const { error: insertError } = await supabase
-            .from('admin_users')
-            .insert({
-              email: 'admin@taskpro.pro',
-              password_hash: 'admin123', // Simple password for testing
-              role: 'admin'
-            });
-          
-          if (insertError) {
-            console.error('Error creating admin user:', insertError);
-            toast.error('Error creating admin user: ' + insertError.message);
-            return false;
-          }
-          
-          console.log('Default admin user created, trying login again');
-          // Try login again with simple password check
-          if (email === 'admin@taskpro.pro' && password === 'admin123') {
-            console.log('Admin login successful (newly created user)');
-            return true;
-          }
+        // Create default admin user if it doesn't exist
+        const { error: insertError } = await supabase
+          .from('admin_users')
+          .insert({
+            email: 'admin@taskpro.pro',
+            password_hash: 'admin123', // Simple password for testing
+            role: 'admin'
+          });
+        
+        if (insertError) {
+          console.error('Error creating admin user:', insertError);
+          toast.error('Error creating admin user');
+          return false;
         }
         
-        toast.error('Invalid admin credentials');
-        return false;
+        console.log('Default admin user created successfully');
+        
+        // Check if this is the newly created user
+        if (email === 'admin@taskpro.pro' && password === 'admin123') {
+          toast.success('Admin user created and logged in successfully');
+          return true;
+        } else {
+          toast.error('Invalid admin credentials');
+          return false;
+        }
       }
 
-      // For now, let's do a simple password comparison since crypt might not be available
-      console.log('Comparing passwords - stored:', adminUser.password_hash, 'provided:', password);
+      // Simple password comparison for now
+      console.log('Comparing passwords for existing user');
       
-      if (adminUser.password_hash === password || password === 'admin123') {
-        console.log('Password match found');
+      if (adminUser.password_hash === password) {
+        console.log('Password match - login successful');
         
         // Update last login timestamp
         const { error: updateError } = await supabase
@@ -98,7 +88,7 @@ export const adminBaseService = {
           console.error('Error updating last login:', updateError);
         }
 
-        console.log('Admin login successful');
+        toast.success('Admin login successful');
         return true;
       } else {
         console.log('Password mismatch');

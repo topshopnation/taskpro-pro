@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,37 +10,44 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
 export function AdminLoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@taskpro.pro'); // Pre-fill for testing
+  const [password, setPassword] = useState('admin123'); // Pre-fill for testing
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
     setLoading(true);
+    console.log('Form submission - attempting admin login...');
 
     try {
       const loginSuccess = await adminService.loginAdmin(email, password);
       
       if (loginSuccess) {
-        toast.success("Admin login successful");
-        // Store admin session separately from main user session
+        console.log('Login successful, storing session and redirecting...');
+        
+        // Store admin session
         localStorage.setItem('admin_session', JSON.stringify({
           email,
           timestamp: new Date().toISOString()
         }));
+        
+        // Navigate to admin dashboard
         navigate('/admin');
       } else {
-        toast.error("Admin login failed", {
-          description: "Invalid credentials"
-        });
+        console.log('Login failed');
+        // Error message is already shown by the service
       }
     } catch (error) {
-      console.error('Admin login error:', error);
-      toast.error("Admin login failed", {
-        description: "An unexpected error occurred"
-      });
+      console.error('Unexpected error during login:', error);
+      toast.error("An unexpected error occurred during login");
     } finally {
       setLoading(false);
     }
@@ -68,6 +76,7 @@ export function AdminLoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              placeholder="admin@taskpro.pro"
             />
           </div>
           <div className="space-y-2">
@@ -80,11 +89,13 @@ export function AdminLoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                placeholder="Enter admin password"
               />
               <button 
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 onClick={toggleShowPassword}
+                disabled={loading}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -94,6 +105,12 @@ export function AdminLoginForm() {
             {loading ? "Logging in..." : "Login to Admin"}
           </Button>
         </form>
+        
+        <div className="mt-4 text-sm text-muted-foreground text-center">
+          <p>Default credentials:</p>
+          <p>Email: admin@taskpro.pro</p>
+          <p>Password: admin123</p>
+        </div>
       </CardContent>
     </Card>
   );
