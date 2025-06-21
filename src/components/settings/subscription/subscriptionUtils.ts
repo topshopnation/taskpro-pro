@@ -1,64 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const activateSubscription = async (subscriptionId: string, userId: string): Promise<boolean> => {
-  try {
-    console.log("Activating subscription:", { subscriptionId, userId });
-    
-    const { data, error } = await supabase.functions.invoke('activate-paypal-subscription', {
-      body: {
-        subscriptionId,
-        userId
-      }
-    });
-
-    if (error) {
-      console.error('Error activating subscription:', error);
-      return false;
-    }
-
-    if (data?.success) {
-      console.log('Subscription activated successfully:', data);
-      return true;
-    } else {
-      console.error('Subscription activation failed:', data);
-      return false;
-    }
-  } catch (error) {
-    console.error('Error in activateSubscription:', error);
-    return false;
-  }
-};
-
-export const cancelSubscription = async (subscriptionId: string, userId: string): Promise<void> => {
-  try {
-    console.log("Canceling subscription:", { subscriptionId, userId });
-    
-    const { data, error } = await supabase.functions.invoke('cancel-paypal-subscription', {
-      body: {
-        subscriptionId,
-        userId
-      }
-    });
-
-    if (error) {
-      console.error('Error canceling subscription:', error);
-      throw new Error(error.message || 'Failed to cancel subscription');
-    }
-
-    if (!data?.success) {
-      console.error('Subscription cancellation failed:', data);
-      throw new Error('Subscription cancellation was not successful');
-    }
-
-    console.log('Subscription canceled successfully:', data);
-  } catch (error) {
-    console.error('Error in cancelSubscription:', error);
-    throw error;
-  }
-};
-
-export const createSubscriptionUrl = async (planType: "monthly" | "yearly", userId: string): Promise<string | null> => {
+export async function createSubscriptionUrl(planType: 'monthly' | 'yearly', userId: string): Promise<string | null> {
   try {
     console.log("Creating subscription URL for:", { planType, userId });
     
@@ -70,19 +13,51 @@ export const createSubscriptionUrl = async (planType: "monthly" | "yearly", user
     });
 
     if (error) {
-      console.error('Error creating subscription URL:', error);
-      return null;
+      console.error("Error creating subscription:", error);
+      throw new Error(error.message || "Failed to create subscription");
     }
 
-    if (data?.approval_url) {
-      console.log('Subscription URL created successfully:', data.approval_url);
-      return data.approval_url;
-    } else {
-      console.error('No approval URL returned:', data);
-      return null;
+    if (!data?.approval_url) {
+      console.error("No approval URL in response:", data);
+      throw new Error("No approval URL received from PayPal");
     }
-  } catch (error) {
-    console.error('Error in createSubscriptionUrl:', error);
-    return null;
+
+    console.log("Subscription URL created successfully:", data.approval_url);
+    return data.approval_url;
+  } catch (error: any) {
+    console.error("Error in createSubscriptionUrl:", error);
+    throw error;
   }
-};
+}
+
+export async function activateSubscription(subscriptionId: string, userId: string): Promise<boolean> {
+  try {
+    console.log("🔄 Activating subscription:", { subscriptionId, userId });
+    
+    // Call the activate-paypal-subscription edge function
+    const { data, error } = await supabase.functions.invoke('activate-paypal-subscription', {
+      body: {
+        subscriptionId,
+        userId
+      }
+    });
+
+    if (error) {
+      console.error("❌ Error activating subscription:", error);
+      return false;
+    }
+
+    console.log("✅ Subscription activation response:", data);
+    
+    if (data?.success) {
+      console.log("🎉 Subscription activated successfully via edge function");
+      return true;
+    } else {
+      console.error("❌ Subscription activation failed - no success flag");
+      return false;
+    }
+  } catch (error: any) {
+    console.error("💥 Exception in activateSubscription:", error);
+    return false;
+  }
+}

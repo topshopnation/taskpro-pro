@@ -53,18 +53,24 @@ export function useSubscriptionProcessing() {
           
           // Force refresh subscription data multiple times to ensure it updates
           console.log("🔄 Refreshing subscription data immediately");
-          await fetchSubscription();
+          await fetchSubscription(true); // Force refresh
           
           // Additional refreshes with delays to ensure the database has updated
           setTimeout(async () => {
             console.log("🔄 Doing delayed subscription refresh (1)");
-            await fetchSubscription();
+            await fetchSubscription(true);
           }, 2000);
           
           setTimeout(async () => {
             console.log("🔄 Doing delayed subscription refresh (2)");
-            await fetchSubscription();
+            await fetchSubscription(true);
           }, 5000);
+          
+          // Final refresh after 10 seconds
+          setTimeout(async () => {
+            console.log("🔄 Final delayed subscription refresh");
+            await fetchSubscription(true);
+          }, 10000);
         } else {
           console.error("❌ Subscription activation failed");
           toast.error("Subscription activation failed - please contact support", { 
