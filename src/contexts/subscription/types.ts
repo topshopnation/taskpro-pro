@@ -1,6 +1,7 @@
+
 // Types for subscription status
-export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'canceled';
-export type SubscriptionPlanType = 'monthly' | 'yearly';
+export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'canceled' | 'none';
+export type SubscriptionPlanType = 'monthly' | 'yearly' | 'none';
 
 // Type for subscription data
 export interface Subscription {
@@ -34,6 +35,6 @@ export interface SubscriptionContextType {
   daysRemaining: number;
   loading: boolean;
   initialized: boolean;
-  updateSubscription: (update: SubscriptionUpdate) => Promise<void>;
-  fetchSubscription: () => Promise<void>;
+  updateSubscription: (update: SubscriptionUpdate) => Promise<Subscription>;
+  fetchSubscription: () => Promise<Subscription | null>;
 }

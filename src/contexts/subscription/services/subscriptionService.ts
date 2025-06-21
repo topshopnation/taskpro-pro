@@ -1,159 +1,103 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Subscription, SubscriptionUpdate } from '../types';
-import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { Subscription, SubscriptionUpdate, SubscriptionStatus, SubscriptionPlanType } from "../types";
 
 export const subscriptionService = {
-  async updateSubscription(userId: string, update: SubscriptionUpdate) {
-    console.log("Updating subscription for user:", userId);
-    console.log("Update data:", update);
-
+  async fetchSubscription(userId: string): Promise<Subscription | null> {
     try {
-      const { status, planType, trialStartDate, trialEndDate, currentPeriodStart, currentPeriodEnd } = update;
-
-      // First check if a subscription already exists for this user
-      const { data: existingSubscription, error: checkError } = await supabase
-        .from("subscriptions")
-        .select("id, status, plan_type, current_period_end")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error("Error checking existing subscription:", checkError);
-        throw new Error(`Failed to check existing subscription: ${checkError.message}`);
-      }
-
-      console.log("Existing subscription check result:", existingSubscription);
+      console.log("Fetching subscription for user:", userId);
       
-      let updateResult;
-      
-      if (existingSubscription) {
-        console.log("Updating existing subscription for user:", userId);
-        
-        // Create an update object with only the fields that have values
-        const updateData: Record<string, any> = {
-          updated_at: new Date().toISOString()
-        };
-        
-        if (status) updateData.status = status;
-        if (planType) updateData.plan_type = planType;
-        if (trialStartDate) updateData.trial_start_date = trialStartDate;
-        if (trialEndDate) updateData.trial_end_date = trialEndDate;
-        
-        // Handle current period start/end dates
-        // If there's a current_period_start provided, use it
-        if (currentPeriodStart) {
-          updateData.current_period_start = currentPeriodStart;
-        }
-        
-        // For renewals, handle current_period_end correctly based on existing subscription
-        if (currentPeriodEnd) {
-          const now = new Date();
-          const existingEndDate = existingSubscription.current_period_end 
-            ? new Date(existingSubscription.current_period_end)
-            : null;
-            
-          // If subscription is expired or doesn't have an end date, start from today
-          if (!existingEndDate || existingEndDate < now) {
-            console.log("Subscription expired or no end date, setting end date from today");
-            updateData.current_period_end = currentPeriodEnd;
-          } else {
-            // If subscription is still active, add time to the existing end date
-            console.log("Subscription still active, extending from current end date");
-            // Calculate the duration being added from the current period parameters
-            const newEndDate = new Date(currentPeriodEnd);
-            const startDate = new Date(currentPeriodStart || new Date());
-            const durationToAdd = newEndDate.getTime() - startDate.getTime();
-            
-            // Add this duration to the existing end date
-            const extendedEndDate = new Date(existingEndDate.getTime() + durationToAdd);
-            updateData.current_period_end = extendedEndDate.toISOString();
-            console.log("Extended end date:", updateData.current_period_end);
-          }
-        }
-        
-        console.log("Updating with data:", updateData);
-        
-        // Update existing subscription with immediate select to get the updated data
-        updateResult = await supabase
-          .from("subscriptions")
-          .update(updateData)
-          .eq("user_id", userId)
-          .select()
-          .maybeSingle();
-          
-        // Log the raw response for debugging  
-        console.log("Update result:", updateResult);
-      } else {
-        console.log("Creating new subscription for user:", userId);
-        // Create new subscription
-        updateResult = await supabase
-          .from("subscriptions")
-          .insert({
-            user_id: userId,
-            status: status || 'active',
-            plan_type: planType || 'monthly',
-            trial_start_date: trialStartDate || null,
-            trial_end_date: trialEndDate || null,
-            current_period_start: currentPeriodStart || new Date().toISOString(),
-            current_period_end: currentPeriodEnd || null,
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .maybeSingle();
-          
-        // Log the raw response for debugging
-        console.log("Insert result:", updateResult);
-      }
-
-      if (updateResult.error) {
-        console.error("Error updating subscription:", updateResult.error);
-        throw new Error(`Failed to update subscription: ${updateResult.error.message}`);
-      }
-      
-      if (!updateResult.data) {
-        throw new Error("No subscription data returned after update");
-      }
-      
-      console.log("Subscription updated successfully:", updateResult.data);
-      return updateResult.data as Subscription;
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      throw new Error(`Subscription update failed: ${errorMessage}`);
-    }
-  },
-
-  async fetchSubscription(userId: string) {
-    console.log("Fetching subscription for user:", userId);
-    try {
-      // Force cache refresh on the fetch
       const { data, error } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", userId)
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error) {
-        if (error.code === "PGRST116") {
-          console.log("No subscription found for user:", userId);
-          return null;
-        }
-        console.error("Error fetching subscription:", error);
-        throw new Error(`Failed to fetch subscription: ${error.message}`);
-      }
-
-      if (data) {
-        console.log("Subscription fetched successfully:", data);
-        return data as Subscription;
-      } else {
-        console.log("No subscription found for user:", userId);
+        console.error('Error fetching subscription:', error);
         return null;
       }
+
+      if (!data) {
+        console.log("No subscription found for user");
+        return null;
+      }
+
+      // Ensure status and plan_type match our types
+      const subscription: Subscription = {
+        ...data,
+        status: (data.status as SubscriptionStatus) || 'none',
+        plan_type: (data.plan_type as SubscriptionPlanType) || 'none'
+      };
+
+      console.log("Subscription fetched successfully:", subscription);
+      return subscription;
     } catch (error) {
-      console.error("Error fetching subscription:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      throw new Error(`Subscription fetch failed: ${errorMessage}`);
+      console.error('Error in fetchSubscription:', error);
+      return null;
+    }
+  },
+
+  async updateSubscription(userId: string, update: SubscriptionUpdate): Promise<Subscription> {
+    try {
+      console.log("Updating subscription for user:", userId, "with:", update);
+
+      // Check if subscription exists
+      const { data: existingSubscription } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const updateData = {
+        user_id: userId,
+        status: update.status || 'trial',
+        plan_type: update.planType || 'monthly',
+        trial_start_date: update.trialStartDate,
+        trial_end_date: update.trialEndDate,
+        current_period_start: update.currentPeriodStart,
+        current_period_end: update.currentPeriodEnd,
+        updated_at: new Date().toISOString()
+      };
+
+      let result;
+      if (existingSubscription) {
+        // Update existing subscription
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .update(updateData)
+          .eq('user_id', userId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      } else {
+        // Create new subscription
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .insert({
+            ...updateData,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      }
+
+      const subscription: Subscription = {
+        ...result,
+        status: (result.status as SubscriptionStatus) || 'none',
+        plan_type: (result.plan_type as SubscriptionPlanType) || 'none'
+      };
+
+      console.log("Subscription updated successfully:", subscription);
+      return subscription;
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      throw error;
     }
   }
 };

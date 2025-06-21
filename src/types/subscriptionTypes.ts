@@ -1,7 +1,7 @@
 
 import { Subscription } from "@/contexts/subscription/types";
 
-export type SubscriptionPlanType = 'monthly' | 'yearly';
+export type SubscriptionPlanType = 'monthly' | 'yearly' | 'none';
 
 export interface SubscriptionCardProps {
   onUpgrade: () => void;
@@ -39,5 +39,5 @@ export interface UseSubscriptionCardReturn {
   isStable: boolean;
   showRenewButton: boolean;
   error: string | null;
-  isSubscriptionActive: boolean; // Added new property
+  isSubscriptionActive: boolean;
 }
