@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SubscriptionPlan } from "@/types/adminTypes";
+import { useState } from "react";
 
 interface SubscriptionPlanDialogContentProps {
   currentPlan: Partial<SubscriptionPlan>;
@@ -22,6 +23,8 @@ export function SubscriptionPlanDialogContent({
   onSubmit,
   setDialogOpen
 }: SubscriptionPlanDialogContentProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const formatPriceInput = (value: string) => {
     // Remove non-digit characters except decimal point
     let cleanValue = value.replace(/[^\d.]/g, '');
@@ -48,6 +51,37 @@ export function SubscriptionPlanDialogContent({
     });
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('Form submitted with data:', currentPlan);
+    
+    // Basic validation
+    if (!currentPlan.name?.trim()) {
+      alert('Plan name is required');
+      return;
+    }
+
+    if (!currentPlan.price_monthly || currentPlan.price_monthly <= 0) {
+      alert('Monthly price must be greater than 0');
+      return;
+    }
+
+    if (!currentPlan.price_yearly || currentPlan.price_yearly <= 0) {
+      alert('Yearly price must be greater than 0');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(e);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
@@ -55,10 +89,10 @@ export function SubscriptionPlanDialogContent({
           {isEditing ? "Edit Subscription Plan" : "Create New Subscription Plan"}
         </DialogTitle>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-4 py-4">
+      <form onSubmit={handleSubmit} className="space-y-4 py-4">
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Plan Name</Label>
+            <Label htmlFor="name">Plan Name *</Label>
             <Input 
               id="name" 
               value={currentPlan.name || ""} 
@@ -81,7 +115,7 @@ export function SubscriptionPlanDialogContent({
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price_monthly">Monthly Price ($)</Label>
+              <Label htmlFor="price_monthly">Monthly Price ($) *</Label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
                 <Input 
@@ -97,7 +131,7 @@ export function SubscriptionPlanDialogContent({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="price_yearly">Yearly Price ($)</Label>
+              <Label htmlFor="price_yearly">Yearly Price ($) *</Label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
                 <Input 
@@ -110,14 +144,10 @@ export function SubscriptionPlanDialogContent({
                   required
                 />
               </div>
-              {currentPlan.price_monthly && currentPlan.price_yearly && (
+              {currentPlan.price_monthly && currentPlan.price_yearly && currentPlan.price_monthly > 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  {currentPlan.price_monthly > 0 && (
-                    <>
-                      {Math.round(((currentPlan.price_monthly * 12 - currentPlan.price_yearly) / (currentPlan.price_monthly * 12)) * 100)}% 
-                      savings compared to monthly
-                    </>
-                  )}
+                  {Math.round(((currentPlan.price_monthly * 12 - currentPlan.price_yearly) / (currentPlan.price_monthly * 12)) * 100)}% 
+                  savings compared to monthly
                 </div>
               )}
             </div>
@@ -126,12 +156,12 @@ export function SubscriptionPlanDialogContent({
           <div className="flex items-center space-x-2">
             <Switch 
               id="is_active"
-              checked={currentPlan.is_active || false}
+              checked={currentPlan.is_active !== false}
               onCheckedChange={(checked) => setCurrentPlan({...currentPlan, is_active: checked})}
             />
             <Label htmlFor="is_active" className="font-medium">Active</Label>
             <span className="text-sm text-muted-foreground ml-2">
-              {currentPlan.is_active ? "This plan is visible to users" : "This plan is hidden from users"}
+              {currentPlan.is_active !== false ? "This plan is visible to users" : "This plan is hidden from users"}
             </span>
           </div>
         </div>
@@ -141,11 +171,12 @@ export function SubscriptionPlanDialogContent({
             type="button" 
             variant="outline" 
             onClick={() => setDialogOpen(false)}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button type="submit">
-            {isEditing ? "Update Plan" : "Create Plan"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : (isEditing ? "Update Plan" : "Create Plan")}
           </Button>
         </DialogFooter>
       </form>

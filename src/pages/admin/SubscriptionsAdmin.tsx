@@ -9,7 +9,7 @@ import { useSubscriptionPlans } from "@/hooks/admin/useSubscriptionPlans";
 import { useSubscriptionDialog } from "@/hooks/admin/useSubscriptionDialog";
 import { SubscriptionAdminHeader } from "@/components/admin/subscriptions/SubscriptionAdminHeader";
 import { SubscriptionAdminContent } from "@/components/admin/subscriptions/SubscriptionAdminContent";
-import { adminService } from "@/services/admin";
+import { subscriptionPlansService } from "@/services/admin/subscription-plans-service";
 import { toast } from "sonner";
 
 export default function SubscriptionsAdmin() {
@@ -71,7 +71,7 @@ export default function SubscriptionsAdmin() {
     
     try {
       console.log("Deleting plan:", deleteId);
-      const success = await adminService.deleteSubscriptionPlan(deleteId);
+      const success = await subscriptionPlansService.deleteSubscriptionPlan(deleteId);
       if (success) {
         setPlans(prev => prev.filter(plan => plan.id !== deleteId));
         toast.success("Subscription plan deleted successfully");

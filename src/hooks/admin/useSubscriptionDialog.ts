@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { SubscriptionPlan } from "@/types/adminTypes";
-import { adminService } from "@/services/admin";
+import { subscriptionPlansService } from "@/services/admin/subscription-plans-service";
 import { toast } from "sonner";
 
 export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => void) {
@@ -26,24 +26,23 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
       return;
     }
 
-    if (currentPlan.price_monthly === undefined || currentPlan.price_monthly < 0) {
-      toast.error("Monthly price must be a valid number");
+    if (currentPlan.price_monthly === undefined || currentPlan.price_monthly <= 0) {
+      toast.error("Monthly price must be greater than 0");
       return;
     }
 
-    if (currentPlan.price_yearly === undefined || currentPlan.price_yearly < 0) {
-      toast.error("Yearly price must be a valid number");
+    if (currentPlan.price_yearly === undefined || currentPlan.price_yearly <= 0) {
+      toast.error("Yearly price must be greater than 0");
       return;
     }
     
     try {
       if (isEditing && currentPlan.id) {
         console.log("Updating plan with ID:", currentPlan.id);
-        const success = await adminService.updateSubscriptionPlan(currentPlan.id, currentPlan);
+        const success = await subscriptionPlansService.updateSubscriptionPlan(currentPlan.id, currentPlan);
         if (success) {
           toast.success("Subscription plan updated successfully");
           setDialogOpen(false);
-          // Trigger refresh by calling onSuccess with current plan data
           onSuccess(currentPlan as SubscriptionPlan);
         } else {
           toast.error("Failed to update subscription plan");
@@ -51,7 +50,7 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
         }
       } else {
         console.log("Creating new plan:", currentPlan);
-        const newPlan = await adminService.createSubscriptionPlan(currentPlan);
+        const newPlan = await subscriptionPlansService.createSubscriptionPlan(currentPlan);
         if (newPlan) {
           toast.success("Subscription plan created successfully");
           onSuccess(newPlan);
