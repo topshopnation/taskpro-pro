@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -193,7 +192,8 @@ serve(async (req) => {
           payer_selected: "PAYPAL",
           payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
         },
-        return_url: returnUrl,
+        // Include subscription ID in return URL for proper tracking
+        return_url: `${returnUrl}&subscription_id=${subscriptionId || 'PENDING'}`,
         cancel_url: cancelUrl
       },
       custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })
@@ -228,11 +228,16 @@ serve(async (req) => {
         throw new Error("No approval URL found in PayPal response");
       }
       
-      console.log("Subscription created successfully with approval URL:", approvalUrl);
+      // Modify approval URL to include subscription ID for proper tracking
+      const urlObj = new URL(approvalUrl);
+      const modifiedReturnUrl = `${returnUrl}&subscription_id=${subscription.id}`;
+      urlObj.searchParams.set('return_url', modifiedReturnUrl);
+      
+      console.log("Subscription created successfully with approval URL:", urlObj.toString());
       
       return new Response(
         JSON.stringify({ 
-          approval_url: approvalUrl,
+          approval_url: urlObj.toString(),
           subscription_id: subscription.id,
           status: subscription.status
         }),

@@ -16,8 +16,10 @@ export const useSubscriptionUrlParams = (
   const urlParams = new URLSearchParams(location.search);
   const subscriptionSuccess = urlParams.get('subscription_success');
   const subscriptionCancelled = urlParams.get('subscription_cancelled');
-  const subscriptionId = urlParams.get('subscription_id');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
+
+  // Get subscription ID from PayPal's return parameters
+  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('token') || urlParams.get('ba_token');
 
   // Memoize the subscription handler to avoid recreation on every render
   const handleSubscription = useCallback(async () => {
@@ -32,39 +34,21 @@ export const useSubscriptionUrlParams = (
         // Mark as processed immediately to prevent double processing
         subscriptionProcessed.current = true;
         
-        // For PayPal subscriptions, we need to get the subscription ID from the URL
-        // PayPal will redirect back with the subscription ID in the URL
         if (subscriptionId) {
           console.log("Processing subscription with ID:", subscriptionId);
           await processSubscription(subscriptionId, "completed");
+          
+          // Force immediate refresh of subscription data after processing
+          console.log("Refreshing subscription data after successful activation");
+          await fetchSubscription(true); // Force refresh
+          
+          toast.success("Subscription activated successfully! Your plan has been updated.");
         } else {
-          // If no subscription ID, we need to extract it from PayPal's redirect
-          // PayPal typically includes it as a token or subscription_id parameter
-          const allParams = Object.fromEntries(urlParams.entries());
-          console.log("All URL parameters:", allParams);
-          
-          // Look for common PayPal subscription parameters
-          const paypalSubscriptionId = urlParams.get('token') || urlParams.get('subscription_id') || urlParams.get('subscriptionID');
-          
-          if (paypalSubscriptionId) {
-            console.log("Found PayPal subscription ID:", paypalSubscriptionId);
-            await processSubscription(paypalSubscriptionId, "completed");
-          } else {
-            console.error("No subscription ID found in URL parameters");
-            toast.error("Subscription activation failed - missing subscription information.");
-            
-            // Clean up URL parameters
-            const url = new URL(window.location.href);
-            url.search = '';
-            window.history.replaceState({}, document.title, url.toString());
-            return;
-          }
+          console.error("No subscription ID found in URL parameters");
+          toast.error("Subscription activation failed - missing subscription information.");
         }
         
-        // Force refresh subscription data after URL-based subscription activation
-        await fetchSubscription();
-        
-        // Clean up URL parameters after successful processing
+        // Clean up URL parameters after processing
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, document.title, url.toString());

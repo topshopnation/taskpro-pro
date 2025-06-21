@@ -29,9 +29,23 @@ export function useSubscriptionProcessing() {
         
         if (success) {
           console.log("Subscription activated successfully");
-          // Refresh subscription data
-          await fetchSubscription();
-          toast.success("Subscription activated! Auto-renewal is now enabled.");
+          
+          // Force immediate refresh of subscription data multiple times to ensure update
+          console.log("Forcing subscription data refresh after activation");
+          await fetchSubscription(true); // First refresh
+          
+          // Add a small delay and refresh again to ensure database changes are reflected
+          setTimeout(async () => {
+            await fetchSubscription(true);
+            console.log("Second subscription refresh completed");
+          }, 1000);
+          
+          // Third refresh after another delay for good measure
+          setTimeout(async () => {
+            await fetchSubscription(true);
+            console.log("Final subscription refresh completed");
+          }, 2000);
+          
         } else {
           throw new Error("Subscription activation failed");
         }
