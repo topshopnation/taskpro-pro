@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CreditCard, ExternalLink, X, Plus } from "lucide-react";
+import { CreditCard, Plus } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription";
-import { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 
 interface SubscriptionActionsProps {
   onUpgrade: () => void;
@@ -11,7 +10,6 @@ interface SubscriptionActionsProps {
 
 export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
   const { subscription, isTrialActive, daysRemaining } = useSubscription();
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const getButtonConfig = () => {
     // Check if user has expired trial
@@ -87,14 +85,41 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
     };
   };
 
+  // Check if within 14 days of subscription end
+  const isWithin14Days = () => {
+    if (!subscription) return false;
+    
+    const currentDate = new Date();
+    let endDate: Date | null = null;
+    
+    // For trial subscriptions
+    if (subscription.trial_end_date) {
+      endDate = new Date(subscription.trial_end_date);
+    }
+    // For paid subscriptions
+    else if (subscription.current_period_end) {
+      endDate = new Date(subscription.current_period_end);
+    }
+    
+    if (!endDate) return false;
+    
+    const daysUntilEnd = Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntilEnd <= 14;
+  };
+
+  // Only show button if within 14 days of end, expired, or no subscription
+  const shouldShowButton = !subscription || 
+                           subscription.status === 'expired' || 
+                           subscription.status === 'canceled' || 
+                           isWithin14Days();
+
+  if (!shouldShowButton) {
+    return null;
+  }
+
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
   const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
-  
-  // Show cancel button for active paid subscriptions with PayPal subscription ID
-  const showCancelButton = subscription?.status === 'active' && 
-                           subscription?.paypal_subscription_id && 
-                           !isTrialActive;
 
   return (
     <div className="flex flex-col gap-2">
@@ -108,18 +133,6 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
         {buttonConfig.text}
       </Button>
       
-      {showCancelButton && (
-        <Button 
-          onClick={() => setShowCancelDialog(true)}
-          variant="outline"
-          size="sm"
-          className="text-xs h-8 text-destructive hover:text-destructive"
-        >
-          <X className="mr-1.5 h-3.5 w-3.5" />
-          Cancel Subscription
-        </Button>
-      )}
-      
       {buttonConfig.urgent && (
         <p className="text-xs text-muted-foreground text-center">
           {isTrialActive && daysRemaining <= 3 
@@ -129,11 +142,6 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
             : "Renew to add more time and continue access"}
         </p>
       )}
-      
-      <CancelSubscriptionDialog 
-        open={showCancelDialog}
-        onOpenChange={setShowCancelDialog}
-      />
     </div>
   );
 }
