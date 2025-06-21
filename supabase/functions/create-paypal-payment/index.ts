@@ -28,13 +28,19 @@ serve(async (req) => {
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live"; // Default to live
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
     }
     
-    // Get PayPal access token - PRODUCTION URL
-    const tokenResponse = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
+    // Use correct PayPal API URL based on environment
+    const baseUrl = environment === "sandbox" 
+      ? "https://api-m.sandbox.paypal.com" 
+      : "https://api-m.paypal.com"; // Live environment
+    
+    // Get PayPal access token
+    const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -55,7 +61,7 @@ serve(async (req) => {
     const amount = planType === 'yearly' ? '15.00' : '2.00';
     const description = planType === 'yearly' ? 'TaskPro Pro - Yearly Subscription' : 'TaskPro Pro - Monthly Subscription';
     
-    // Create PayPal payment - PRODUCTION URL
+    // Create PayPal payment
     const paymentData = {
       intent: "CAPTURE",
       purchase_units: [{
@@ -74,7 +80,7 @@ serve(async (req) => {
       }
     };
     
-    const paymentResponse = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
+    const paymentResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

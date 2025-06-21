@@ -63,16 +63,16 @@ serve(async (req) => {
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live"; // Default to live
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
     }
     
     // Use correct PayPal API URL based on environment
-    const baseUrl = environment === "live" 
-      ? "https://api-m.paypal.com" 
-      : "https://api-m.sandbox.paypal.com";
+    const baseUrl = environment === "sandbox" 
+      ? "https://api-m.sandbox.paypal.com" 
+      : "https://api-m.paypal.com"; // Live environment
     
     // Get PayPal access token
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -176,7 +176,6 @@ serve(async (req) => {
     console.log("PayPal plan created:", paypalPlan);
     
     // Create PayPal subscription with the dynamic plan
-    // Fix: Remove invalid {subscription_id} placeholder from return URL
     const subscriptionData = {
       plan_id: paypalPlan.id,
       subscriber: {
@@ -194,7 +193,7 @@ serve(async (req) => {
           payer_selected: "PAYPAL",
           payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
         },
-        return_url: `${returnUrl}`, // Remove the invalid {subscription_id} placeholder
+        return_url: `${returnUrl}`,
         cancel_url: cancelUrl
       },
       custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })

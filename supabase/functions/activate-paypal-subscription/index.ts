@@ -27,16 +27,16 @@ serve(async (req) => {
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+    const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live"; // Default to live
     
     if (!clientId || !clientSecret) {
       throw new Error("PayPal credentials not configured");
     }
     
     // Use correct PayPal API URL based on environment
-    const baseUrl = environment === "live" 
-      ? "https://api-m.paypal.com" 
-      : "https://api-m.sandbox.paypal.com";
+    const baseUrl = environment === "sandbox" 
+      ? "https://api-m.sandbox.paypal.com" 
+      : "https://api-m.paypal.com"; // Live environment
     
     // Get PayPal access token
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
