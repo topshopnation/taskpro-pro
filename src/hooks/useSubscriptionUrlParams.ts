@@ -23,7 +23,14 @@ export const useSubscriptionUrlParams = (
   const handleSubscription = useCallback(async () => {
     try {
       if (subscriptionSuccess === 'true' && subscriptionId && !subscriptionProcessed.current && !isProcessingSubscription) {
-        console.log("Processing PayPal subscription from URL params:", { subscriptionId, planType, subscriptionProcessed: subscriptionProcessed.current });
+        console.log("Processing PayPal subscription from URL params:", { 
+          subscriptionId, 
+          planType, 
+          subscriptionProcessed: subscriptionProcessed.current 
+        });
+        
+        // Mark as processed immediately to prevent double processing
+        subscriptionProcessed.current = true;
         
         // Process the PayPal subscription using the subscription ID
         await processSubscription(subscriptionId, "completed");
@@ -38,14 +45,19 @@ export const useSubscriptionUrlParams = (
       }
     } catch (error) {
       console.error("Error handling subscription from URL params:", error);
-      toast.error("Error processing subscription. Please try again.");
+      subscriptionProcessed.current = false; // Reset on error
+      toast.error("Error processing subscription. Please contact support if the issue persists.");
     }
   }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription, fetchSubscription]);
 
   useEffect(() => {
     if (subscriptionSuccess === 'true' && subscriptionId) {
-      // Execute subscription handling
-      handleSubscription();
+      // Add a small delay to ensure the component is fully mounted
+      const timeoutId = setTimeout(() => {
+        handleSubscription();
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     } else if (subscriptionCancelled === 'true') {
       toast.error("Subscription was cancelled. You can try again whenever you're ready.");
       

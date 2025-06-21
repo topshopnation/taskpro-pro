@@ -4,6 +4,25 @@ import { SubscriptionPlanType } from "@/types/subscriptionTypes";
 
 export const createTrialSubscription = async (userId: string): Promise<boolean> => {
   try {
+    console.log("Creating trial subscription for user:", userId);
+    
+    // First check if subscription already exists
+    const { data: existingSubscription, error: fetchError } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (fetchError) {
+      console.error('Error checking existing subscription:', fetchError);
+      return false;
+    }
+    
+    if (existingSubscription) {
+      console.log('User already has a subscription:', existingSubscription);
+      return true; // Consider this a success if they already have one
+    }
+
     const trialStart = new Date();
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + 14); // 14-day trial
@@ -42,7 +61,7 @@ export const createSubscriptionUrl = async (planType: SubscriptionPlanType, user
       return null;
     }
 
-    // Call our new Supabase Edge Function to create PayPal subscription
+    // Call our Supabase Edge Function to create PayPal subscription
     const { data, error } = await supabase.functions.invoke('create-paypal-subscription', {
       body: {
         planType,
@@ -54,7 +73,7 @@ export const createSubscriptionUrl = async (planType: SubscriptionPlanType, user
 
     if (error) {
       console.error('Error creating PayPal subscription:', error);
-      return null;
+      throw new Error(`PayPal subscription creation failed: ${error.message}`);
     }
 
     if (data?.approval_url) {
@@ -62,17 +81,22 @@ export const createSubscriptionUrl = async (planType: SubscriptionPlanType, user
       return data.approval_url;
     }
 
-    console.error('No approval URL returned from PayPal');
-    return null;
+    console.error('No approval URL returned from PayPal:', data);
+    throw new Error('No approval URL returned from PayPal');
   } catch (error) {
     console.error('Error creating subscription URL:', error);
-    return null;
+    throw error; // Re-throw to let calling code handle the error
   }
 };
 
 export const activateSubscription = async (subscriptionId: string, userId: string): Promise<boolean> => {
   try {
     console.log("Activating PayPal subscription:", subscriptionId, "for user:", userId);
+
+    if (!subscriptionId || !userId) {
+      console.error("Missing required parameters for subscription activation");
+      return false;
+    }
 
     const { data, error } = await supabase.functions.invoke('activate-paypal-subscription', {
       body: {
@@ -83,7 +107,7 @@ export const activateSubscription = async (subscriptionId: string, userId: strin
 
     if (error) {
       console.error('Error activating PayPal subscription:', error);
-      return false;
+      throw new Error(`PayPal subscription activation failed: ${error.message}`);
     }
 
     if (data?.success) {
@@ -91,9 +115,10 @@ export const activateSubscription = async (subscriptionId: string, userId: strin
       return true;
     }
 
+    console.error('Subscription activation was not successful:', data);
     return false;
   } catch (error) {
     console.error('Error activating subscription:', error);
-    return false;
+    throw error; // Re-throw to let calling code handle the error
   }
 };

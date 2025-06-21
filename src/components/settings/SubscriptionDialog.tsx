@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import PlanSelector from "./subscription/PlanSelector";
-import { createPaymentUrl } from "./subscription/paymentUtils";
+import { createSubscriptionUrl } from "./subscription/subscriptionUtils";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -30,7 +30,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     }
   }, [open]);
   
-  const openPaymentLink = async () => {
+  const openSubscriptionLink = async () => {
     if (!user) {
       toast.error("You must be signed in to subscribe");
       return;
@@ -38,23 +38,24 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
     
     setIsProcessing(true);
     setPaymentError(null);
-    console.log("Creating payment URL for user:", user.id, "plan type:", planType);
+    console.log("Creating subscription URL for user:", user.id, "plan type:", planType);
     
     try {
-      const paymentUrl = await createPaymentUrl(planType, user.id);
+      const subscriptionUrl = await createSubscriptionUrl(planType, user.id);
       
-      if (paymentUrl) {
-        if (paymentUrl.includes("client-id=test")) {
-          console.log("Test mode payment - simulated PayPal redirect");
-          onOpenChange(false);
-        } else {
-          window.open(paymentUrl, "_blank");
-          toast.info("Complete your payment in the new tab to activate your subscription");
-        }
+      if (subscriptionUrl) {
+        console.log("Opening PayPal subscription URL:", subscriptionUrl);
+        // Open in new tab for better user experience
+        window.open(subscriptionUrl, "_blank");
+        toast.info("Complete your subscription in the new tab to activate auto-renewal");
+        onOpenChange(false); // Close dialog after opening PayPal
+      } else {
+        throw new Error("Failed to generate subscription URL");
       }
-    } catch (error) {
-      console.error("Error initiating payment:", error);
-      setPaymentError("Failed to initiate payment process. Please try again.");
+    } catch (error: any) {
+      console.error("Error initiating subscription:", error);
+      setPaymentError(error.message || "Failed to initiate subscription process. Please try again.");
+      toast.error(error.message || "Failed to initiate subscription process. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -116,7 +117,7 @@ export default function SubscriptionDialog({ open, onOpenChange }: SubscriptionD
           <Button onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={openPaymentLink} disabled={isProcessing}>
+          <Button onClick={openSubscriptionLink} disabled={isProcessing}>
             {isProcessing ? "Processing..." : getButtonText()}
           </Button>
         </DialogFooter>
