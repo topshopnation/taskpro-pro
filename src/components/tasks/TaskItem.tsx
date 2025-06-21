@@ -115,13 +115,13 @@ export function TaskItem({
     <>
       <div 
         className={cn(
-          "flex flex-col md:flex-row md:items-start gap-2 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
+          "flex flex-col gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
           `task-priority-${task.priority}`
         )}
         onClick={handleTaskClick}
       >
-        {/* Mobile: Vertical layout, Desktop: Horizontal layout */}
-        <div className="flex items-start gap-2 md:flex-1">
+        {/* Top row: Checkbox and task details */}
+        <div className="flex items-start gap-3">
           <div className="mt-1" onClick={e => e.stopPropagation()}>
             <Checkbox 
               checked={task.completed} 
@@ -141,8 +141,8 @@ export function TaskItem({
           />
         </div>
         
-        {/* Actions positioned below on mobile, to the side on desktop */}
-        <div className="md:flex-shrink-0">
+        {/* Bottom row: All actions in one line */}
+        <div className="pl-8">
           <TaskItemActionContainer
             task={task}
             onDeleteClick={() => setIsDeleteDialogOpen(true)}

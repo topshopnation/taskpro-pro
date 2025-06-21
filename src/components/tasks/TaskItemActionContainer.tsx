@@ -29,43 +29,36 @@ export function TaskItemActionContainer({
   onFavoriteToggle
 }: TaskItemActionContainerProps) {
   return (
-    <div className="flex md:items-center md:space-x-1" onClick={e => e.stopPropagation()}>
+    <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
       <TooltipProvider>
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-1 space-y-1 md:space-y-0">
-          {/* Mobile: Stack icons vertically, Desktop: Horizontal layout */}
-          <div className="flex items-center space-x-1 md:contents">
-            <TaskItemDueDate
-              dueDate={task.dueDate}
-              onDateChange={onDateChange}
-              isUpdating={isUpdating}
-            />
-            
-            {onProjectChange && (
-              <TaskItemProject
-                taskId={task.id}
-                projectId={task.projectId}
-                isUpdating={isUpdating}
-                onProjectChange={onProjectChange}
-              />
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-1 md:contents">
-            <TaskItemPriority 
-              priority={task.priority} 
-              onPriorityChange={onPriorityChange}
-              isUpdating={isUpdating}
-            />
-            
-            <TaskItemActions
-              task={task}
-              onDeleteClick={onDeleteClick}
-              onEditClick={onEditClick}
-              isUpdating={isUpdating}
-              onFavoriteToggle={onFavoriteToggle}
-            />
-          </div>
-        </div>
+        <TaskItemDueDate
+          dueDate={task.dueDate}
+          onDateChange={onDateChange}
+          isUpdating={isUpdating}
+        />
+        
+        {onProjectChange && (
+          <TaskItemProject
+            taskId={task.id}
+            projectId={task.projectId}
+            isUpdating={isUpdating}
+            onProjectChange={onProjectChange}
+          />
+        )}
+        
+        <TaskItemPriority 
+          priority={task.priority} 
+          onPriorityChange={onPriorityChange}
+          isUpdating={isUpdating}
+        />
+        
+        <TaskItemActions
+          task={task}
+          onDeleteClick={onDeleteClick}
+          onEditClick={onEditClick}
+          isUpdating={isUpdating}
+          onFavoriteToggle={onFavoriteToggle}
+        />
       </TooltipProvider>
     </div>
   );
