@@ -65,15 +65,17 @@ serve(async (req) => {
     
     console.log("✅ Successfully obtained PayPal access token");
     
-    // Check if this is a billing agreement (starts with BA-) or subscription (starts with I-)
+    // For billing agreements (BA- tokens), we need to execute them first
     let subscriptionData;
     let planType = 'monthly';
+    let actualSubscriptionId = subscriptionId;
     
     if (subscriptionId.startsWith('BA-')) {
-      console.log("📋 Processing PayPal billing agreement:", subscriptionId);
+      console.log("📋 Processing PayPal billing agreement token, need to execute it first:", subscriptionId);
       
-      // For billing agreements, we get the agreement details
-      const agreementResponse = await fetch(`${baseUrl}/v1/billing-agreements/${subscriptionId}`, {
+      // Execute the billing agreement
+      const executeResponse = await fetch(`${baseUrl}/v1/payments/billing-agreements/${subscriptionId}/agreement-execute`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -81,7 +83,29 @@ serve(async (req) => {
         }
       });
       
-      console.log("📋 Agreement response status:", agreementResponse.status);
+      console.log("📋 Execute agreement response status:", executeResponse.status);
+      
+      if (!executeResponse.ok) {
+        const errorText = await executeResponse.text();
+        console.error("❌ Failed to execute billing agreement:", errorText);
+        throw new Error(`Failed to execute billing agreement: ${executeResponse.status} ${errorText}`);
+      }
+      
+      const executeData = await executeResponse.json();
+      console.log("💾 Executed billing agreement data:", JSON.stringify(executeData, null, 2));
+      
+      // Now get the agreement details
+      actualSubscriptionId = executeData.id || subscriptionId;
+      
+      const agreementResponse = await fetch(`${baseUrl}/v1/payments/billing-agreements/${actualSubscriptionId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log("📋 Agreement details response status:", agreementResponse.status);
       
       if (!agreementResponse.ok) {
         const errorText = await agreementResponse.text();
@@ -104,7 +128,7 @@ serve(async (req) => {
         console.warn("⚠️ Could not parse plan type from agreement, defaulting to monthly");
       }
       
-    } else {
+    } else if (subscriptionId.startsWith('I-')) {
       console.log("📋 Processing PayPal subscription:", subscriptionId);
       
       // For regular subscriptions, get subscription details
@@ -135,6 +159,8 @@ serve(async (req) => {
       } catch (e) {
         console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
       }
+    } else {
+      throw new Error(`Unknown subscription ID format: ${subscriptionId}`);
     }
     
     // Calculate subscription period
@@ -178,7 +204,7 @@ serve(async (req) => {
     const subscriptionUpdateData = {
       status: 'active',
       plan_type: planType,
-      paypal_subscription_id: subscriptionId,
+      paypal_subscription_id: actualSubscriptionId,
       current_period_start: currentDate.toISOString(),
       current_period_end: periodEnd.toISOString(),
       updated_at: currentDate.toISOString()
