@@ -31,6 +31,9 @@ export const signIn = async (email: string, password: string): Promise<void> => 
     if (error) throw error;
     
     toast.success("Signed in successfully");
+    
+    // Always redirect to /today after successful sign in
+    window.location.href = '/today';
   } catch (error: any) {
     toast.error("Sign in failed", { description: error.message });
     throw error;
