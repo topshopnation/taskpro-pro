@@ -5,7 +5,6 @@ import { CreditCard, BadgeCheck, AlertCircle } from "lucide-react";
 import { useSubscriptionCard } from "./subscription/useSubscriptionCard";
 import { SubscriptionCardSkeleton } from "./subscription/SubscriptionCardSkeleton";
 import { SubscriptionStatus } from "./subscription/SubscriptionStatus";
-import { SubscriptionFeatures } from "./subscription/SubscriptionFeatures";
 import { SubscriptionCardProps } from "@/types/subscriptionTypes";
 import { useEffect, useState } from "react";
 import { subscriptionPlanService, SubscriptionPlanData } from "@/services/subscriptionPlanService";
@@ -120,8 +119,6 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
             </div>
           </div>
         )}
-        
-        <SubscriptionFeatures />
       </CardContent>
       <CardFooter className="py-2 px-4">
         <Button 
