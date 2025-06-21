@@ -15,6 +15,7 @@ export function useSubscriptionProcessing() {
   const processSubscription = async (subscriptionId: string, subscriptionStatus: string) => {
     if (!user) {
       console.error("❌ No user available for subscription processing");
+      toast.error("Please sign in to complete subscription activation");
       return;
     }
     
@@ -38,22 +39,32 @@ export function useSubscriptionProcessing() {
       // Process the subscription based on status
       if (subscriptionStatus === "completed" || subscriptionStatus === "success") {
         console.log("✅ Processing successful subscription activation");
+        
+        // Show immediate feedback to user
+        toast.info("Processing your subscription...");
+        
         const success = await activateSubscription(subscriptionId, user.id);
         
         if (success) {
           console.log("🎉 Subscription activated successfully");
           toast.success("Subscription activated successfully! Your plan has been updated.");
           
-          // Force refresh subscription data immediately and after a delay
+          // Force refresh subscription data multiple times to ensure it updates
           console.log("🔄 Refreshing subscription data immediately");
           await fetchSubscription();
           
+          // Additional refreshes with delays to ensure the database has updated
           setTimeout(async () => {
-            console.log("🔄 Doing delayed subscription refresh");
+            console.log("🔄 Doing delayed subscription refresh (1)");
             await fetchSubscription();
-          }, 3000);
+          }, 2000);
+          
+          setTimeout(async () => {
+            console.log("🔄 Doing delayed subscription refresh (2)");
+            await fetchSubscription();
+          }, 5000);
         } else {
-          throw new Error("Subscription activation failed");
+          throw new Error("Subscription activation failed - please contact support");
         }
       } else {
         console.error("❌ Subscription was not completed successfully, status:", subscriptionStatus);

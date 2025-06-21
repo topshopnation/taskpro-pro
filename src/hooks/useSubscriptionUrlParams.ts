@@ -18,8 +18,8 @@ export const useSubscriptionUrlParams = (
   const subscriptionSuccess = urlParams.get('subscription_success');
   const subscriptionCancelled = urlParams.get('subscription_cancelled');
   
-  // PayPal returns subscription_id in the URL, but also check for ba_token as fallback
-  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
+  // PayPal can return subscription_id, ba_token, or token - try all possible parameters
+  const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token') || urlParams.get('token');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
   console.log("🔍 PayPal URL Debug:", { 
