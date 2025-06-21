@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -114,39 +115,45 @@ export function TaskItem({
     <>
       <div 
         className={cn(
-          "flex items-start gap-2 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
+          "flex flex-col md:flex-row md:items-start gap-2 p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer",
           `task-priority-${task.priority}`
         )}
         onClick={handleTaskClick}
       >
-        <div className="mt-1" onClick={e => e.stopPropagation()}>
-          <Checkbox 
-            checked={task.completed} 
-            onCheckedChange={handleCompletionToggle}
-            disabled={isUpdating}
+        {/* Mobile: Vertical layout, Desktop: Horizontal layout */}
+        <div className="flex items-start gap-2 md:flex-1">
+          <div className="mt-1" onClick={e => e.stopPropagation()}>
+            <Checkbox 
+              checked={task.completed} 
+              onCheckedChange={handleCompletionToggle}
+              disabled={isUpdating}
+            />
+          </div>
+          
+          <TaskItemDetails
+            title={task.title}
+            notes={task.notes}
+            dueDate={task.dueDate}
+            dueTime={task.dueTime}
+            completed={task.completed}
+            tags={taskTags}
+            projectName={projectName}
           />
         </div>
         
-        <TaskItemDetails
-          title={task.title}
-          notes={task.notes}
-          dueDate={task.dueDate}
-          dueTime={task.dueTime}
-          completed={task.completed}
-          tags={taskTags}
-          projectName={projectName}
-        />
-        
-        <TaskItemActionContainer
-          task={task}
-          onDeleteClick={() => setIsDeleteDialogOpen(true)}
-          onEditClick={() => onTaskEdit ? onTaskEdit(task) : setIsEditDialogOpen(true)}
-          isUpdating={isUpdating}
-          onPriorityChange={handlePriorityChange}
-          onDateChange={handleDateChange}
-          onProjectChange={handleProjectChange}
-          onFavoriteToggle={onFavoriteToggle}
-        />
+        {/* Actions positioned below on mobile, to the side on desktop */}
+        <div className="md:flex-shrink-0">
+          <TaskItemActionContainer
+            task={task}
+            onDeleteClick={() => setIsDeleteDialogOpen(true)}
+            onEditClick={() => onTaskEdit ? onTaskEdit(task) : setIsEditDialogOpen(true)}
+            isUpdating={isUpdating}
+            onPriorityChange={handlePriorityChange}
+            onDateChange={handleDateChange}
+            onProjectChange={handleProjectChange}
+            onFavoriteToggle={onFavoriteToggle}
+          />
+        </div>
       </div>
 
       <TaskItemConfirmDelete 

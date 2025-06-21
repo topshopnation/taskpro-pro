@@ -1,90 +1,80 @@
 
-import { Calendar, Clock, Tag as TagIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { Tag } from "./taskTypes"
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface TaskItemDetailsProps {
-  title: string
-  notes?: string
-  dueDate?: Date
-  dueTime?: string
-  completed: boolean
-  tags?: Tag[]
-  projectName?: string
+  title: string;
+  notes?: string;
+  dueDate?: Date;
+  dueTime?: string;
+  completed: boolean;
+  tags?: any[];
+  projectName?: string;
 }
 
-export function TaskItemDetails({ 
-  title, 
-  notes, 
-  dueDate, 
-  dueTime, 
+export function TaskItemDetails({
+  title,
+  notes,
+  dueDate,
+  dueTime,
   completed,
-  tags = [],
+  tags,
   projectName
 }: TaskItemDetailsProps) {
-  // Check if time should be shown - hide if empty or 00:00 (midnight)
-  const shouldShowTime = dueDate && 
-    (dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0);
-  
-  const timeString = shouldShowTime ? format(dueDate, "HH:mm") : "";
-  
+  const formatDueDate = (date: Date) => {
+    if (isToday(date)) return "Today";
+    if (isTomorrow(date)) return "Tomorrow";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, "MMM d");
+  };
+
   return (
     <div className="flex-1 min-w-0">
-      <div className="flex flex-col">
-        <div className="flex items-start">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+        <div className="flex-1 min-w-0 mb-2 md:mb-0 md:mr-4">
           <h3 className={cn(
-            "text-sm font-medium truncate",
+            "font-medium text-sm md:text-base leading-5 md:leading-normal break-words",
             completed && "line-through text-muted-foreground"
           )}>
             {title}
           </h3>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-          {dueDate && (
-            <span className="text-xs text-muted-foreground flex items-center">
-              <Calendar className="h-3 w-3 mr-1" />
-              {format(dueDate, "MMM d, yyyy")}
-              {shouldShowTime && (
-                <span className="flex items-center">
-                  <Clock className="h-3 w-3 mx-1" />
-                  {timeString}
-                </span>
-              )}
-            </span>
+          
+          {notes && (
+            <p className={cn(
+              "text-xs md:text-sm text-muted-foreground mt-1 break-words line-clamp-2",
+              completed && "line-through"
+            )}>
+              {notes}
+            </p>
           )}
           
-          {projectName && (
-            <span className="text-xs text-muted-foreground flex items-center">
-              <span className="h-2 w-2 bg-blue-400 rounded-full mr-1"></span>
-              {projectName}
-            </span>
-          )}
-        </div>
-        
-        {notes && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-            {notes}
-          </p>
-        )}
-        
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {tags.map(tag => (
-              <Badge 
-                key={tag.id} 
-                variant="outline"
-                className="text-xs py-0 px-1"
-              >
-                <TagIcon className="mr-1 h-2 w-2" />
-                {tag.name}
+          <div className="flex flex-wrap items-center gap-1 mt-1">
+            {dueDate && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                {formatDueDate(dueDate)}
+                {dueTime && ` ${dueTime}`}
               </Badge>
-            ))}
+            )}
+            
+            {projectName && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                {projectName}
+              </Badge>
+            )}
+            
+            {tags && tags.length > 0 && (
+              <>
+                {tags.map((tag) => (
+                  <Badge key={tag.id} variant="outline" className="text-xs px-1.5 py-0.5">
+                    {tag.tags?.name}
+                  </Badge>
+                ))}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
-  )
+  );
 }
