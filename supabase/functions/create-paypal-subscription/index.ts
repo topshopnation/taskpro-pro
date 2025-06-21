@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // CORS headers for all responses
 const corsHeaders = {
@@ -24,6 +25,25 @@ serve(async (req) => {
     const { planType, userId, returnUrl, cancelUrl }: SubscriptionRequest = await req.json();
     
     console.log("Creating PayPal subscription for:", { planType, userId });
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Get the active subscription plan from database
+    const { data: plan, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('is_active', true)
+      .single();
+    
+    if (planError || !plan) {
+      console.error('Error fetching subscription plan:', planError);
+      throw new Error('No active subscription plan found');
+    }
+    
+    console.log('Using subscription plan from database:', plan);
     
     // Get PayPal credentials from environment
     const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
@@ -58,17 +78,92 @@ serve(async (req) => {
       throw new Error("Failed to get PayPal access token");
     }
     
-    // Get plan IDs from environment or use defaults
-    const monthlyPlanId = Deno.env.get("PAYPAL_MONTHLY_PLAN_ID") || 'P-65H54700W12667836M7423DA';
-    const yearlyPlanId = Deno.env.get("PAYPAL_YEARLY_PLAN_ID") || 'P-80L22294MH2379142M7422KA';
+    // Create PayPal plan dynamically based on database values
+    const planPrice = planType === 'yearly' ? plan.price_yearly : plan.price_monthly;
+    const interval = planType === 'yearly' ? 'YEAR' : 'MONTH';
     
-    const planId = planType === 'yearly' ? yearlyPlanId : monthlyPlanId;
+    // First create a PayPal product
+    const productData = {
+      name: plan.name,
+      description: plan.description || `${plan.name} subscription`,
+      type: "SERVICE",
+      category: "SOFTWARE"
+    };
     
-    console.log("Using plan ID:", planId, "for plan type:", planType);
+    const productResponse = await fetch(`${baseUrl}/v1/catalogs/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${tokenData.access_token}`,
+        "Accept": "application/json",
+        "PayPal-Request-Id": `PRODUCT-${userId}-${Date.now()}`
+      },
+      body: JSON.stringify(productData),
+    });
     
-    // Create PayPal subscription with proper return/cancel URLs
+    const product = await productResponse.json();
+    
+    if (!productResponse.ok) {
+      console.error("PayPal product creation failed:", product);
+      throw new Error(`PayPal product creation failed: ${product.message || 'Unknown error'}`);
+    }
+    
+    console.log("PayPal product created:", product);
+    
+    // Now create a billing plan
+    const billingPlanData = {
+      product_id: product.id,
+      name: `${plan.name} - ${planType}`,
+      description: `${plan.name} ${planType} subscription`,
+      status: "ACTIVE",
+      billing_cycles: [
+        {
+          frequency: {
+            interval_unit: interval,
+            interval_count: 1
+          },
+          tenure_type: "REGULAR",
+          sequence: 1,
+          total_cycles: 0, // 0 means infinite
+          pricing_scheme: {
+            fixed_price: {
+              value: planPrice.toString(),
+              currency_code: "USD"
+            }
+          }
+        }
+      ],
+      payment_preferences: {
+        auto_bill_outstanding: true,
+        setup_fee_failure_action: "CONTINUE",
+        payment_failure_threshold: 3
+      }
+    };
+    
+    const planResponse = await fetch(`${baseUrl}/v1/billing/plans`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${tokenData.access_token}`,
+        "Accept": "application/json",
+        "PayPal-Request-Id": `PLAN-${userId}-${Date.now()}`,
+        "Prefer": "return=representation"
+      },
+      body: JSON.stringify(billingPlanData),
+    });
+    
+    const paypalPlan = await planResponse.json();
+    
+    if (!planResponse.ok) {
+      console.error("PayPal plan creation failed:", paypalPlan);
+      throw new Error(`PayPal plan creation failed: ${paypalPlan.message || 'Unknown error'}`);
+    }
+    
+    console.log("PayPal plan created:", paypalPlan);
+    
+    // Create PayPal subscription with the dynamic plan
     const subscriptionData = {
-      plan_id: planId,
+      plan_id: paypalPlan.id,
       subscriber: {
         name: {
           given_name: "TaskPro",
@@ -87,7 +182,7 @@ serve(async (req) => {
         return_url: `${returnUrl}&subscription_id={subscription_id}`,
         cancel_url: cancelUrl
       },
-      custom_id: JSON.stringify({ userId, planType })
+      custom_id: JSON.stringify({ userId, planType, dbPlanId: plan.id })
     };
     
     console.log("Creating subscription with data:", JSON.stringify(subscriptionData, null, 2));
@@ -113,7 +208,6 @@ serve(async (req) => {
     }
     
     if (subscription.status === "APPROVAL_PENDING") {
-      // Find the approval URL
       const approvalUrl = subscription.links?.find((link: any) => link.rel === "approve")?.href;
       
       if (!approvalUrl) {

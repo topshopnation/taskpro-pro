@@ -17,37 +17,23 @@ export default function PlanSelector({
 }: PlanSelectorProps) {
   const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchActivePlan() {
       try {
+        setIsLoading(true);
+        setError(null);
         const plan = await subscriptionPlanService.getActivePlan();
+        
         if (plan) {
           setActivePlan(plan);
         } else {
-          // Fallback to updated default pricing
-          setActivePlan({
-            id: 'default',
-            name: 'TaskPro Pro',
-            description: '',
-            price_monthly: 2.00,
-            price_yearly: 15.00,
-            features: [],
-            is_active: true
-          });
+          setError('No active subscription plan found. Please contact support.');
         }
       } catch (error) {
         console.error('Error fetching subscription plan:', error);
-        // Fallback to updated default pricing
-        setActivePlan({
-          id: 'default',
-          name: 'TaskPro Pro',
-          description: '',
-          price_monthly: 2.00,
-          price_yearly: 15.00,
-          features: [],
-          is_active: true
-        });
+        setError('Failed to load subscription plans. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -56,8 +42,16 @@ export default function PlanSelector({
     fetchActivePlan();
   }, []);
 
-  if (isLoading || !activePlan) {
+  if (isLoading) {
     return <div className="animate-pulse h-32 bg-muted rounded-md" />;
+  }
+
+  if (error || !activePlan) {
+    return (
+      <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-md">
+        <p className="text-sm text-destructive">{error || 'Unable to load subscription plans'}</p>
+      </div>
+    );
   }
 
   const yearlyDiscount = Math.round(((activePlan.price_monthly * 12 - activePlan.price_yearly) / (activePlan.price_monthly * 12)) * 100);
@@ -88,33 +82,33 @@ export default function PlanSelector({
             </div>
           </div>
             
-            <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "yearly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("yearly")}>
-              <RadioGroupItem value="yearly" id="yearly" className="absolute right-3 top-3" />
-              {yearlyDiscount > 0 && (
-                <div className="absolute -right-1 -top-3">
-                  <div className="bg-primary flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white shadow-sm">
-                    Save {yearlyDiscount}%
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="yearly" className="font-medium">Yearly</Label>
-                  {planType === "yearly" && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
-                </div>
-                <div className="text-sm">
-                  <div className="font-semibold">${activePlan.price_yearly.toFixed(2)}/year</div>
-                  <div className="text-muted-foreground text-xs">Billed annually</div>
+          <div className={`relative rounded-md border p-3 cursor-pointer ${planType === "yearly" ? "border-primary bg-primary/10" : "border-muted-foreground/20"}`} onClick={() => onPlanTypeChange("yearly")}>
+            <RadioGroupItem value="yearly" id="yearly" className="absolute right-3 top-3" />
+            {yearlyDiscount > 0 && (
+              <div className="absolute -right-1 -top-3">
+                <div className="bg-primary flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white shadow-sm">
+                  Save {yearlyDiscount}%
                 </div>
               </div>
-              
-              <div className="absolute -top-2 left-3 bg-green-100 text-xs px-2 py-0.5 rounded text-green-700 dark:bg-green-900 dark:text-green-300">
-                Best Value
+            )}
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="yearly" className="font-medium">Yearly</Label>
+                {planType === "yearly" && (
+                  <Check className="h-4 w-4 text-primary" />
+                )}
+              </div>
+              <div className="text-sm">
+                <div className="font-semibold">${activePlan.price_yearly.toFixed(2)}/year</div>
+                <div className="text-muted-foreground text-xs">Billed annually</div>
               </div>
             </div>
+            
+            <div className="absolute -top-2 left-3 bg-green-100 text-xs px-2 py-0.5 rounded text-green-700 dark:bg-green-900 dark:text-green-300">
+              Best Value
+            </div>
+          </div>
         </div>
       </RadioGroup>
     </div>

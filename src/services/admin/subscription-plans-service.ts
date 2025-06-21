@@ -39,6 +39,18 @@ export const subscriptionPlansService = {
         throw new Error('Missing required fields for subscription plan');
       }
 
+      // Deactivate all other plans if this one is being set to active
+      if (plan.is_active) {
+        const { error: deactivateError } = await supabase
+          .from('subscription_plans')
+          .update({ is_active: false })
+          .neq('id', 'temp'); // This will match all existing records
+        
+        if (deactivateError) {
+          console.error('Error deactivating other plans:', deactivateError);
+        }
+      }
+
       const planData = {
         name: plan.name,
         price_monthly: Number(plan.price_monthly),
@@ -79,6 +91,18 @@ export const subscriptionPlansService = {
       
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan update');
+      }
+      
+      // Deactivate all other plans if this one is being set to active
+      if (plan.is_active) {
+        const { error: deactivateError } = await supabase
+          .from('subscription_plans')
+          .update({ is_active: false })
+          .neq('id', id);
+        
+        if (deactivateError) {
+          console.error('Error deactivating other plans:', deactivateError);
+        }
       }
       
       const updateData = {

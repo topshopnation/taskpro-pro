@@ -24,21 +24,23 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
 
   const [activePlan, setActivePlan] = useState<SubscriptionPlanData | null>(null);
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [pricesError, setPricesError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchActivePlan() {
       try {
         setPricesLoading(true);
+        setPricesError(null);
         const plan = await subscriptionPlanService.getActivePlan();
         
         if (plan) {
           setActivePlan(plan);
         } else {
-          setActivePlan(null);
+          setPricesError('No subscription plans available');
         }
       } catch (error) {
         console.error('Error fetching active subscription plan:', error);
-        setActivePlan(null);
+        setPricesError('Failed to load pricing information');
       } finally {
         setPricesLoading(false);
       }
@@ -88,7 +90,11 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           error={error}
         />
 
-        {activePlan && (
+        {pricesError ? (
+          <div className="text-xs text-destructive p-2 bg-destructive/10 rounded">
+            {pricesError}
+          </div>
+        ) : activePlan ? (
           <div className="flex items-center justify-between border rounded-md p-3">
             <div className="flex items-center gap-2">
               <div className="bg-primary/10 p-1.5 rounded-md">
@@ -97,7 +103,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               <div>
                 <h4 className="text-xs font-medium">{activePlan.name}</h4>
                 <div className="text-xs text-muted-foreground">
-                  <p>Live pricing:</p>
+                  <p>Current pricing:</p>
                   <ul className="pl-3 mt-0.5 space-y-0.5">
                     <li>${activePlan.price_monthly.toFixed(2)} per month</li>
                     <li>${activePlan.price_yearly.toFixed(2)} per year (save {yearlyDiscount}%)</li>
@@ -106,6 +112,10 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
               </div>
             </div>
           </div>
+        ) : (
+          <div className="text-xs text-muted-foreground">
+            Loading pricing information...
+          </div>
         )}
       </CardContent>
       <CardFooter className="py-2 px-4">
@@ -113,6 +123,7 @@ export default function SubscriptionCard({ onUpgrade }: SubscriptionCardProps) {
           onClick={onUpgrade}
           size="sm"
           className="text-xs h-8"
+          disabled={pricesError !== null}
         >
           <CreditCard className="mr-1.5 h-3.5 w-3.5" />
           {getButtonText()}
