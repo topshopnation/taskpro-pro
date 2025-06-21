@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Save, Shield, Database, Bell, Palette, RotateCcw } from "lucide-react";
+import { Save, Shield, Database, Bell, Palette, RotateCcw, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { adminService } from "@/services/admin";
@@ -19,12 +19,20 @@ export default function SettingsAdmin() {
     userRegistration: true,
     emailNotifications: true,
     backupFrequency: "daily",
-    sessionTimeout: "24",
-    maxUsersPerPlan: "1000"
+    sessionTimeout: "unlimited",
+    maxUsersPerPlan: "unlimited"
   });
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  
+  // Password change states
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -78,10 +86,67 @@ export default function SettingsAdmin() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters long");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      // Get admin email from localStorage
+      const adminSession = localStorage.getItem('admin_session');
+      if (!adminSession) {
+        toast.error("Admin session not found");
+        return;
+      }
+
+      const { email } = JSON.parse(adminSession);
+      const success = await adminService.changeAdminPassword(
+        email,
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
+
+      if (success) {
+        toast.success("Password changed successfully");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+      } else {
+        toast.error("Failed to change password. Please check your current password.");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast.error("Failed to change password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleInputChange = (key: keyof AdminSettings, value: string | boolean) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
+    }));
+  };
+
+  const handlePasswordInputChange = (field: string, value: string) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
     }));
   };
 
@@ -167,6 +232,63 @@ export default function SettingsAdmin() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Security */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Lock className="h-5 w-5" />
+              <CardTitle>Security</CardTitle>
+            </div>
+            <CardDescription>
+              Admin account security settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
+                  placeholder="Enter current password"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </div>
+              
+              <Button 
+                onClick={handlePasswordChange} 
+                disabled={passwordLoading}
+                className="w-fit"
+              >
+                {passwordLoading ? "Changing Password..." : "Change Password"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
