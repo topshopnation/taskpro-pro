@@ -8,6 +8,7 @@ import { SubscriptionPlan } from "@/types/adminTypes";
 export const subscriptionPlansService = {
   async getSubscriptionPlans() {
     try {
+      console.log("Fetching subscription plans...");
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -18,6 +19,7 @@ export const subscriptionPlansService = {
         throw error;
       }
       
+      console.log("Fetched plans:", data);
       return (data || []).map(plan => ({
         ...plan,
         description: plan.description || '',
@@ -31,20 +33,26 @@ export const subscriptionPlansService = {
   
   async createSubscriptionPlan(plan: Partial<SubscriptionPlan>) {
     try {
+      console.log("Creating subscription plan:", plan);
+      
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan');
       }
 
+      const planData = {
+        name: plan.name,
+        price_monthly: Number(plan.price_monthly),
+        price_yearly: Number(plan.price_yearly),
+        description: plan.description || '',
+        features: plan.features || [],
+        is_active: plan.is_active !== undefined ? plan.is_active : true
+      };
+
+      console.log("Inserting plan data:", planData);
+
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert({
-          name: plan.name,
-          price_monthly: plan.price_monthly,
-          price_yearly: plan.price_yearly,
-          description: plan.description || '',
-          features: plan.features || [],
-          is_active: plan.is_active !== undefined ? plan.is_active : true
-        })
+        .insert(planData)
         .select()
         .single();
         
@@ -53,6 +61,7 @@ export const subscriptionPlansService = {
         throw error;
       }
       
+      console.log("Created plan:", data);
       return {
         ...data,
         description: data.description || '',
@@ -66,20 +75,26 @@ export const subscriptionPlansService = {
   
   async updateSubscriptionPlan(id: string, plan: Partial<SubscriptionPlan>) {
     try {
+      console.log("Updating subscription plan:", id, plan);
+      
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
         throw new Error('Missing required fields for subscription plan update');
       }
       
+      const updateData = {
+        name: plan.name,
+        price_monthly: Number(plan.price_monthly),
+        price_yearly: Number(plan.price_yearly),
+        description: plan.description || '',
+        features: plan.features || [],
+        is_active: plan.is_active
+      };
+
+      console.log("Update data:", updateData);
+
       const { error } = await supabase
         .from('subscription_plans')
-        .update({
-          name: plan.name,
-          price_monthly: plan.price_monthly,
-          price_yearly: plan.price_yearly,
-          description: plan.description || '',
-          features: plan.features || [],
-          is_active: plan.is_active
-        })
+        .update(updateData)
         .eq('id', id);
         
       if (error) {
@@ -87,6 +102,7 @@ export const subscriptionPlansService = {
         throw error;
       }
       
+      console.log("Plan updated successfully");
       return true;
     } catch (error) {
       console.error('Error updating subscription plan:', error);
@@ -96,6 +112,7 @@ export const subscriptionPlansService = {
   
   async deleteSubscriptionPlan(id: string) {
     try {
+      console.log("Deleting subscription plan:", id);
       const { error } = await supabase
         .from('subscription_plans')
         .delete()
@@ -106,6 +123,7 @@ export const subscriptionPlansService = {
         throw error;
       }
       
+      console.log("Plan deleted successfully");
       return true;
     } catch (error) {
       console.error('Error deleting subscription plan:', error);

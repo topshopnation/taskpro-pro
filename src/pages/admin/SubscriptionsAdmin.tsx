@@ -9,7 +9,7 @@ import { useSubscriptionPlans } from "@/hooks/admin/useSubscriptionPlans";
 import { useSubscriptionDialog } from "@/hooks/admin/useSubscriptionDialog";
 import { SubscriptionAdminHeader } from "@/components/admin/subscriptions/SubscriptionAdminHeader";
 import { SubscriptionAdminContent } from "@/components/admin/subscriptions/SubscriptionAdminContent";
-import { adminService } from "@/services/admin-service";
+import { adminService } from "@/services/admin";
 import { toast } from "sonner";
 
 export default function SubscriptionsAdmin() {
@@ -18,6 +18,7 @@ export default function SubscriptionsAdmin() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const { plans, setPlans, loading, fetchPlans } = useSubscriptionPlans();
+  
   const { 
     dialogOpen, 
     setDialogOpen, 
@@ -27,8 +28,8 @@ export default function SubscriptionsAdmin() {
     setCurrentPlan, 
     handleFormSubmit 
   } = useSubscriptionDialog((newPlan) => {
-    setPlans(prev => [...prev, newPlan]);
-    fetchPlans();
+    console.log("Plan created/updated, refreshing list");
+    fetchPlans(); // Always refresh the list after create/update
   });
 
   const filteredPlans = plans.filter(
@@ -37,6 +38,7 @@ export default function SubscriptionsAdmin() {
   );
 
   const handleCreate = () => {
+    console.log("Creating new plan");
     setIsEditing(false);
     setCurrentPlan({
       name: "",
@@ -50,12 +52,14 @@ export default function SubscriptionsAdmin() {
   };
 
   const handleEdit = (plan: SubscriptionPlan) => {
+    console.log("Editing plan:", plan);
     setIsEditing(true);
     setCurrentPlan({...plan});
     setDialogOpen(true);
   };
 
   const handleDuplicate = (plan: SubscriptionPlan) => {
+    console.log("Duplicating plan:", plan);
     const duplicate = {...plan, name: `${plan.name} (Copy)`, id: undefined};
     setCurrentPlan(duplicate);
     setIsEditing(false);
@@ -66,6 +70,7 @@ export default function SubscriptionsAdmin() {
     if (!deleteId) return;
     
     try {
+      console.log("Deleting plan:", deleteId);
       const success = await adminService.deleteSubscriptionPlan(deleteId);
       if (success) {
         setPlans(prev => prev.filter(plan => plan.id !== deleteId));
@@ -80,11 +85,6 @@ export default function SubscriptionsAdmin() {
       setDeleteDialogOpen(false);
       setDeleteId(null);
     }
-  };
-
-  const handleFormSubmitWithRefresh = async (e: React.FormEvent) => {
-    await handleFormSubmit(e);
-    fetchPlans();
   };
 
   return (
@@ -114,7 +114,7 @@ export default function SubscriptionsAdmin() {
             currentPlan={currentPlan}
             setCurrentPlan={setCurrentPlan}
             isEditing={isEditing}
-            onSubmit={handleFormSubmitWithRefresh}
+            onSubmit={handleFormSubmit}
             setDialogOpen={setDialogOpen}
           />
         </Dialog>

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { SubscriptionPlan } from "@/types/adminTypes";
-import { adminService } from "@/services/admin-service";
+import { adminService } from "@/services/admin";
 import { toast } from "sonner";
 
 export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => void) {
@@ -18,6 +18,8 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("Form submitted with plan:", currentPlan);
     
     if (!currentPlan.name?.trim()) {
       toast.error("Plan name is required");
@@ -36,15 +38,19 @@ export function useSubscriptionDialog(onSuccess: (plan: SubscriptionPlan) => voi
     
     try {
       if (isEditing && currentPlan.id) {
+        console.log("Updating plan with ID:", currentPlan.id);
         const success = await adminService.updateSubscriptionPlan(currentPlan.id, currentPlan);
         if (success) {
           toast.success("Subscription plan updated successfully");
           setDialogOpen(false);
+          // Trigger refresh by calling onSuccess with current plan data
+          onSuccess(currentPlan as SubscriptionPlan);
         } else {
           toast.error("Failed to update subscription plan");
           return;
         }
       } else {
+        console.log("Creating new plan:", currentPlan);
         const newPlan = await adminService.createSubscriptionPlan(currentPlan);
         if (newPlan) {
           toast.success("Subscription plan created successfully");
