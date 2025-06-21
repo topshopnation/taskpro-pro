@@ -39,9 +39,12 @@ export function AdminLoginForm() {
           timestamp: new Date().toISOString()
         }));
         
+        toast.success("Admin login successful!");
         console.log('Admin session stored, navigating to admin dashboard...');
         // Navigate to admin dashboard with replace to prevent back navigation to login
         navigate('/admin', { replace: true });
+      } else {
+        toast.error("Invalid admin credentials. Please check your email and password.");
       }
     } catch (error) {
       console.error('Unexpected error during login:', error);
@@ -102,6 +105,14 @@ export function AdminLoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Logging in..." : "Login to Admin"}
           </Button>
+          
+          <div className="mt-4 p-3 bg-muted rounded-md">
+            <p className="text-sm text-muted-foreground">
+              <strong>Test Credentials:</strong><br />
+              Email: admin@taskpro.pro<br />
+              Password: admin123
+            </p>
+          </div>
         </form>
       </CardContent>
     </Card>

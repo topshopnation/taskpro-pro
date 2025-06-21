@@ -39,7 +39,7 @@ export const adminBaseService = {
     try {
       console.log("Attempting admin login for:", email);
       
-      // First verify admin credentials
+      // First verify admin credentials using the fixed function
       const { data: isValid, error: verifyError } = await supabase.rpc('verify_admin_credentials', {
         input_email: email,
         input_password: password
@@ -55,35 +55,7 @@ export const adminBaseService = {
         return false;
       }
 
-      // Check if user profile exists for this email
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Error checking profile:', profileError);
-        return false;
-      }
-
-      if (!profile) {
-        console.log("No profile found for admin email, this should not happen");
-        return false;
-      }
-
-      // Sign in the user
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-      if (signInError) {
-        console.error('Error signing in admin:', signInError);
-        return false;
-      }
-
-      console.log("Admin login successful");
+      console.log("Admin credentials verified successfully");
       return true;
     } catch (error) {
       console.error('Error in loginAdmin:', error);
@@ -95,14 +67,12 @@ export const adminBaseService = {
     try {
       console.log("Adding new admin user:", email);
       
-      // Insert into admin_users table
-      const { error } = await supabase
-        .from('admin_users')
-        .insert({
-          email,
-          password_hash: password, // This should be hashed by a database function
-          role
-        });
+      // Use the new add_admin_user function
+      const { data: success, error } = await supabase.rpc('add_admin_user', {
+        admin_email: email,
+        admin_password: password,
+        admin_role: role
+      });
 
       if (error) {
         console.error('Error adding admin user:', error);
@@ -110,7 +80,7 @@ export const adminBaseService = {
       }
 
       console.log("Admin user added successfully");
-      return true;
+      return success === true;
     } catch (error) {
       console.error('Error in addAdminUser:', error);
       return false;
