@@ -29,18 +29,17 @@ export function useAuthRedirect(user: User | null, loading: boolean) {
       return;
     }
     
-    // Redirect authenticated users from auth/home to today page
+    // Redirect authenticated users from auth/home to today page (but reduce redirects)
     if (user && (isAuthPage || isHomePage)) {
       console.log("User authenticated, redirecting to today page from:", currentPath);
       navigate('/today', { replace: true });
       return;
     }
     
-    // Redirect unauthenticated users from protected pages to home page - adding immediate redirect
+    // Redirect unauthenticated users from protected pages to home page
     if (!user && !isAuthPage && !isHomePage) {
       console.log("No user, redirecting to / from protected page:", currentPath);
-      // Force immediate redirect for better security
-      window.location.href = '/';
+      navigate('/', { replace: true });
       return;
     }
   }, [user, loading, location.pathname, location.search, navigate]);

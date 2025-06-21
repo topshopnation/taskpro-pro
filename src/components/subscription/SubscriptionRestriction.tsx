@@ -13,7 +13,7 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
   const { isActive, isTrialActive, subscription, loading, daysRemaining, initialized } = useSubscription();
   const navigate = useNavigate();
 
-  // Always show content while loading or not initialized to prevent flashing
+  // Always show content while loading or not initialized
   if (loading || !initialized) {
     return <>{children}</>;
   }
@@ -24,12 +24,6 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
   }
 
   // Only show restriction if we're absolutely sure user doesn't have access
-  // and the subscription data has been properly loaded
-  if (!initialized) {
-    return <>{children}</>;
-  }
-
-  // If user doesn't have access, show restricted view
   return (
     <div className="relative">
       {/* Semi-transparent overlay */}
