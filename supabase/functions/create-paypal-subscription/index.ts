@@ -11,8 +11,6 @@ const corsHeaders = {
 interface SubscriptionRequest {
   planType: 'monthly' | 'yearly';
   userId: string;
-  returnUrl: string;
-  cancelUrl: string;
 }
 
 serve(async (req) => {
@@ -22,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { planType, userId, returnUrl, cancelUrl }: SubscriptionRequest = await req.json();
+    const { planType, userId }: SubscriptionRequest = await req.json();
     
     console.log("Creating PayPal subscription for:", { planType, userId });
     
@@ -73,6 +71,13 @@ serve(async (req) => {
     const baseUrl = environment === "sandbox" 
       ? "https://api-m.sandbox.paypal.com" 
       : "https://api-m.paypal.com"; // Live environment
+    
+    // Set up return and cancel URLs
+    const baseReturnUrl = `${supabaseUrl.replace('/supabase', '')}/settings`;
+    const returnUrl = `${baseReturnUrl}?subscription_success=true`;
+    const cancelUrl = `${baseReturnUrl}?subscription_cancelled=true`;
+    
+    console.log("Using return URLs:", { returnUrl, cancelUrl });
     
     // Get PayPal access token
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -231,7 +236,7 @@ serve(async (req) => {
       // Modify the approval URL to include the subscription ID in the return URL
       const urlObj = new URL(approvalUrl);
       const originalReturnUrl = urlObj.searchParams.get('return_url') || returnUrl;
-      const modifiedReturnUrl = `${originalReturnUrl}${originalReturnUrl.includes('?') ? '&' : '?'}subscription_id=${subscription.id}&subscription_success=true&plan_type=${planType}`;
+      const modifiedReturnUrl = `${originalReturnUrl}&subscription_id=${subscription.id}&plan_type=${planType}`;
       urlObj.searchParams.set('return_url', modifiedReturnUrl);
       
       console.log("Subscription created successfully with approval URL:", urlObj.toString());
