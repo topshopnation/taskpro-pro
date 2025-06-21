@@ -22,34 +22,52 @@ export const useSubscriptionUrlParams = (
   const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
+  console.log("🔍 PayPal URL Debug:", { 
+    subscriptionSuccess, 
+    subscriptionCancelled, 
+    subscriptionId, 
+    planType,
+    fullUrl: location.search,
+    allParams: Object.fromEntries(urlParams)
+  });
+
   // Memoize the subscription handler to avoid recreation on every render
   const handleSubscription = useCallback(async () => {
     try {
       if (subscriptionSuccess === 'true' && subscriptionId && !subscriptionProcessed.current && !isProcessingSubscription) {
-        console.log("Processing PayPal subscription from URL params:", { subscriptionId, planType, subscriptionProcessed: subscriptionProcessed.current });
+        console.log("🚀 Processing PayPal subscription from URL params:", { 
+          subscriptionId, 
+          planType, 
+          subscriptionProcessed: subscriptionProcessed.current,
+          isProcessingSubscription
+        });
         
         // Process the PayPal subscription using the subscription ID
         await processSubscription(subscriptionId, "completed");
         
         // Force refresh subscription data after URL-based subscription processing
+        console.log("🔄 Refreshing subscription data after processing");
         await fetchSubscription();
         
         // Clean up URL parameters after successful processing
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, document.title, url.toString());
+        console.log("✅ URL cleaned up after subscription processing");
       }
     } catch (error) {
-      console.error("Error handling subscription from URL params:", error);
+      console.error("❌ Error handling subscription from URL params:", error);
       toast.error("Error processing subscription. Please try again.");
     }
   }, [subscriptionSuccess, subscriptionId, planType, subscriptionProcessed, isProcessingSubscription, processSubscription, fetchSubscription]);
 
   useEffect(() => {
     if (subscriptionSuccess === 'true' && subscriptionId) {
+      console.log("🎯 Triggering subscription handling");
       // Execute subscription handling
       handleSubscription();
     } else if (subscriptionCancelled === 'true') {
+      console.log("❌ Subscription was cancelled");
       toast.error("Subscription was cancelled. You can try again whenever you're ready.");
       
       // Clean up URL parameters

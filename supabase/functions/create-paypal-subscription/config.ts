@@ -2,7 +2,7 @@
 export const getPayPalConfig = () => {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-  const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "live";
+  const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox"; // Changed default to sandbox
   
   if (!clientId || !clientSecret) {
     throw new Error("PayPal credentials not configured");
