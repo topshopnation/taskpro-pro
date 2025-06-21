@@ -43,7 +43,7 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
       };
     }
 
-    // Active subscription users
+    // Active subscription users - check if expired
     if (subscription?.status === 'active') {
       const currentDate = new Date();
       const endDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
@@ -58,12 +58,8 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
         };
       }
       
-      return {
-        text: "Renew Subscription",
-        variant: "outline" as const,
-        icon: Plus,
-        urgent: false
-      };
+      // Active subscription that's not expired - don't show button
+      return null;
     }
 
     // Canceled users
@@ -107,17 +103,28 @@ export function SubscriptionActions({ onUpgrade }: SubscriptionActionsProps) {
     return daysUntilEnd <= 14;
   };
 
-  // Only show button if within 14 days of end, expired, or no subscription
-  const shouldShowButton = !subscription || 
-                           subscription.status === 'expired' || 
-                           subscription.status === 'canceled' || 
-                           isWithin14Days();
+  const buttonConfig = getButtonConfig();
 
-  if (!shouldShowButton) {
+  // Don't show button if:
+  // 1. No button config (active subscription that's not expired)
+  // 2. Active subscription with valid PayPal ID that's not within 14 days or expired
+  if (!buttonConfig) {
     return null;
   }
 
-  const buttonConfig = getButtonConfig();
+  // Additional check: if subscription is active and has PayPal ID and not within 14 days, don't show
+  if (subscription?.status === 'active' && 
+      subscription.paypal_subscription_id && 
+      !isWithin14Days()) {
+    const currentDate = new Date();
+    const endDate = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+    const isExpired = endDate && endDate < currentDate;
+    
+    if (!isExpired) {
+      return null;
+    }
+  }
+
   const IconComponent = buttonConfig.icon;
   const hasExpiredTrial = subscription?.status === 'expired' && subscription.trial_end_date;
 
