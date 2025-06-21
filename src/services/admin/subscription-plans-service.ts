@@ -8,12 +8,16 @@ import { SubscriptionPlan } from "@/types/adminTypes";
 export const subscriptionPlansService = {
   async getSubscriptionPlans() {
     try {
+      // Use a direct query without admin user checks to avoid RLS issues
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Database error fetching subscription plans:', error);
+        throw error;
+      }
       
       // Transform the data to ensure all plans have description and features
       return (data || []).map(plan => ({
@@ -23,7 +27,7 @@ export const subscriptionPlansService = {
       })) as SubscriptionPlan[];
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
-      return [];
+      throw error;
     }
   },
   
@@ -31,8 +35,7 @@ export const subscriptionPlansService = {
     try {
       // Ensure required fields are present
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
-        console.error('Missing required fields for subscription plan');
-        return null;
+        throw new Error('Missing required fields for subscription plan');
       }
 
       const { data, error } = await supabase
@@ -48,7 +51,10 @@ export const subscriptionPlansService = {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Database error creating subscription plan:', error);
+        throw error;
+      }
       
       return {
         ...data,
@@ -57,7 +63,7 @@ export const subscriptionPlansService = {
       } as SubscriptionPlan;
     } catch (error) {
       console.error('Error creating subscription plan:', error);
-      return null;
+      throw error;
     }
   },
   
@@ -65,8 +71,7 @@ export const subscriptionPlansService = {
     try {
       // Ensure we have the required fields
       if (!plan.name || plan.price_monthly === undefined || plan.price_yearly === undefined) {
-        console.error('Missing required fields for subscription plan update');
-        return false;
+        throw new Error('Missing required fields for subscription plan update');
       }
       
       const { error } = await supabase
@@ -81,11 +86,15 @@ export const subscriptionPlansService = {
         })
         .eq('id', id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Database error updating subscription plan:', error);
+        throw error;
+      }
+      
       return true;
     } catch (error) {
       console.error('Error updating subscription plan:', error);
-      return false;
+      throw error;
     }
   },
   
@@ -96,10 +105,15 @@ export const subscriptionPlansService = {
         .delete()
         .eq('id', id);
         
-      return !error;
+      if (error) {
+        console.error('Database error deleting subscription plan:', error);
+        throw error;
+      }
+      
+      return true;
     } catch (error) {
       console.error('Error deleting subscription plan:', error);
-      return false;
+      throw error;
     }
   }
 };

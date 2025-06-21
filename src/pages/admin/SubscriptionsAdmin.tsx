@@ -28,6 +28,7 @@ export default function SubscriptionsAdmin() {
     handleFormSubmit 
   } = useSubscriptionDialog((newPlan) => {
     setPlans(prev => [...prev, newPlan]);
+    fetchPlans(); // Refresh the list after adding
   });
 
   const filteredPlans = plans.filter(
@@ -65,54 +66,66 @@ export default function SubscriptionsAdmin() {
     if (!deleteId) return;
     
     try {
-      await adminService.deleteSubscriptionPlan(deleteId);
-      setPlans(prev => prev.filter(plan => plan.id !== deleteId));
-      toast.success("Subscription plan deleted");
-      setDeleteDialogOpen(false);
-      setDeleteId(null);
+      const success = await adminService.deleteSubscriptionPlan(deleteId);
+      if (success) {
+        setPlans(prev => prev.filter(plan => plan.id !== deleteId));
+        toast.success("Subscription plan deleted successfully");
+      } else {
+        toast.error("Failed to delete subscription plan");
+      }
     } catch (error) {
       console.error("Error deleting plan:", error);
       toast.error("Failed to delete subscription plan");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteId(null);
     }
+  };
+
+  const handleFormSubmitWithRefresh = async (e: React.FormEvent) => {
+    await handleFormSubmit(e);
+    // Refresh the plans list after successful creation/update
+    fetchPlans();
   };
 
   return (
     <AdminLayout>
-      <SubscriptionAdminHeader 
-        onRefresh={fetchPlans}
-        onCreate={handleCreate}
-        loading={loading}
-      />
-      
-      <SubscriptionAdminContent 
-        loading={loading}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        filteredPlans={filteredPlans}
-        onEdit={handleEdit}
-        onDuplicate={handleDuplicate}
-        onDelete={(id) => {
-          setDeleteId(id);
-          setDeleteDialogOpen(true);
-        }}
-        onCreate={handleCreate}
-      />
-      
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <SubscriptionPlanDialogContent
-          currentPlan={currentPlan}
-          setCurrentPlan={setCurrentPlan}
-          isEditing={isEditing}
-          onSubmit={handleFormSubmit}
-          setDialogOpen={setDialogOpen}
+      <div className="space-y-6">
+        <SubscriptionAdminHeader 
+          onRefresh={fetchPlans}
+          onCreate={handleCreate}
+          loading={loading}
         />
-      </Dialog>
-      
-      <DeletePlanDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirmDelete={handleConfirmDelete}
-      />
+        
+        <SubscriptionAdminContent 
+          loading={loading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filteredPlans={filteredPlans}
+          onEdit={handleEdit}
+          onDuplicate={handleDuplicate}
+          onDelete={(id) => {
+            setDeleteId(id);
+            setDeleteDialogOpen(true);
+          }}
+        />
+        
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <SubscriptionPlanDialogContent
+            currentPlan={currentPlan}
+            setCurrentPlan={setCurrentPlan}
+            isEditing={isEditing}
+            onSubmit={handleFormSubmitWithRefresh}
+            setDialogOpen={setDialogOpen}
+          />
+        </Dialog>
+        
+        <DeletePlanDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirmDelete={handleConfirmDelete}
+        />
+      </div>
     </AdminLayout>
   );
 }

@@ -1,8 +1,7 @@
 
-import { Search, Loader2, PlusCircle } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { SubscriptionPlan } from "@/types/adminTypes";
 import { SubscriptionPlansTable } from "./SubscriptionPlansTable";
 
@@ -14,7 +13,6 @@ interface SubscriptionAdminContentProps {
   onEdit: (plan: SubscriptionPlan) => void;
   onDuplicate: (plan: SubscriptionPlan) => void;
   onDelete: (id: string) => void;
-  onCreate: () => void;
 }
 
 export function SubscriptionAdminContent({
@@ -24,13 +22,12 @@ export function SubscriptionAdminContent({
   filteredPlans,
   onEdit,
   onDuplicate,
-  onDelete,
-  onCreate
+  onDelete
 }: SubscriptionAdminContentProps) {
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle>Plans</CardTitle>
+        <CardTitle>Subscription Plans</CardTitle>
         <CardDescription>
           Manage subscription plans and pricing tiers
         </CardDescription>
@@ -53,10 +50,7 @@ export function SubscriptionAdminContent({
         ) : filteredPlans.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             <p>No subscription plans found.</p>
-            <Button variant="outline" className="mt-4" onClick={onCreate}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create a new plan
-            </Button>
+            <p className="text-sm mt-2">Click "Create Plan" above to add your first subscription plan.</p>
           </div>
         ) : (
           <SubscriptionPlansTable
