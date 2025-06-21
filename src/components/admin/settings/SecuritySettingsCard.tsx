@@ -44,6 +44,8 @@ export function SecuritySettingsCard() {
       }
 
       const { email } = JSON.parse(adminSession);
+      console.log("Attempting to change password for admin:", email);
+      
       // Use empty string for current password since we're removing that requirement
       const success = await adminService.changeAdminPassword(
         email,
