@@ -10,7 +10,7 @@ interface SubscriptionRestrictionProps {
 }
 
 export function SubscriptionRestriction({ children }: SubscriptionRestrictionProps) {
-  const { isActive, isTrialActive, subscription, loading, daysRemaining, initialized } = useSubscription();
+  const { isActive, isTrialActive, subscription, loading, initialized } = useSubscription();
   const navigate = useNavigate();
 
   // Always show content while loading or not initialized
@@ -19,9 +19,18 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
   }
 
   // If user has active subscription OR active trial, show the regular content
-  if (isActive || isTrialActive) {
+  const hasAccess = isActive || isTrialActive;
+  if (hasAccess) {
+    console.log("User has access - showing content", { isActive, isTrialActive });
     return <>{children}</>;
   }
+
+  console.log("User does not have access - showing restriction", { 
+    isActive, 
+    isTrialActive, 
+    subscription: subscription?.status,
+    hasAccess 
+  });
 
   // Only show restriction if we're absolutely sure user doesn't have access
   return (
@@ -40,9 +49,7 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
           <AlertTriangle className="h-5 w-5 text-purple-500" />
           <AlertTitle className="text-xl text-purple-700">Subscription Required</AlertTitle>
           <AlertDescription className="mt-2 text-gray-600">
-            {subscription?.status === 'trial' && daysRemaining <= 0 ? (
-              <span>Your free trial has expired. Subscribe now to continue using all TaskPro features.</span>
-            ) : subscription?.status === 'expired' ? (
+            {subscription?.status === 'expired' ? (
               <span>Your subscription has expired. Please renew to continue using TaskPro.</span>
             ) : subscription?.status === 'canceled' ? (
               <span>Your subscription has been canceled. Reactivate your subscription to continue using TaskPro.</span>
@@ -55,7 +62,9 @@ export function SubscriptionRestriction({ children }: SubscriptionRestrictionPro
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white"
                 variant="default"
               >
-                Start Free Trial
+                {subscription?.status === 'expired' || subscription?.status === 'canceled' 
+                  ? 'Renew Subscription' 
+                  : 'Start Free Trial'}
               </Button>
             </div>
           </AlertDescription>

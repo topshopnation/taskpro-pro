@@ -43,7 +43,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     // Prevent fetch spam with minimum time between fetches (unless forced)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    if (!force && timeSinceLastFetch < 500 && lastFetchTime.current > 0) {
+    if (!force && timeSinceLastFetch < 1000 && lastFetchTime.current > 0) {
       console.log("Throttling subscription fetch, last fetch was", timeSinceLastFetch, "ms ago");
       return subscription;
     }
@@ -90,9 +90,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     }
   }, [user, setLoading, updateState, isFetching, subscription]);
 
-  // Fetch subscription data when component mounts or user changes
+  // Fetch subscription data when user changes, but only once per user
   useEffect(() => {
-    if (user && !isFetching && !initialized && !fetchLock.current) {
+    if (user && !isFetching && !initialLoadDone.current && !fetchLock.current) {
       console.log("User authenticated, fetching subscription");
       fetchSubscription();
     } else if (!user) {
@@ -100,9 +100,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       updateState(null);
       setLoading(false);
       setInitialized(true);
-      initialLoadDone.current = true;
+      initialLoadDone.current = false; // Reset for next user
     }
-  }, [user?.id, fetchSubscription, isFetching, initialized]);
+  }, [user?.id, fetchSubscription, isFetching]);
 
   const updateSubscription = useCallback(async (update: SubscriptionUpdate) => {
     if (!user?.id) {

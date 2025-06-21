@@ -12,12 +12,12 @@ import { useSubscriptionCheck } from "@/hooks/use-subscription-check";
 export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { shouldRestrict } = useSubscriptionCheck();
+  const { shouldRestrict, loading: subscriptionLoading } = useSubscriptionCheck();
   
   // Log navigation for debugging
   useEffect(() => {
-    console.log("AppLayout rendering at path:", location.pathname);
-  }, [location.pathname]);
+    console.log("AppLayout rendering at path:", location.pathname, "shouldRestrict:", shouldRestrict);
+  }, [location.pathname, shouldRestrict]);
 
   const content = children || <Outlet />;
 
@@ -28,7 +28,7 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
         <div className="flex flex-1 w-full">
           <AppSidebar className="hidden md:block" />
           <main className="flex-1 p-3 md:p-6 overflow-x-hidden pb-safe">
-            {shouldRestrict ? (
+            {!subscriptionLoading && shouldRestrict ? (
               <SubscriptionRestriction>
                 {content}
               </SubscriptionRestriction>
@@ -38,7 +38,6 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
           </main>
         </div>
         
-        {/* Adding Toaster for notifications */}
         <Toaster 
           position="bottom-right"
           duration={3000}

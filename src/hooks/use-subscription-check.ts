@@ -12,20 +12,12 @@ const UNRESTRICTED_ROUTES = [
 ];
 
 export function useSubscriptionCheck() {
-  const { isActive, isTrialActive, loading, fetchSubscription, initialized } = useSubscription();
+  const { isActive, isTrialActive, loading, initialized } = useSubscription();
   const [shouldRestrict, setShouldRestrict] = useState(false);
   const { pathname } = useLocation();
 
-  // Ensure subscription data is loaded - only fetch once
   useEffect(() => {
-    if (!loading && !initialized) {
-      console.log("useSubscriptionCheck: Fetching subscription data");
-      fetchSubscription();
-    }
-  }, [fetchSubscription, loading, initialized]);
-
-  useEffect(() => {
-    // Never restrict while loading or not initialized
+    // Always allow access while loading or not initialized
     if (loading || !initialized) {
       setShouldRestrict(false);
       return;
@@ -39,13 +31,11 @@ export function useSubscriptionCheck() {
     
     // Only restrict if:
     // 1. Not on an unrestricted route AND
-    // 2. User doesn't have access (no active subscription or trial) AND
+    // 2. User doesn't have access AND
     // 3. Data has finished loading
     const shouldRestrictAccess = !isUnrestrictedRoute && !hasAccess && initialized && !loading;
     
-    setShouldRestrict(shouldRestrictAccess);
-    
-    console.log("Subscription check:", {
+    console.log("Subscription check decision:", {
       pathname,
       isUnrestrictedRoute,
       isActive,
@@ -55,6 +45,8 @@ export function useSubscriptionCheck() {
       loading,
       shouldRestrictAccess
     });
+    
+    setShouldRestrict(shouldRestrictAccess);
   }, [isActive, isTrialActive, loading, initialized, pathname]);
 
   return {
