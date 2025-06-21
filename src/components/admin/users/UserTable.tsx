@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ export function UserTable({ users, onRoleChange, onEditUser, onEditSubscription 
       trial_end_date: user.trial_end_date || null,
       current_period_start: null,
       current_period_end: user.current_period_end || null,
+      paypal_subscription_id: null,
       created_at: '',
       updated_at: ''
     } : null;
