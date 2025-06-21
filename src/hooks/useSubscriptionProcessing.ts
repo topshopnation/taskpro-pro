@@ -41,13 +41,15 @@ export function useSubscriptionProcessing() {
         console.log("✅ Processing successful subscription activation");
         
         // Show immediate feedback to user
-        toast.info("Processing your subscription...");
+        toast.loading("Processing your subscription...", { id: "subscription-processing" });
         
         const success = await activateSubscription(subscriptionId, user.id);
         
         if (success) {
           console.log("🎉 Subscription activated successfully");
-          toast.success("Subscription activated successfully! Your plan has been updated.");
+          toast.success("Subscription activated successfully! Your plan has been updated.", { 
+            id: "subscription-processing" 
+          });
           
           // Force refresh subscription data multiple times to ensure it updates
           console.log("🔄 Refreshing subscription data immediately");
@@ -64,7 +66,11 @@ export function useSubscriptionProcessing() {
             await fetchSubscription();
           }, 5000);
         } else {
-          throw new Error("Subscription activation failed - please contact support");
+          console.error("❌ Subscription activation failed");
+          toast.error("Subscription activation failed - please contact support", { 
+            id: "subscription-processing" 
+          });
+          subscriptionProcessed.current = false; // Reset on failure
         }
       } else {
         console.error("❌ Subscription was not completed successfully, status:", subscriptionStatus);
@@ -73,7 +79,9 @@ export function useSubscriptionProcessing() {
       }
     } catch (error: any) {
       console.error("💥 Error processing subscription:", error);
-      toast.error(`Subscription processing error: ${error.message}`);
+      toast.error(`Subscription processing error: ${error.message}`, { 
+        id: "subscription-processing" 
+      });
       subscriptionProcessed.current = false; // Reset on error
     } finally {
       setIsProcessingSubscription(false);
