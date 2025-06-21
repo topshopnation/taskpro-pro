@@ -35,37 +35,35 @@ export const createTrialSubscription = async (userId: string): Promise<boolean> 
 
 export const createPaymentUrl = async (planType: SubscriptionPlanType, userId: string): Promise<string | null> => {
   try {
-    console.log("Creating payment URL for plan:", planType, "user:", userId);
+    console.log("Creating PayPal payment URL for plan:", planType, "user:", userId);
     
     if (!userId) {
       console.error("No user ID provided for payment URL creation");
       return null;
     }
 
-    // For testing purposes, simulate a PayPal payment
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode - simulating payment");
-      
-      // Store test payment data with updated pricing
-      const testPaymentData = {
+    // Call our Supabase Edge Function to create PayPal payment
+    const { data, error } = await supabase.functions.invoke('create-paypal-payment', {
+      body: {
         planType,
         userId,
-        amount: planType === 'yearly' ? 15.00 : 2.00,
-        timestamp: new Date().toISOString()
-      };
-      
-      localStorage.setItem('taskpro_test_payment', JSON.stringify(testPaymentData));
-      
-      // Redirect to settings page to simulate returning from PayPal
-      setTimeout(() => {
-        window.location.href = '/settings?payment_success=true&plan=' + planType;
-      }, 1000);
-      
-      return `https://sandbox.paypal.com/test?client-id=test&plan=${planType}&user=${userId}`;
+        returnUrl: `${window.location.origin}/settings?payment_success=true&plan_type=${planType}`,
+        cancelUrl: `${window.location.origin}/settings?payment_cancelled=true`
+      }
+    });
+
+    if (error) {
+      console.error('Error creating PayPal payment:', error);
+      return null;
     }
 
-    // In production, you would integrate with actual PayPal API
-    return `https://paypal.com/checkout?plan=${planType}&user=${userId}`;
+    if (data?.approval_url) {
+      console.log('PayPal payment URL created:', data.approval_url);
+      return data.approval_url;
+    }
+
+    console.error('No approval URL returned from PayPal');
+    return null;
   } catch (error) {
     console.error('Error creating payment URL:', error);
     return null;

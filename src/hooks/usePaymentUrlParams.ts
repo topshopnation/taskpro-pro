@@ -17,17 +17,17 @@ export const usePaymentUrlParams = (
   const urlParams = new URLSearchParams(location.search);
   const paymentSuccess = urlParams.get('payment_success');
   const paymentCancelled = urlParams.get('payment_cancelled');
+  const paymentId = urlParams.get('token'); // PayPal returns 'token' parameter
   const planType = urlParams.get('plan_type') as 'monthly' | 'yearly' | null;
 
   // Memoize the payment handler to avoid recreation on every render
   const handlePayment = useCallback(async () => {
     try {
-      if (paymentSuccess === 'true' && planType && !paymentProcessed.current && !isProcessingPayment) {
-        console.log("Processing payment from URL params:", { planType, paymentProcessed: paymentProcessed.current });
+      if (paymentSuccess === 'true' && paymentId && !paymentProcessed.current && !isProcessingPayment) {
+        console.log("Processing PayPal payment from URL params:", { paymentId, planType, paymentProcessed: paymentProcessed.current });
         
-        // We're using a payment ID that's the same as the plan type for simplicity
-        // and passing "completed" as the payment status
-        await processPayment(planType, "completed");
+        // Process the PayPal payment using the token (payment ID)
+        await processPayment(paymentId, "completed");
         
         // Force refresh subscription data after URL-based payment and wait for it to complete
         await fetchSubscription();
@@ -36,18 +36,15 @@ export const usePaymentUrlParams = (
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, document.title, url.toString());
-        
-        // Show success message after parameters are cleared
-        toast.success("Payment successful! Your subscription is now active.");
       }
     } catch (error) {
       console.error("Error handling payment from URL params:", error);
       toast.error("Error processing payment. Please try again.");
     }
-  }, [paymentSuccess, planType, paymentProcessed, isProcessingPayment, processPayment, fetchSubscription]);
+  }, [paymentSuccess, paymentId, planType, paymentProcessed, isProcessingPayment, processPayment, fetchSubscription]);
 
   useEffect(() => {
-    if (paymentSuccess === 'true' && planType) {
+    if (paymentSuccess === 'true' && paymentId) {
       // Execute payment handling
       handlePayment();
     } else if (paymentCancelled === 'true') {

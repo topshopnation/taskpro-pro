@@ -25,35 +25,44 @@ export function usePaymentProcessing() {
 
       // Process the payment based on status
       if (paymentStatus === "completed" || paymentStatus === "success") {
-        // Determine plan type from payment ID (in our case, payment ID is the plan type)
-        const planType = paymentId as "monthly" | "yearly";
-        
-        // Calculate period end date based on plan type
-        const currentDate = new Date();
-        const periodEnd = new Date(currentDate);
-        
-        if (planType === "monthly") {
-          periodEnd.setMonth(periodEnd.getMonth() + 1);
-        } else {
-          periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-        }
-        
-        console.log("Updating subscription with:", {
-          status: "active",
-          planType: planType,
-          currentPeriodStart: currentDate.toISOString(),
-          currentPeriodEnd: periodEnd.toISOString()
+        // Call our edge function to capture the PayPal payment
+        const { data, error } = await supabase.functions.invoke('capture-paypal-payment', {
+          body: {
+            paymentId,
+            userId: user.id
+          }
         });
-        
-        // Update subscription with payment details
-        await updateSubscription({
-          status: "active",
-          planType: planType,
-          currentPeriodStart: currentDate.toISOString(),
-          currentPeriodEnd: periodEnd.toISOString()
-        } as SubscriptionUpdate);
-        
-        console.log("Subscription update completed successfully");
+
+        if (error) {
+          throw new Error(`Payment capture failed: ${error.message}`);
+        }
+
+        if (data?.success) {
+          console.log("Payment captured successfully:", data);
+          
+          // Update subscription with payment details
+          const planType = data.planType as "monthly" | "yearly";
+          const currentDate = new Date();
+          const periodEnd = new Date(currentDate);
+          
+          if (planType === "monthly") {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+          } else {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+          }
+          
+          await updateSubscription({
+            status: "active",
+            planType: planType,
+            currentPeriodStart: currentDate.toISOString(),
+            currentPeriodEnd: periodEnd.toISOString()
+          } as SubscriptionUpdate);
+          
+          console.log("Subscription update completed successfully");
+          toast.success("Payment successful! Your subscription is now active.");
+        } else {
+          throw new Error("Payment capture was not successful");
+        }
       } else {
         toast.error("Payment was not completed successfully.");
       }
