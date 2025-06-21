@@ -14,33 +14,17 @@ export default function PriceDisplay({ planType }: PriceDisplayProps) {
   useEffect(() => {
     async function fetchActivePlan() {
       try {
+        setLoading(true);
         const plan = await subscriptionPlanService.getActivePlan();
         if (plan) {
           setActivePlan(plan);
         } else {
-          // Fallback to default pricing
-          setActivePlan({
-            id: 'default',
-            name: 'TaskPro Pro',
-            description: '',
-            price_monthly: 9.99,
-            price_yearly: 99.99,
-            features: [],
-            is_active: true
-          });
+          console.warn('No active plan found in database, this should be configured in admin');
+          setActivePlan(null);
         }
       } catch (error) {
         console.error('Error fetching subscription plan:', error);
-        // Fallback to default pricing
-        setActivePlan({
-          id: 'default',
-          name: 'TaskPro Pro',
-          description: '',
-          price_monthly: 9.99,
-          price_yearly: 99.99,
-          features: [],
-          is_active: true
-        });
+        setActivePlan(null);
       } finally {
         setLoading(false);
       }
@@ -49,8 +33,17 @@ export default function PriceDisplay({ planType }: PriceDisplayProps) {
     fetchActivePlan();
   }, []);
 
-  if (loading || !activePlan) {
+  if (loading) {
     return <div className="animate-pulse h-16 bg-muted rounded-md" />;
+  }
+
+  if (!activePlan) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-sm text-muted-foreground">No pricing configured</span>
+        <span className="text-xs text-muted-foreground">Please contact support</span>
+      </div>
+    );
   }
 
   if (planType === "monthly") {

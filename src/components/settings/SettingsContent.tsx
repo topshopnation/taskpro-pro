@@ -3,7 +3,6 @@ import { useState } from "react";
 import ProfileCard from "@/components/settings/ProfileCard";
 import AppearanceCard from "@/components/settings/AppearanceCard";
 import SubscriptionCard from "@/components/settings/SubscriptionCard";
-import VoiceInputCard from "@/components/settings/VoiceInputCard";
 import DataManagementCard from "@/components/settings/DataManagementCard";
 import ProfileDialog from "@/components/settings/ProfileDialog";
 import SubscriptionDialog from "@/components/settings/SubscriptionDialog";
@@ -24,7 +23,6 @@ export const SettingsContent = () => {
           <ProfileCard onEditProfile={() => setIsProfileDialogOpen(true)} />
           <SubscriptionCard onUpgrade={() => setIsUpgradeDialogOpen(true)} />
           <AppearanceCard />
-          <VoiceInputCard />
           <DataManagementCard />
           <SignOutCard />
         </div>
