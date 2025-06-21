@@ -77,22 +77,11 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
     }
   })();
 
-  // Show renew button if subscription expires within 60 days or is already expired
-  const showRenewButton = subscription?.status === 'active' && (() => {
-    try {
-      if (!subscription.current_period_end) return false;
-      const endDate = new Date(subscription.current_period_end);
-      const now = new Date();
-      const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilExpiry <= 60 || endDate <= now;
-    } catch (err) {
-      console.error("Error calculating renewal status:", err);
-      return false;
-    }
-  })();
+  // Always show management button - users should always be able to manage their subscription
+  const showManagementButton = true;
 
   // Check if user can upgrade (trial active or within 60 days of expiration)
-  const canUpgrade = isTrialActive || showRenewButton || (!isActive && !isTrialActive);
+  const canUpgrade = isTrialActive || (!isActive && !isTrialActive);
 
   return {
     subscription,
@@ -101,7 +90,7 @@ export function useSubscriptionCard(): UseSubscriptionCardReturn {
     formattedExpiryDate,
     hasRendered,
     isStable,
-    showRenewButton: showRenewButton || canUpgrade,
+    showRenewButton: showManagementButton,
     error,
     isSubscriptionActive: isSubscriptionActive || isTrialActive
   };
