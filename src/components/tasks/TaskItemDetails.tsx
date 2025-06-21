@@ -19,7 +19,7 @@ export function TaskItemDetails({
   return (
     <div className="flex-1 min-w-0">
       <h3 className={cn(
-        "font-medium text-xs sm:text-sm md:text-base leading-4 sm:leading-5 md:leading-normal break-words",
+        "font-medium text-xs sm:text-sm leading-4 sm:leading-5 break-words",
         completed && "line-through text-muted-foreground"
       )}>
         {title}
@@ -27,7 +27,7 @@ export function TaskItemDetails({
       
       {notes && (
         <p className={cn(
-          "text-xs sm:text-sm text-muted-foreground mt-1 break-words line-clamp-2",
+          "text-xs text-muted-foreground mt-1 break-words line-clamp-2",
           completed && "line-through"
         )}>
           {notes}
