@@ -4,13 +4,19 @@ export function getPayPalConfig() {
   const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
   const environment = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
   
+  console.log("PayPal Environment:", environment);
+  console.log("PayPal Client ID exists:", !!clientId);
+  console.log("PayPal Client Secret exists:", !!clientSecret);
+  
   if (!clientId || !clientSecret) {
-    throw new Error("PayPal credentials not configured");
+    throw new Error(`PayPal credentials not configured. ClientID: ${!!clientId}, ClientSecret: ${!!clientSecret}`);
   }
   
-  const baseUrl = environment === "sandbox" 
-    ? "https://api-m.sandbox.paypal.com" 
-    : "https://api-m.paypal.com";
+  const baseUrl = environment === "production" 
+    ? "https://api-m.paypal.com" 
+    : "https://api-m.sandbox.paypal.com";
+  
+  console.log("Using PayPal Base URL:", baseUrl);
   
   return { clientId, clientSecret, baseUrl };
 }
