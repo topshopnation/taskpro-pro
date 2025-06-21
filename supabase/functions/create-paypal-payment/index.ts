@@ -33,8 +33,8 @@ serve(async (req) => {
       throw new Error("PayPal credentials not configured");
     }
     
-    // Get PayPal access token
-    const tokenResponse = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    // Get PayPal access token - PRODUCTION URL
+    const tokenResponse = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -55,7 +55,7 @@ serve(async (req) => {
     const amount = planType === 'yearly' ? '15.00' : '2.00';
     const description = planType === 'yearly' ? 'TaskPro Pro - Yearly Subscription' : 'TaskPro Pro - Monthly Subscription';
     
-    // Create PayPal payment
+    // Create PayPal payment - PRODUCTION URL
     const paymentData = {
       intent: "CAPTURE",
       purchase_units: [{
@@ -74,7 +74,7 @@ serve(async (req) => {
       }
     };
     
-    const paymentResponse = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
+    const paymentResponse = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

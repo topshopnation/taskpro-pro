@@ -39,8 +39,8 @@ serve(async (req) => {
       throw new Error("PayPal credentials not configured");
     }
     
-    // Get PayPal access token
-    const tokenResponse = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    // Get PayPal access token - PRODUCTION URL
+    const tokenResponse = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -57,8 +57,8 @@ serve(async (req) => {
       throw new Error("Failed to get PayPal access token");
     }
     
-    // Capture the payment
-    const captureResponse = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${paymentId}/capture`, {
+    // Capture the payment - PRODUCTION URL
+    const captureResponse = await fetch(`https://api-m.paypal.com/v2/checkout/orders/${paymentId}/capture`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
