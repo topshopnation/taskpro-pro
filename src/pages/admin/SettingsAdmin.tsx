@@ -170,15 +170,15 @@ export default function SettingsAdmin() {
           </CardContent>
         </Card>
 
-        {/* User Management */}
+        {/* User Registration */}
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Shield className="h-5 w-5" />
-              <CardTitle>User Management</CardTitle>
+              <CardTitle>User Registration</CardTitle>
             </div>
             <CardDescription>
-              Control user registration and access
+              Control user registration access
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -193,39 +193,6 @@ export default function SettingsAdmin() {
                 checked={settings.userRegistration}
                 onCheckedChange={(checked) => handleInputChange('userRegistration', checked)}
               />
-            </div>
-            
-            <Separator />
-            
-            <div className="grid gap-2">
-              <Label htmlFor="sessionTimeout">Session Timeout (hours)</Label>
-              <Input
-                id="sessionTimeout"
-                type="number"
-                value={settings.sessionTimeout}
-                onChange={(e) => handleInputChange('sessionTimeout', e.target.value)}
-                placeholder="24"
-                min="1"
-                max="168"
-              />
-              <p className="text-xs text-muted-foreground">
-                How long users stay logged in (1-168 hours)
-              </p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="maxUsersPerPlan">Max Users Per Plan</Label>
-              <Input
-                id="maxUsersPerPlan"
-                type="number"
-                value={settings.maxUsersPerPlan}
-                onChange={(e) => handleInputChange('maxUsersPerPlan', e.target.value)}
-                placeholder="1000"
-                min="1"
-              />
-              <p className="text-xs text-muted-foreground">
-                Maximum number of users allowed per subscription plan
-              </p>
             </div>
           </CardContent>
         </Card>

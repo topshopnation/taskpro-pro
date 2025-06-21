@@ -21,8 +21,8 @@ export const settingsService = {
       userRegistration: true,
       emailNotifications: true,
       backupFrequency: "daily",
-      sessionTimeout: "24",
-      maxUsersPerPlan: "1000"
+      sessionTimeout: "unlimited",
+      maxUsersPerPlan: "unlimited"
     };
   },
 
