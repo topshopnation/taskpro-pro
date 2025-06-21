@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ export function CancelSubscriptionDialog({ open, onOpenChange }: CancelSubscript
     setIsProcessing(true);
     
     try {
-      await cancelSubscription(subscription.paypal_subscription_id, user.id);
+      await cancelSubscription(subscription.paypal_subscription_id);
       toast.success("Subscription canceled successfully. Your access will continue until your billing period ends.");
       
       // Refresh subscription data
