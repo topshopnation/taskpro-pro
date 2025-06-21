@@ -19,20 +19,28 @@ export default function Settings() {
   // Check if user needs a trial subscription (but not if they had an expired trial)
   useEffect(() => {
     const initializeTrialIfNeeded = async () => {
-      // Only proceed if we have a user, data is loaded, and we're initialized
-      if (user && !loading && initialized && !subscription) {
+      // Only proceed if we have a user, data is loaded, we're initialized, and no subscription exists
+      // Also add a flag to prevent multiple calls
+      if (user && !loading && initialized && !subscription && !window.trialCreationInProgress) {
         console.log("No subscription found, attempting to create trial for user:", user.id);
+        
+        // Set flag to prevent multiple simultaneous calls
+        window.trialCreationInProgress = true;
+        
         try {
           const result = await createTrialSubscription(user.id);
           if (result.success && result.subscription) {
             console.log("Created trial subscription for new user");
             // Force refresh subscription data to get the new trial
-            await fetchSubscription(); // Remove the argument since it doesn't accept any
+            await fetchSubscription();
           } else {
             console.log("Could not create trial - user may have had previous subscription");
           }
         } catch (error) {
           console.error("Error creating trial subscription:", error);
+        } finally {
+          // Clear flag regardless of success/failure
+          window.trialCreationInProgress = false;
         }
       }
     };
@@ -44,6 +52,8 @@ export default function Settings() {
   useEffect(() => {
     return () => {
       subscriptionProcessed.current = false;
+      // Also clear the trial creation flag on unmount
+      window.trialCreationInProgress = false;
     };
   }, []);
 
@@ -52,4 +62,11 @@ export default function Settings() {
       <SettingsContent />
     </AppLayout>
   );
+}
+
+// Extend Window interface for TypeScript
+declare global {
+  interface Window {
+    trialCreationInProgress?: boolean;
+  }
 }
