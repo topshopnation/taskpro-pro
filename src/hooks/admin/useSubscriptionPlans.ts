@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { SubscriptionPlan } from "@/types/adminTypes";
-import { adminService } from "@/services/admin-service";
-import { supabase } from "@/integrations/supabase/client";
+import { subscriptionPlanService } from "@/services/subscriptionPlanService";
 import { toast } from "sonner";
 
 export function useSubscriptionPlans() {
@@ -12,23 +11,17 @@ export function useSubscriptionPlans() {
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      const { data: plansData, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      console.log("Fetching subscription plans via subscriptionPlanService...");
       
-      const formattedPlans = plansData.map(plan => ({
-        ...plan,
-        description: plan.description || '',
-        features: Array.isArray(plan.features) ? plan.features : []
-      })) as SubscriptionPlan[];
+      // Use the regular subscription plan service instead of direct Supabase query
+      const plansData = await subscriptionPlanService.getAllPlans();
       
-      setPlans(formattedPlans);
+      console.log("Fetched plans:", plansData);
+      setPlans(plansData || []);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
       toast.error("Failed to load subscription plans");
+      setPlans([]);
     } finally {
       setLoading(false);
     }
