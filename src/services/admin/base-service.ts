@@ -39,46 +39,15 @@ export const adminBaseService = {
     try {
       console.log("Attempting admin login for:", email);
       
-      // First verify admin credentials using the database function
-      const { data: isValid, error: verifyError } = await supabase.rpc('verify_admin_credentials', {
-        input_email: email,
-        input_password: password
-      });
-
-      if (verifyError) {
-        console.error('Error verifying admin credentials:', verifyError);
-        
-        // If the crypt function fails, let's try a direct database query as fallback
-        console.log("Crypt function failed, trying direct query...");
-        
-        const { data: adminData, error: queryError } = await supabase
-          .from('admin_users')
-          .select('password_hash')
-          .eq('email', email)
-          .single();
-          
-        if (queryError) {
-          console.error('Error querying admin user:', queryError);
-          return false;
-        }
-        
-        // For now, since we know the password should be the hashed version,
-        // let's check if this is the expected admin email
-        if (email === 'admin@taskpro.pro') {
-          console.log("Fallback verification for known admin");
-          return true;
-        }
-        
-        return false;
+      // For now, use a simple hardcoded check for the admin user
+      // This is temporary until we can properly set up password hashing
+      if (email === 'admin@taskpro.pro' && password === 'eur!trx1JUD!ryk-duy') {
+        console.log("Admin credentials verified successfully");
+        return true;
       }
-
-      if (!isValid) {
-        console.log("Invalid admin credentials");
-        return false;
-      }
-
-      console.log("Admin credentials verified successfully");
-      return true;
+      
+      console.log("Invalid admin credentials");
+      return false;
     } catch (error) {
       console.error('Error in loginAdmin:', error);
       return false;
