@@ -1,0 +1,242 @@
+
+/* iOS-specific styles for native app experience */
+
+/* iOS Safe Area Support */
+:root {
+  --ios-blue: #007AFF;
+  --ios-gray: #8E8E93;
+  --ios-light-gray: #F2F2F7;
+  --ios-dark-gray: #1C1C1E;
+  --ios-separator: rgba(60, 60, 67, 0.36);
+}
+
+/* iOS-style navigation bars */
+.ios-nav-bar {
+  background: rgba(248, 248, 248, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid var(--ios-separator);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+/* iOS-style buttons */
+.ios-button {
+  background: var(--ios-blue);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  padding: 12px 20px;
+  font-size: 17px;
+  transition: opacity 0.2s;
+}
+
+.ios-button:active {
+  opacity: 0.3;
+}
+
+.ios-button-secondary {
+  background: var(--ios-light-gray);
+  color: var(--ios-blue);
+}
+
+/* iOS-style list items */
+.ios-list-item {
+  background: white;
+  border-bottom: 0.5px solid var(--ios-separator);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  transition: background-color 0.2s;
+}
+
+.ios-list-item:active {
+  background: var(--ios-light-gray);
+}
+
+/* iOS-style form inputs */
+.ios-input {
+  background: white;
+  border: 1px solid var(--ios-separator);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 17px;
+  transition: border-color 0.2s;
+}
+
+.ios-input:focus {
+  border-color: var(--ios-blue);
+  outline: none;
+}
+
+/* iOS-style cards */
+.ios-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 8px 16px;
+  overflow: hidden;
+}
+
+/* iOS-style switches */
+.ios-switch {
+  appearance: none;
+  width: 52px;
+  height: 32px;
+  border-radius: 16px;
+  background: #E5E5EA;
+  position: relative;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.ios-switch:checked {
+  background: #34C759;
+}
+
+.ios-switch::before {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ios-switch:checked::before {
+  transform: translateX(20px);
+}
+
+/* iOS-style typography */
+.ios-title {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.ios-large-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.ios-body {
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.ios-caption {
+  font-size: 13px;
+  color: var(--ios-gray);
+  line-height: 1.3;
+}
+
+/* iOS-style animations */
+@keyframes ios-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes ios-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ios-slide-in {
+  animation: ios-slide-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ios-fade-in {
+  animation: ios-fade-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* iOS-style tab bar */
+.ios-tab-bar {
+  background: rgba(248, 248, 248, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--ios-separator);
+  height: 83px;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+.ios-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  color: var(--ios-gray);
+  transition: color 0.2s;
+}
+
+.ios-tab-item.active {
+  color: var(--ios-blue);
+}
+
+.ios-tab-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+}
+
+.ios-tab-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ios-light-gray: #1C1C1E;
+    --ios-dark-gray: #F2F2F7;
+    --ios-separator: rgba(84, 84, 88, 0.65);
+  }
+  
+  .ios-nav-bar {
+    background: rgba(28, 28, 30, 0.8);
+  }
+  
+  .ios-list-item {
+    background: #1C1C1E;
+    color: white;
+  }
+  
+  .ios-card {
+    background: #1C1C1E;
+  }
+  
+  .ios-input {
+    background: #1C1C1E;
+    color: white;
+  }
+  
+  .ios-tab-bar {
+    background: rgba(28, 28, 30, 0.8);
+  }
+}

@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.cefd4ea4a2ed420ab4924acfe5ced87f',
+  appId: 'com.taskpro.app',  // Updated for App Store
   appName: 'TaskPro',
   webDir: 'dist',
   server: {
@@ -18,13 +18,27 @@ const config: CapacitorConfig = {
       showSpinner: false,
       androidSpinnerStyle: 'large',
       iosSpinnerStyle: 'small',
-      spinnerColor: '#999999',
+      spinnerColor: '#6366f1',
       splashFullScreen: true,
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'default'
+      style: 'default',
+      backgroundColor: '#ffffff'
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
+    },
+    Haptics: {},
+    App: {
+      launchUrl: 'https://cefd4ea4-a2ed-420a-b492-4acfe5ced87f.lovableproject.com?forceHideBadge=true'
     }
+  },
+  ios: {
+    contentInset: 'automatic',
+    backgroundColor: '#ffffff'
   }
 };
 

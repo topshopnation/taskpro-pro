@@ -31,6 +31,10 @@
   padding-right: var(--safe-area-inset-right);
 }
 
+.safe-area-top {
+  padding-top: max(var(--safe-area-inset-top), 20px);
+}
+
 /* iOS-specific optimizations */
 @supports (-webkit-touch-callout: none) {
   /* iOS-only styles */
@@ -43,6 +47,19 @@
   textarea,
   select {
     font-size: 16px !important;
+    border-radius: 10px;
+    padding: 12px 16px;
+    border: 1px solid rgba(60, 60, 67, 0.36);
+    background: white;
+    transition: border-color 0.2s ease;
+  }
+  
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: #007AFF;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
   }
   
   /* Improve touch targets */
@@ -50,6 +67,15 @@
   .clickable {
     min-height: 44px;
     min-width: 44px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  button:active,
+  .clickable:active {
+    opacity: 0.7;
+    transform: scale(0.98);
   }
   
   /* Remove iOS button styling */
@@ -57,7 +83,57 @@
   input[type="submit"],
   input[type="button"] {
     -webkit-appearance: none;
-    border-radius: 0;
+    border-radius: 8px;
+  }
+  
+  /* iOS-style cards */
+  .card {
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    border: none;
+  }
+  
+  /* iOS-style navigation */
+  .nav-button {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 17px;
+    font-weight: 400;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .nav-button:active {
+    background-color: rgba(0, 122, 255, 0.1);
+  }
+  
+  /* iOS-style list items */
+  .list-item {
+    background: white;
+    border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .list-item:active {
+    background-color: #F2F2F7;
+  }
+  
+  .list-item:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  
+  .list-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
   }
 }
 
@@ -76,4 +152,105 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  
+  /* Mobile-optimized spacing */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  /* Better tap targets on mobile */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* iOS-style section headers */
+  .section-header {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8E8E93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 16px 8px 16px;
+    margin: 0;
+  }
+}
+
+/* Dark mode iOS optimizations */
+@media (prefers-color-scheme: dark) {
+  @supports (-webkit-touch-callout: none) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    textarea,
+    select {
+      background: #1C1C1E;
+      color: white;
+      border-color: rgba(84, 84, 88, 0.65);
+    }
+    
+    .card {
+      background: #1C1C1E;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .list-item {
+      background: #1C1C1E;
+      color: white;
+      border-bottom-color: rgba(84, 84, 88, 0.65);
+    }
+    
+    .list-item:active {
+      background-color: #2C2C2E;
+    }
+    
+    .section-header {
+      color: #8E8E93;
+    }
+  }
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* iOS-style animations */
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.slide-in-right {
+  animation: slideInFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-out-right {
+  animation: slideOutToRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
