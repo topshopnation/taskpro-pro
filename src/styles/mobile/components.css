@@ -1,0 +1,127 @@
+
+/* Mobile component optimizations */
+@media (max-width: 768px) {
+  /* Make checkboxes MUCH smaller on mobile - REDUCED SIZE */
+  .mobile-checkbox {
+    height: 12px !important;
+    width: 12px !important;
+  }
+  
+  /* Checkbox container adjustments - REDUCED SIZE */
+  [data-radix-checkbox-root] {
+    height: 12px !important;
+    width: 12px !important;
+  }
+  
+  /* Task item spacing adjustments - TIGHTER SPACING */
+  .task-item-mobile {
+    padding: 4px 8px !important;
+  }
+  
+  /* Reduce task row spacing - MUCH TIGHTER */
+  .task-list-mobile .space-y-1 > * + * {
+    margin-top: 2px !important;
+  }
+  
+  /* Compact task item layout */
+  .task-item-compact {
+    min-height: 32px !important;
+    padding: 4px 8px !important;
+  }
+  
+  /* Badge text size adjustments */
+  .badge-mobile {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    line-height: 1.2 !important;
+  }
+}
+
+/* iOS-specific components */
+@supports (-webkit-touch-callout: none) {
+  /* Improve touch targets */
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  button:active,
+  .clickable:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  
+  /* iOS-style cards */
+  .card {
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    border: none;
+  }
+  
+  /* iOS-style navigation */
+  .nav-button {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 17px;
+    font-weight: 400;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .nav-button:active {
+    background-color: rgba(0, 122, 255, 0.1);
+  }
+  
+  /* iOS-style list items */
+  .list-item {
+    background: white;
+    border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .list-item:active {
+    background-color: #F2F2F7;
+  }
+  
+  .list-item:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  
+  .list-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+}
+
+/* Dark mode components */
+@media (prefers-color-scheme: dark) {
+  @supports (-webkit-touch-callout: none) {
+    .card {
+      background: #1C1C1E;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .list-item {
+      background: #1C1C1E;
+      color: white;
+      border-bottom-color: rgba(84, 84, 88, 0.65);
+    }
+    
+    .list-item:active {
+      background-color: #2C2C2E;
+    }
+  }
+}

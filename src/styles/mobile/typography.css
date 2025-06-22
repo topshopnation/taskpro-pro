@@ -1,0 +1,57 @@
+
+/* Mobile font size improvements */
+@media (max-width: 768px) {
+  /* Task names should be larger on mobile */
+  .task-title {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+    font-weight: 500 !important;
+  }
+  
+  /* Menu items should be larger on mobile - INCREASED FONT SIZE */
+  .menu-item,
+  .sidebar-menu-item,
+  .nav-item {
+    font-size: 22px !important;
+    min-height: 48px !important;
+  }
+  
+  /* Sidebar text improvements - INCREASED FONT SIZE */
+  [data-sidebar] .sidebar-menu-button {
+    font-size: 22px !important;
+    padding: 14px 18px !important;
+    min-height: 52px !important;
+  }
+  
+  /* Navigation text */
+  .sidebar-group-label {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Task notes text size */
+  .task-notes-mobile {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* iOS-style section headers */
+  .section-header {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8E8E93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 16px 8px 16px;
+    margin: 0;
+  }
+}
+
+/* Dark mode typography */
+@media (prefers-color-scheme: dark) {
+  @supports (-webkit-touch-callout: none) {
+    .section-header {
+      color: #8E8E93;
+    }
+  }
+}
