@@ -11,12 +11,14 @@ export const updateTaskCompletion = async (taskId: string, completed: boolean, t
       
     if (error) throw error;
     
-    // Removed toast notifications from here to prevent duplicates
-    // The useTaskOperations hook should handle all task completion toasts
+    // No toast notifications here to prevent duplicates
+    // The useTaskOperations hook handles all task completion toasts
     
   } catch (error: any) {
+    // Only show error toasts here, success is handled by the main hook
     toast.error("Failed to update task", {
-      description: error.message
+      description: error.message,
+      duration: 3000
     });
     throw error; // Re-throw to allow for optimistic UI updates to be reverted
   }
@@ -30,9 +32,14 @@ export const toggleTaskFavorite = async (taskId: string, favorite: boolean): Pro
       .eq('id', taskId);
       
     if (error) throw error;
+    
+    toast.success(favorite ? "Added to favorites" : "Removed from favorites", {
+      duration: 2000
+    });
   } catch (error: any) {
     toast.error("Failed to update task favorite status", {
-      description: error.message
+      description: error.message,
+      duration: 3000
     });
     throw error;
   }

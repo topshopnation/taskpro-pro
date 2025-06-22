@@ -44,6 +44,8 @@ export function useTaskCompletion() {
       queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
       
       // Generate a unique toast ID to prevent duplicates and handle cleanup
       const uniqueId = `task-${completed ? 'complete' : 'incomplete'}-${taskId}-${Date.now()}`;
@@ -51,6 +53,7 @@ export function useTaskCompletion() {
       // Dismiss any existing completion toasts for this task to prevent overlaps
       toast.dismiss(`task-complete-${taskId}`);
       toast.dismiss(`task-incomplete-${taskId}`);
+      toast.dismiss(`task-undo-${taskId}`);
       
       // Only show undo toast - no completion confirmation toast at all
       toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
@@ -82,6 +85,8 @@ export function useTaskCompletion() {
               queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
               queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
               queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+              queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
               
               // Show success message for undo
               toast.success("Task undone", {

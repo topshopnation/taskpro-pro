@@ -60,7 +60,9 @@ export function useTaskItem({
         
         if (error) throw error;
         
-        toast.success("Task priority updated");
+        toast.success("Task priority updated", {
+          duration: 2000
+        });
       }
     } catch (error: any) {
       toast.error(`Error updating task priority: ${error.message}`);
@@ -84,7 +86,9 @@ export function useTaskItem({
         
         if (error) throw error;
         
-        toast.success(date ? "Due date updated" : "Due date removed");
+        toast.success(date ? "Due date updated" : "Due date removed", {
+          duration: 2000
+        });
       }
     } catch (error: any) {
       toast.error(`Error updating due date: ${error.message}`);
@@ -105,7 +109,7 @@ export function useTaskItem({
       
       setIsDeleteDialogOpen(false);
       onDelete(task.id);
-      // Removed duplicate toast - the deleteTask function in useTaskOperations handles this
+      // No toast here - the deleteTask function in useTaskOperations handles this
     } catch (error: any) {
       toast.error(`Error deleting task: ${error.message}`);
     } finally {

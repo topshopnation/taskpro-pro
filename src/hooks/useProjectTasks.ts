@@ -2,12 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
 import { useCallback } from "react";
 import { queryClient } from "@/lib/react-query";
 import { Task } from "@/components/tasks/taskTypes";
+import { useOptimisticTasks } from "@/hooks/useOptimisticTasks";
 
-export function useProjectTasks(projectId: string | undefined) {
+export const useProjectTasks = (projectId?: string) => {
   const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error, refetch } = useQuery({
@@ -26,7 +26,7 @@ export function useProjectTasks(projectId: string | undefined) {
         `)
         .eq('user_id', user.id)
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .eq('completed', false);
 
       if (error) throw error;
 
@@ -46,55 +46,43 @@ export function useProjectTasks(projectId: string | undefined) {
     enabled: !!user && !!projectId,
   });
 
+  const { 
+    visibleTasks,
+    handleOptimisticComplete,
+    handleOptimisticDelete
+  } = useOptimisticTasks(tasks);
+
+  // Filter out tasks that have sections (for unsectioned tasks display)
+  const unsectionedTasks = visibleTasks.filter(task => !task.section);
+
   const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed })
-        .eq('id', taskId)
-        .eq('user_id', user.id);
+    // Apply optimistic update
+    handleOptimisticComplete(taskId, completed);
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
-      toast.success(completed ? "Task completed!" : "Task uncompleted!");
-    } catch (error: any) {
-      toast.error(`Failed to ${completed ? 'complete' : 'uncomplete'} task: ${error.message}`);
-    }
-  }, [user]);
+    // Invalidate queries for consistency across the app
+    queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  }, [user, handleOptimisticComplete]);
 
   const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId)
-        .eq('user_id', user.id);
+    // Apply optimistic update
+    handleOptimisticDelete(taskId);
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
-      toast.success("Task deleted!");
-    } catch (error: any) {
-      toast.error(`Failed to delete task: ${error.message}`);
-    }
-  }, [user]);
-
-  // Filter tasks that are not in sections (unsectioned tasks)
-  const unsectionedTasks = tasks.filter(task => !task.section);
+    // Invalidate queries for consistency
+    queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  }, [user, handleOptimisticDelete]);
 
   return {
-    tasks,
+    tasks: visibleTasks,
     unsectionedTasks,
     isLoadingTasks: isLoading,
-    isLoading,
-    error,
     handleComplete,
     handleDelete,
     refetch
   };
-}
+};

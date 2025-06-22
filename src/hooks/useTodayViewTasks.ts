@@ -2,14 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { queryClient } from "@/lib/react-query";
 import { Task } from "@/components/tasks/taskTypes";
-import { isToday, startOfToday, endOfToday } from "date-fns";
+import { startOfToday, endOfToday } from "date-fns";
+import { useOptimisticTasks } from "@/hooks/useOptimisticTasks";
 
 export const useTodayViewTasks = () => {
   const { user } = useAuth();
-  const [hiddenTaskIds, setHiddenTaskIds] = useState<Set<string>>(new Set());
 
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ['today-tasks', user?.id],
@@ -48,40 +48,33 @@ export const useTodayViewTasks = () => {
     enabled: !!user,
   });
 
-  // Filter out hidden tasks for optimistic UI updates
-  const visibleTasks = tasks.filter(task => !hiddenTaskIds.has(task.id));
+  const { 
+    visibleTasks,
+    handleOptimisticComplete,
+    handleOptimisticDelete
+  } = useOptimisticTasks(tasks);
 
   const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
-    // Optimistically update UI
-    if (completed) {
-      // Hide task immediately when marked as complete
-      setHiddenTaskIds(prev => new Set(prev).add(taskId));
-    } else {
-      // Show task immediately when marked as incomplete (undo)
-      setHiddenTaskIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(taskId);
-        return newSet;
-      });
-    }
+    // Apply optimistic update
+    handleOptimisticComplete(taskId, completed);
 
     // Invalidate queries for consistency across the app
     queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  }, [user]);
+  }, [user, handleOptimisticComplete]);
 
   const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
-    // Optimistically hide the task immediately
-    setHiddenTaskIds(prev => new Set(prev).add(taskId));
+    // Apply optimistic update
+    handleOptimisticDelete(taskId);
 
     // Invalidate queries for consistency
     queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  }, [user]);
+  }, [user, handleOptimisticDelete]);
 
   const handleFavoriteToggle = useCallback(async (taskId: string, favorite: boolean) => {
     if (!user) return;
