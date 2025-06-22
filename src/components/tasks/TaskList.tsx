@@ -23,7 +23,7 @@ interface TaskListProps {
 
 export function TaskList({ 
   title, 
-  tasks, 
+  tasks = [], // Default to empty array
   isLoading = false, 
   emptyMessage = "No tasks found", 
   onComplete, 
@@ -36,6 +36,9 @@ export function TaskList({
   onProjectChange
 }: TaskListProps) {
   const isMobile = useMediaQuery("(max-width: 768px)")
+  
+  // Ensure tasks is always an array
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
   
   return (
     <Card className="overflow-hidden">
@@ -60,11 +63,11 @@ export function TaskList({
               </div>
             ))}
           </div>
-        ) : tasks.length === 0 ? (
+        ) : safeTasks.length === 0 ? (
           <p className="text-xs md:text-sm text-muted-foreground py-3 text-center">{emptyMessage}</p>
         ) : (
           <div className={cn("space-y-1", isMobile && "space-y-0")}>
-            {tasks.map((task) => (
+            {safeTasks.map((task) => (
               <TaskItem 
                 key={task.id} 
                 task={task} 

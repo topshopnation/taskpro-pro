@@ -5,8 +5,11 @@ import { Task } from "@/components/tasks/taskTypes";
 export function useOptimisticTasks(initialTasks: Task[] = []) {
   const [hiddenTaskIds, setHiddenTaskIds] = useState<Set<string>>(new Set());
 
+  // Ensure initialTasks is always an array to prevent map errors
+  const safeTasks = Array.isArray(initialTasks) ? initialTasks : [];
+
   // Filter out hidden tasks for optimistic UI updates
-  const visibleTasks = initialTasks.filter(task => !hiddenTaskIds.has(task.id));
+  const visibleTasks = safeTasks.filter(task => !hiddenTaskIds.has(task.id));
 
   const handleOptimisticComplete = useCallback((taskId: string, completed: boolean) => {
     if (completed) {
