@@ -4,6 +4,7 @@ import { Task } from "@/components/tasks/taskTypes";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/react-query";
 
 interface UseTaskItemProps {
   task: Task;
@@ -60,6 +61,17 @@ export function useTaskItem({
         
         if (error) throw error;
         
+        // Invalidate all task queries to ensure all components get fresh data
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+        queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['filtered-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['filter'] });
+        
         toast.success("Task priority updated", {
           duration: 2000
         });
@@ -85,6 +97,17 @@ export function useTaskItem({
           .eq('id', task.id);
         
         if (error) throw error;
+        
+        // Invalidate all task queries to ensure all components get fresh data
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+        queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['filtered-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['filter'] });
         
         toast.success(date ? "Due date updated" : "Due date removed", {
           duration: 2000
