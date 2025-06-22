@@ -10,7 +10,7 @@ import { format, isToday, isTomorrow, isYesterday } from "date-fns"
 import { useMediaQuery } from "@/hooks/use-mobile"
 import { TaskItemActionContainer } from "./TaskItemActionContainer"
 import { useTaskItem } from "./hooks/useTaskItem"
-import { TaskDeleteAlert } from "./TaskDeleteAlert"
+import { TaskItemConfirmDelete } from "./TaskItemConfirmDelete"
 import { EditTaskDialog } from "./EditTaskDialog"
 
 interface TaskItemProps {
@@ -81,6 +81,15 @@ export function TaskItem({
     return format(date, "MMM d");
   };
 
+  const handleDeleteTask = async (taskId: string): Promise<boolean> => {
+    try {
+      await handleDelete();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   return (
     <>
       <div className={cn(
@@ -147,11 +156,15 @@ export function TaskItem({
         </div>
       </div>
 
-      <TaskDeleteAlert
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
+      <TaskItemConfirmDelete
+        taskId={task.id}
         taskTitle={task.title}
+        taskCompleted={task.completed}
+        onOpenChange={setIsDeleteDialogOpen}
+        onDelete={handleDeleteTask}
+        open={isDeleteDialogOpen}
+        isUpdating={isUpdating}
+        onConfirm={handleDelete}
       />
 
       <EditTaskDialog
