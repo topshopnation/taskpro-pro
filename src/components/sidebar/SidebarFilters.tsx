@@ -129,19 +129,21 @@ export function SidebarFilters({
               ) : (
                 <>
                   {filters.map((filter) => {
+                    const slugName = filter.name.toLowerCase().replace(/\s+/g, '-');
                     const isActive = location.pathname.includes(`/filters/${filter.id}`);
                     
                     return (
                       <SidebarMenuItem key={filter.id} className="group">
                         <SidebarMenuButton asChild>
-                          <button
-                            className={cn(
+                          <NavLink
+                            to={`/filters/${filter.id}/${slugName}`}
+                            className={({ isActive }) => cn(
                               "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors relative",
                               isActive
                                 ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                                 : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                             )}
-                            onClick={(e) => handleFilterClick(filter, e)}
+                            onClick={onMobileMenuClose}
                           >
                             <Filter 
                               className="h-4 w-4" 
@@ -170,7 +172,7 @@ export function SidebarFilters({
                                 </div>
                               </div>
                             </button>
-                          </button>
+                          </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );

@@ -4,14 +4,14 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { FilterHeader } from "@/components/filters/FilterHeader";
-import { useFetchFilter } from "@/hooks/useFetchFilter";
+import { useFetchFilter } from "@/hooks/filter/useFetchFilter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilterOperations } from "@/hooks/filter/useFilterOperations";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function FilterView() {
-  const { filterId } = useParams<{ filterId: string }>();
+  const { id: filterId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function FilterView() {
   const [filterColor, setFilterColor] = useState("");
   const [filterConditions, setFilterConditions] = useState({ items: [], logic: "and" });
   
-  const { currentFilter, isLoading: isFilterLoading } = useFetchFilter(filterId || "");
+  const { currentFilter, isLoading: isFilterLoading } = useFetchFilter();
   const { data: tasks = [], isLoading: isTasksLoading } = useFilteredTasks(filterId || "");
   const { completeTask, deleteTask } = useTaskOperations();
   const { deleteFilter, updateFilter } = useFilterOperations(filterId || "");

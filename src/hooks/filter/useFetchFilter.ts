@@ -48,7 +48,7 @@ export function useFetchFilter() {
       toast.error("Failed to fetch filter", {
         description: error.message
       });
-      navigate('/');
+      navigate('/filters');
       return null;
     }
   };
