@@ -3,12 +3,15 @@ import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Task } from "@/components/tasks/taskTypes"
 import { cn } from "@/lib/utils"
-import { TaskItemDueDate } from "@/components/tasks/TaskItemDueDate"
 import { MoreHorizontal, Star, StarOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { format, isToday, isTomorrow, isYesterday } from "date-fns"
 import { useMediaQuery } from "@/hooks/use-mobile"
+import { TaskItemActionContainer } from "./TaskItemActionContainer"
+import { useTaskItem } from "./hooks/useTaskItem"
+import { TaskDeleteAlert } from "./TaskDeleteAlert"
+import { EditTaskDialog } from "./EditTaskDialog"
 
 interface TaskItemProps {
   task: Task
@@ -37,28 +40,37 @@ export function TaskItem({
 }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed)
   const [isFavorite, setIsFavorite] = useState(task.favorite)
-  const [isUpdating, setIsUpdating] = useState(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
 
-  const handleComplete = async (checked: boolean) => {
-    setIsUpdating(true)
-    setIsCompleted(checked)
-    try {
-      onComplete(task.id, checked)
-    } finally {
-      setIsUpdating(false)
+  const {
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    isUpdating,
+    handleCompletionToggle,
+    handlePriorityChange,
+    handleDateChange,
+    handleDelete
+  } = useTaskItem({
+    task,
+    onComplete,
+    onDelete,
+    onFavoriteToggle,
+    onPriorityChange,
+    onDateChange,
+  });
+
+  const handleFavorite = async () => {
+    setIsFavorite(!isFavorite)
+    if (onFavoriteToggle) {
+      onFavoriteToggle(task.id, !isFavorite)
     }
   }
 
-  const handleFavorite = async () => {
-    setIsUpdating(true)
-    setIsFavorite(!isFavorite)
-    try {
-      if (onFavoriteToggle) {
-        onFavoriteToggle(task.id, !isFavorite)
-      }
-    } finally {
-      setIsUpdating(false)
+  const handleProjectChange = async (projectId: string | null) => {
+    if (onProjectChange) {
+      await onProjectChange(task.id, projectId)
     }
   }
 
@@ -70,91 +82,83 @@ export function TaskItem({
   };
 
   return (
-    <div className={cn(
-      "group flex items-center gap-3 bg-background border-b border-border/50 hover:bg-accent/50 transition-colors",
-      isMobile ? "task-item-compact" : "p-4",
-      isCompleted && "opacity-60"
-    )}>
-      <Checkbox
-        checked={isCompleted}
-        onCheckedChange={handleComplete}
-        disabled={isUpdating}
-        aria-label={task.title}
-        id={task.id}
-        className={cn(isMobile && "mobile-checkbox")}
+    <>
+      <div className={cn(
+        "group flex items-center gap-3 bg-background border-b border-border/50 hover:bg-accent/50 transition-colors p-3",
+        isMobile && "task-item-compact px-2 py-2",
+        isCompleted && "opacity-60"
+      )}>
+        <Checkbox
+          checked={isCompleted}
+          onCheckedChange={handleCompletionToggle}
+          disabled={isUpdating}
+          aria-label={task.title}
+          id={task.id}
+          className={cn(isMobile && "mobile-checkbox")}
+        />
+
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center gap-2">
+            <h3 className={cn(
+              "task-title font-medium truncate flex-1",
+              isMobile ? "text-sm" : "text-base",
+              isCompleted && "line-through text-muted-foreground"
+            )}>
+              {task.title}
+            </h3>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleFavorite}
+              disabled={isUpdating}
+              className="hover:bg-transparent p-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              {isFavorite ? (
+                <Star className="h-4 w-4 text-yellow-500" />
+              ) : (
+                <StarOff className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="sr-only">
+                {isFavorite ? "Unfavorite" : "Favorite"}
+              </span>
+            </Button>
+          </div>
+
+          {task.notes && (
+            <p className={cn(
+              "truncate task-notes-mobile text-muted-foreground",
+              isMobile ? "text-xs" : "text-sm"
+            )}>
+              {task.notes}
+            </p>
+          )}
+
+          <TaskItemActionContainer
+            task={task}
+            onDeleteClick={() => setIsDeleteDialogOpen(true)}
+            onEditClick={() => setIsEditDialogOpen(true)}
+            isUpdating={isUpdating}
+            onPriorityChange={handlePriorityChange}
+            onDateChange={handleDateChange}
+            onProjectChange={onProjectChange ? handleProjectChange : undefined}
+            onFavoriteToggle={onFavoriteToggle}
+          />
+        </div>
+      </div>
+
+      <TaskDeleteAlert
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        taskTitle={task.title}
       />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className={cn(
-            "task-title font-medium truncate",
-            isMobile ? "text-base" : "text-base",
-            isCompleted && "line-through text-muted-foreground"
-          )}>
-            {task.title}
-          </h3>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFavorite}
-            disabled={isUpdating}
-            className="hover:bg-transparent p-0 -mr-1.5 h-6 w-6"
-          >
-            {isFavorite ? (
-              <Star className="h-4 w-4 text-yellow-500" />
-            ) : (
-              <StarOff className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="sr-only">
-              {isFavorite ? "Unfavorite" : "Favorite"}
-            </span>
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {task.notes && (
-            <span className={cn(
-              "truncate task-notes-mobile",
-              isMobile ? "text-sm" : "text-sm"
-            )}>{task.notes}</span>
-          )}
-          
-          {task.dueDate && (
-            <Badge variant="outline" className={cn(
-              "whitespace-nowrap badge-mobile",
-              isMobile ? "text-xs px-2 py-1" : "text-[11px] px-2 py-0.5"
-            )}>
-              {formatDueDate(task.dueDate)}
-              {task.dueTime && ` ${task.dueTime}`}
-            </Badge>
-          )}
-          
-          {showProject && task.projectName && task.projectName !== "No Project" && (
-            <Badge variant="secondary" className={cn(
-              "whitespace-nowrap badge-mobile",
-              isMobile ? "text-xs px-2 py-1" : "text-[11px] px-2 py-0.5"
-            )}>
-              {task.projectName}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onTaskEdit && onTaskEdit(task)}
-          className={cn(
-            "hover:bg-secondary",
-            isMobile ? "h-8 w-8" : "h-7 w-7"
-          )}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Edit task</span>
-        </Button>
-      </div>
-    </div>
+      <EditTaskDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        task={task}
+      />
+    </>
   )
 }
