@@ -42,8 +42,9 @@ export default function FilterView() {
     const conditions = currentFilter.conditions;
     if (conditions && typeof conditions === 'object' && !Array.isArray(conditions)) {
       // If conditions is an object with items property
-      if ('items' in conditions && Array.isArray(conditions.items)) {
-        setFilterConditions(conditions as { items: any[]; logic: string; });
+      const conditionsObj = conditions as any;
+      if ('items' in conditionsObj && Array.isArray(conditionsObj.items)) {
+        setFilterConditions(conditionsObj as { items: any[]; logic: string; });
       } else {
         // If conditions is a plain object, wrap it
         setFilterConditions({ items: [conditions], logic: "and" });

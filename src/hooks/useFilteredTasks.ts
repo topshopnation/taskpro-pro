@@ -32,7 +32,7 @@ export function useFilteredTasks(filterId: string) {
         if (tasksError) throw tasksError;
 
         // Transform to Task interface
-        const allTasks: Task[] = tasksData.map((task: any) => ({
+        const allTasks: Task[] = (tasksData || []).map((task: any) => ({
           id: task.id,
           title: task.title,
           notes: task.notes,
@@ -72,7 +72,13 @@ export function useFilteredTasks(filterId: string) {
         .eq('user_id', user.id)
         .single();
 
-      if (filterError) throw filterError;
+      if (filterError) {
+        if (filterError.code === 'PGRST116') {
+          // Filter not found, return empty array
+          return [];
+        }
+        throw filterError;
+      }
 
       // Fetch all tasks for the user
       const { data: tasksData, error: tasksError } = await supabase
@@ -89,7 +95,7 @@ export function useFilteredTasks(filterId: string) {
       if (tasksError) throw tasksError;
 
       // Transform to Task interface
-      const allTasks: Task[] = tasksData.map((task: any) => ({
+      const allTasks: Task[] = (tasksData || []).map((task: any) => ({
         id: task.id,
         title: task.title,
         notes: task.notes,
@@ -111,9 +117,10 @@ export function useFilteredTasks(filterId: string) {
           conditions = filter.conditions;
         } else if (typeof filter.conditions === 'object' && filter.conditions !== null) {
           // Handle object with items property
-          if ('items' in filter.conditions && Array.isArray(filter.conditions.items)) {
-            conditions = filter.conditions.items;
-            logic = (filter.conditions as any).logic || "and";
+          const conditionsObj = filter.conditions as any;
+          if ('items' in conditionsObj && Array.isArray(conditionsObj.items)) {
+            conditions = conditionsObj.items;
+            logic = conditionsObj.logic || "and";
           } else {
             // Single condition object
             conditions = [filter.conditions];
