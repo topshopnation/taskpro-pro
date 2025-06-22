@@ -1,115 +1,106 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function useFilterOperations(filterId: string) {
   const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Toggle favorite status of a filter
-  const toggleFavorite = async (currentFavorite: boolean) => {
-    setIsUpdating(true);
+  const toggleFavorite = async (newFavoriteValue: boolean) => {
+    if (!user || !filterId) return false;
+
     try {
+      setIsUpdating(true);
       const { error } = await supabase
         .from('filters')
-        .update({ favorite: !currentFavorite })
-        .eq('id', filterId);
-        
+        .update({ favorite: newFavoriteValue })
+        .eq('id', filterId)
+        .eq('user_id', user.id);
+
       if (error) throw error;
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['filter', filterId, user.id] });
       
-      // Success notification
-      toast.success(`Filter ${!currentFavorite ? 'added to' : 'removed from'} favorites`);
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['filter', filterId] });
-      queryClient.invalidateQueries({ queryKey: ['filters'] });
-      
+      toast.success(newFavoriteValue ? "Added to favorites" : "Removed from favorites");
       return true;
     } catch (error: any) {
-      toast.error("Failed to update filter", {
-        description: error.message
-      });
+      console.error('Error updating filter favorite:', error);
+      toast.error('Failed to update filter favorite status');
       return false;
     } finally {
       setIsUpdating(false);
     }
   };
 
-  // Update filter name and conditions
   const updateFilter = async (name: string, conditions: any, color?: string) => {
-    if (!name.trim()) {
-      toast.error("Filter name cannot be empty");
-      return false;
-    }
-    
-    setIsUpdating(true);
+    if (!user || !filterId) return false;
+
     try {
-      console.log("Updating filter with conditions:", conditions);
+      setIsUpdating(true);
       
-      // Prepare update data
-      const updateData: Record<string, any> = {
-        name: name.trim(),
-        conditions: conditions,
+      const updateData: {
+        name: string;
+        conditions: any;
+        color?: string;
+        updated_at: string;
+      } = {
+        name,
+        conditions,
         updated_at: new Date().toISOString()
       };
       
-      // Add color if provided
-      if (color !== undefined) {
+      if (color) {
         updateData.color = color;
       }
-      
+
       const { error } = await supabase
         .from('filters')
         .update(updateData)
-        .eq('id', filterId);
-        
+        .eq('id', filterId)
+        .eq('user_id', user.id);
+
       if (error) throw error;
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['filter', filterId, user.id] });
       
-      // Success notification
       toast.success("Filter updated successfully");
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['filter', filterId] });
-      queryClient.invalidateQueries({ queryKey: ['filters'] });
-      
       return true;
     } catch (error: any) {
-      toast.error("Failed to update filter", {
-        description: error.message
-      });
+      console.error('Error updating filter:', error);
+      toast.error('Failed to update filter');
       return false;
     } finally {
       setIsUpdating(false);
     }
   };
 
-  // Delete a filter
   const deleteFilter = async () => {
-    setIsUpdating(true);
+    if (!user || !filterId) return false;
+
     try {
+      setIsUpdating(true);
       const { error } = await supabase
         .from('filters')
         .delete()
-        .eq('id', filterId);
-        
+        .eq('id', filterId)
+        .eq('user_id', user.id);
+
       if (error) throw error;
-      
-      // Success notification
+
       toast.success("Filter deleted successfully");
-      
-      // Navigate away and invalidate queries
-      navigate('/today');
-      queryClient.invalidateQueries({ queryKey: ['filters'] });
-      
+      navigate('/filters');
       return true;
     } catch (error: any) {
-      toast.error("Failed to delete filter", {
-        description: error.message
-      });
+      console.error('Error deleting filter:', error);
+      toast.error('Failed to delete filter');
       return false;
     } finally {
       setIsUpdating(false);
@@ -117,9 +108,9 @@ export function useFilterOperations(filterId: string) {
   };
 
   return {
-    isUpdating,
     toggleFavorite,
     updateFilter,
-    deleteFilter
+    deleteFilter,
+    isUpdating
   };
 }
