@@ -1,3 +1,4 @@
+
 import { Task } from "@/components/tasks/taskTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,7 +20,8 @@ export const fetchAllTasks = async (userId: string): Promise<Task[]> => {
       dueDate: task.due_date ? new Date(task.due_date) : undefined,
       priority: task.priority || 4,
       projectId: task.project_id,
-      completed: task.completed || false
+      completed: task.completed || false,
+      favorite: task.favorite || false
     }));
   } catch (error: any) {
     toast.error("Failed to fetch tasks", {

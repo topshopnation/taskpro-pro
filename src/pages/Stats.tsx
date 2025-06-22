@@ -1,74 +1,63 @@
 
-import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useDashboardTasks } from "@/hooks/useDashboardTasks";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { StatCards } from "@/components/dashboard/StatCards";
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
-import { sortTasks } from "@/utils/taskSortUtils";
-import { Task } from "@/components/tasks/TaskItem";
-import { BarChart2 } from "lucide-react";
-import { useOverdueTasks } from "@/hooks/useOverdueTasks";
-import { useAuth } from "@/hooks/use-auth";
+import { CompletedTasksStats } from "@/components/dashboard/CompletedTasksStats";
+import { Task } from "@/components/tasks/taskTypes";
 
-export default function Stats() {
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-  const { user } = useAuth();
-  
-  const { 
-    tasks,
-    isLoading, 
-    todayTasks, 
-    highPriorityTasks,
-    handleComplete,
-    handleDelete
-  } = useDashboardTasks();
+const Stats = () => {
+  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardTasks();
+  const { data: completedData, isLoading: isCompletedLoading } = useCompletedTasks();
 
-  const { data: overdueTasks = [] } = useOverdueTasks(user?.id);
-
-  // Apply default sorting to all task lists
-  const sortedAllTasks = sortTasks(tasks.filter(task => !task.completed), "dueDate", "asc")
-  const sortedTodayTasks = sortTasks(todayTasks, "dueDate", "asc")
-  const sortedHighPriorityTasks = sortTasks(highPriorityTasks, "dueDate", "asc")
-
-  if (isLoading) {
+  if (isDashboardLoading || isCompletedLoading) {
     return (
-      <AppLayout>
-        <DashboardSkeleton />
-      </AppLayout>
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
     );
   }
 
+  const { todayTasks = [], highPriorityTasks = [], allTasks = [] } = dashboardData || {};
+  const { totalCompleted = 0 } = completedData || {};
+
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="h-5 w-5" />
-            <h1 className="text-2xl font-bold tracking-tight">Statistics</h1>
-          </div>
-        </div>
-
-        <StatCards 
-          todayCount={todayTasks.length}
-          highPriorityCount={highPriorityTasks.length}
-          overdueCount={overdueTasks.length}
-        />
-
-        <DashboardTabs
-          todayTasks={sortedTodayTasks}
-          highPriorityTasks={sortedHighPriorityTasks}
-          allTasks={sortedAllTasks}
-          onComplete={handleComplete}
-          onDelete={handleDelete}
-        />
-
-        <CreateTaskDialog
-          open={isCreateTaskOpen}
-          onOpenChange={setIsCreateTaskOpen}
-        />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Statistics</h1>
       </div>
-    </AppLayout>
+      
+      <StatCards 
+        todayTasksCount={todayTasks.length}
+        highPriorityTasksCount={highPriorityTasks.length}
+        totalTasksCount={allTasks.length}
+        completedTasksCount={totalCompleted}
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Task Analytics</CardTitle>
+          <CardDescription>
+            Visual breakdown of your task data
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DashboardCharts tasks={allTasks} />
+        </CardContent>
+      </Card>
+
+      <CompletedTasksStats />
+    </div>
   );
-}
+};
+
+export default Stats;

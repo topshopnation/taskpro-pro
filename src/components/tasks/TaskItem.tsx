@@ -8,6 +8,7 @@ import { MoreHorizontal, Star, StarOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { format, isToday, isTomorrow, isYesterday } from "date-fns"
+import { useMediaQuery } from "@/hooks/use-mobile"
 
 interface TaskItemProps {
   task: Task
@@ -37,6 +38,7 @@ export function TaskItem({
   const [isCompleted, setIsCompleted] = useState(task.completed)
   const [isFavorite, setIsFavorite] = useState(task.favorite)
   const [isUpdating, setIsUpdating] = useState(false)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const handleComplete = async (checked: boolean) => {
     setIsUpdating(true)
@@ -69,7 +71,8 @@ export function TaskItem({
 
   return (
     <div className={cn(
-      "group flex items-center gap-3 p-4 bg-background border-b border-border/50 hover:bg-accent/50 transition-colors",
+      "group flex items-center gap-3 bg-background border-b border-border/50 hover:bg-accent/50 transition-colors",
+      isMobile ? "task-item-mobile" : "p-4",
       isCompleted && "opacity-60"
     )}>
       <Checkbox
@@ -78,12 +81,14 @@ export function TaskItem({
         disabled={isUpdating}
         aria-label={task.title}
         id={task.id}
+        className={cn(isMobile && "mobile-checkbox")}
       />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h3 className={cn(
-            "task-title font-medium truncate text-base",
+            "task-title font-medium truncate",
+            isMobile ? "text-lg" : "text-base",
             isCompleted && "line-through text-muted-foreground"
           )}>
             {task.title}
@@ -109,18 +114,27 @@ export function TaskItem({
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           {task.notes && (
-            <span className="truncate text-sm">{task.notes}</span>
+            <span className={cn(
+              "truncate",
+              isMobile ? "text-base" : "text-sm"
+            )}>{task.notes}</span>
           )}
           
           {task.dueDate && (
-            <Badge variant="outline" className="text-[11px] px-2 py-0.5 whitespace-nowrap">
+            <Badge variant="outline" className={cn(
+              "whitespace-nowrap",
+              isMobile ? "text-sm px-3 py-1" : "text-[11px] px-2 py-0.5"
+            )}>
               {formatDueDate(task.dueDate)}
               {task.dueTime && ` ${task.dueTime}`}
             </Badge>
           )}
           
           {showProject && task.projectName && task.projectName !== "No Project" && (
-            <Badge variant="secondary" className="text-[11px] px-2 py-0.5 whitespace-nowrap">
+            <Badge variant="secondary" className={cn(
+              "whitespace-nowrap",
+              isMobile ? "text-sm px-3 py-1" : "text-[11px] px-2 py-0.5"
+            )}>
               {task.projectName}
             </Badge>
           )}
@@ -132,7 +146,10 @@ export function TaskItem({
           variant="ghost"
           size="icon"
           onClick={() => onTaskEdit && onTaskEdit(task)}
-          className="hover:bg-secondary h-7 w-7"
+          className={cn(
+            "hover:bg-secondary",
+            isMobile ? "h-8 w-8" : "h-7 w-7"
+          )}
         >
           <MoreHorizontal className="h-4 w-4" />
           <span className="sr-only">Edit task</span>

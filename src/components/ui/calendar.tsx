@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { getQuickDateOptions } from "@/utils/dateUtils";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   showQuickOptions?: boolean;
@@ -24,6 +25,7 @@ function Calendar({
   const quickOptions = getQuickDateOptions();
   const currentDate = new Date();
   const currentMonth = `${format(props.month || currentDate, "MMM yyyy")}`;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const handleQuickOptionClick = (date: Date | undefined, event: React.MouseEvent) => {
     event.preventDefault();
@@ -69,7 +71,8 @@ function Calendar({
               onClick={(e) => handleQuickOptionClick(option.date, e)}
               className={cn(
                 "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors pointer-events-auto",
-                option.date && isDateSelected(option.date) && "bg-primary/10"
+                option.date && isDateSelected(option.date) && "bg-primary/10",
+                isMobile && "quick-date-option"
               )}
               type="button"
             >
@@ -122,9 +125,15 @@ function Calendar({
                     </svg>
                   </span>
                 )}
-                <span className="font-medium text-xs">{option.label}</span>
+                <span className={cn(
+                  "font-medium text-xs",
+                  isMobile && "text-sm"
+                )}>{option.label}</span>
               </div>
-              <span className="text-muted-foreground text-xs">{option.day}</span>
+              <span className={cn(
+                "text-muted-foreground text-xs",
+                isMobile && "text-sm"
+              )}>{option.day}</span>
             </button>
           ))}
         </div>

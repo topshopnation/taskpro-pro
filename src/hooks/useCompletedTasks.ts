@@ -1,105 +1,58 @@
 
-import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Task } from "@/components/tasks/TaskItem";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { Task } from "@/components/tasks/taskTypes";
 import { filterCompletedTasksByTime, groupTasksByProject } from "@/utils/taskFilterUtils";
-import { updateTaskCompletion, deleteTask } from "@/utils/taskOperations";
-import { useTaskRealtime } from "@/hooks/useTaskRealtime";
 
 export function useCompletedTasks(timeFilter: string = "all") {
-  const [tasks, setTasks] = useState<Task[]>([]);
   const { user } = useAuth();
 
-  // Fetch completed tasks from Supabase
-  const fetchCompletedTasks = useCallback(async () => {
-    if (!user) return [];
-    
-    try {
+  return useQuery({
+    queryKey: ['completedTasks', user?.id, timeFilter],
+    queryFn: async () => {
+      if (!user) return { tasksByProject: {}, totalCompleted: 0 };
+
+      // Fetch completed tasks with project information
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, projects(name, color)')
+        .select(`
+          *,
+          projects (
+            name,
+            color
+          )
+        `)
         .eq('user_id', user.id)
         .eq('completed', true);
-        
+
       if (error) throw error;
-      
-      return data.map((task: any) => ({
+
+      // Transform data to match Task interface
+      const tasks: Task[] = data.map((task: any) => ({
         id: task.id,
         title: task.title,
         notes: task.notes,
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        projectName: task.projects?.name || 'No Project',
+        projectName: task.projects?.name || "No Project",
         projectColor: task.projects?.color,
         completed: task.completed || false,
         favorite: task.favorite || false
       }));
-    } catch (error: any) {
-      toast.error("Failed to fetch completed tasks", {
-        description: error.message
-      });
-      return [];
-    }
-  }, [user]);
-  
-  // Use React Query to fetch tasks
-  const { data: completedTasks, isLoading } = useQuery({
-    queryKey: ['completedTasks', user?.id],
-    queryFn: fetchCompletedTasks,
-    enabled: !!user
-  });
-  
-  // Update local state when data is fetched
-  useEffect(() => {
-    if (completedTasks) {
-      setTasks(completedTasks);
-    }
-  }, [completedTasks]);
-  
-  // Setup realtime subscription
-  useTaskRealtime(user, async () => {
-    const updatedTasks = await fetchCompletedTasks();
-    setTasks(updatedTasks);
-  });
 
-  const filteredTasks = filterCompletedTasksByTime(tasks, timeFilter);
-  const tasksByProject = groupTasksByProject(filteredTasks);
-
-  const handleComplete = async (taskId: string, completed: boolean) => {
-    try {
-      await updateTaskCompletion(taskId, completed);
+      // Filter tasks by time
+      const filteredTasks = filterCompletedTasksByTime(tasks, timeFilter);
       
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, completed } : task
-        )
-      );
-    } catch (error) {
-      // Error is already handled in updateTaskCompletion
-    }
-  };
-
-  const handleDelete = async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
+      // Group tasks by project
+      const tasksByProject = groupTasksByProject(filteredTasks);
       
-      // Optimistic update
-      setTasks(tasks.filter((task) => task.id !== taskId));
-    } catch (error) {
-      // Error is already handled in deleteTask
-    }
-  };
-
-  return {
-    tasks: filteredTasks,
-    tasksByProject,
-    isLoading,
-    handleComplete,
-    handleDelete
-  };
+      return {
+        tasksByProject,
+        totalCompleted: filteredTasks.length
+      };
+    },
+    enabled: !!user,
+  });
 }

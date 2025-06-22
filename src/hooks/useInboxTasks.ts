@@ -1,112 +1,95 @@
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/hooks/use-auth-context"
-import { useQuery } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { supabase } from "@/integrations/supabase/client"
-import { Task } from "@/components/tasks/TaskItem"
-import { updateTaskCompletion, deleteTask } from "@/utils/taskOperations"
-import { useTaskRealtime } from "@/hooks/useTaskRealtime"
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { useCallback } from "react";
+import { queryClient } from "@/lib/react-query";
+import { Task } from "@/components/tasks/taskTypes";
 
-export function useInboxTasks() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const { user } = useAuth()
+export const useInboxTasks = () => {
+  const { user } = useAuth();
 
-  // Fetch inbox tasks (tasks with no project_id)
-  const fetchTasks = async () => {
-    if (!user) return []
-    
-    try {
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ['tasks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
-        .is('project_id', null)
+        .select(`
+          *,
+          projects (
+            name,
+            color
+          )
+        `)
         .eq('user_id', user.id)
+        .is('project_id', null)
         .eq('completed', false)
-        .order('due_date', { ascending: true, nullsFirst: false })
-        
-      if (error) throw error
-      
-      return data.map((task: any) => ({
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map((task: any): Task => ({
         id: task.id,
         title: task.title,
         notes: task.notes,
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
+        projectName: task.projects?.name,
+        projectColor: task.projects?.color,
         completed: task.completed || false,
         favorite: task.favorite || false
-      }))
+      }));
+    },
+    enabled: !!user,
+  });
+
+  const completeTask = useCallback(async (taskId: string, completed: boolean) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', taskId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success(completed ? "Task completed!" : "Task uncompleted!");
     } catch (error: any) {
-      toast.error("Failed to fetch inbox tasks", {
-        description: error.message
-      })
-      return []
+      toast.error(`Failed to ${completed ? 'complete' : 'uncomplete'} task: ${error.message}`);
     }
-  }
-  
-  // Use React Query to fetch tasks
-  const { data: inboxTasks, isLoading, refetch } = useQuery({
-    queryKey: ['inboxTasks', user?.id],
-    queryFn: fetchTasks,
-    enabled: !!user
-  })
-  
-  // Set up realtime subscription using the shared hook
-  useTaskRealtime(user, async () => {
-    // Directly refetch data from the database to ensure we get updated data
-    refetch();
-  })
-  
-  // Update local state when data is fetched
-  useEffect(() => {
-    if (inboxTasks) {
-      setTasks(inboxTasks)
-    }
-  }, [inboxTasks])
+  }, [user]);
 
-  // Handle task operations
-  const handleComplete = async (taskId: string, completed: boolean) => {
-    try {
-      // Get the task title for the toast
-      const task = tasks.find(t => t.id === taskId);
-      const taskTitle = task?.title || '';
-      
-      await updateTaskCompletion(taskId, completed, taskTitle)
-      
-      // Optimistic update
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, completed } : task
-        )
-      )
-      
-      // Toast is now handled in the updateTaskCompletion function
-    } catch (error) {
-      // Error is handled in the taskOperations utility
-    }
-  }
+  const deleteTask = useCallback(async (taskId: string) => {
+    if (!user) return;
 
-  const handleDelete = async (taskId: string) => {
     try {
-      // Get the task title for the toast
-      const task = tasks.find(t => t.id === taskId);
-      const taskTitle = task?.title || '';
-      
-      await deleteTask(taskId, taskTitle)
-      
-      // Optimistic update
-      setTasks(tasks.filter((task) => task.id !== taskId))
-    } catch (error) {
-      // Error is handled in the taskOperations utility
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success("Task deleted!");
+    } catch (error: any) {
+      toast.error(`Failed to delete task: ${error.message}`);
     }
-  }
+  }, [user]);
 
   return {
     tasks,
     isLoading,
-    handleComplete,
-    handleDelete,
-    refetch
-  }
-}
+    error,
+    completeTask,
+    deleteTask
+  };
+};

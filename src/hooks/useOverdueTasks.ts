@@ -1,52 +1,49 @@
 
-import { useQuery } from "@tanstack/react-query"
-import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
-import { Task } from "@/components/tasks/TaskItem"
-import { startOfDay } from "date-fns"
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Task } from "@/components/tasks/taskTypes";
+import { startOfDay } from "date-fns";
 
-export function useOverdueTasks(userId: string | undefined) {
-  const fetchOverdueTasks = async () => {
-    if (!userId) return []
-    
-    // Using start of today as the cutoff point to exclude today's tasks
-    const startOfToday = startOfDay(new Date())
-    
-    try {
+export function useOverdueTasks() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['overdue-tasks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const today = startOfDay(new Date());
+      
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, projects(name, color)')
-        .eq('user_id', userId)
+        .select(`
+          *,
+          projects (
+            name,
+            color
+          )
+        `)
+        .eq('user_id', user.id)
         .eq('completed', false)
-        .lt('due_date', startOfToday.toISOString())
         .not('due_date', 'is', null)
-        
-      if (error) throw error
-      
-      return data.map((task: any) => ({
+        .lt('due_date', today.toISOString());
+
+      if (error) throw error;
+
+      return data.map((task: any): Task => ({
         id: task.id,
         title: task.title,
         notes: task.notes,
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         priority: task.priority || 4,
         projectId: task.project_id,
-        projectName: task.projects?.name || 'No Project',
+        projectName: task.projects?.name || "No Project",
         projectColor: task.projects?.color,
-        section: task.section,
         completed: task.completed || false,
         favorite: task.favorite || false
-      }))
-    } catch (error: any) {
-      toast.error("Failed to fetch overdue tasks", {
-        description: error.message
-      })
-      return []
-    }
-  }
-  
-  return useQuery({
-    queryKey: ['overdue-tasks', userId],
-    queryFn: fetchOverdueTasks,
-    enabled: !!userId
-  })
+      }));
+    },
+    enabled: !!user,
+  });
 }

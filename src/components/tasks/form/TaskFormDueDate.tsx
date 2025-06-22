@@ -140,12 +140,13 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
           <Button
             variant="outline"
             className={cn(
-              "justify-start text-left font-normal date-input-button",
-              !dueDate && "text-muted-foreground"
+              "justify-start text-left font-normal",
+              !dueDate && "text-muted-foreground",
+              isMobile && "date-input-button"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
-            <span className="truncate">
+            <span className="truncate flex-1 text-left">
               {dueDate ? (
                 <>
                   {dateLabel.label}{' '}
@@ -163,28 +164,31 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
             "w-auto p-2 z-50",
             isMobile && "calendar-popover"
           )}
-          align={isMobile ? "center" : "start"}
-          side={isMobile ? "bottom" : "bottom"}
-          sideOffset={isMobile ? 20 : 5}
-          alignOffset={0}
+          align="start"
+          side="bottom"
+          sideOffset={5}
           avoidCollisions={true}
           onClick={handlePopoverContentClick}
         >
           <div className="flex flex-col space-y-2 pointer-events-auto">
-            <div className="flex items-center space-x-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Time input - show second, less prominent */}
+            <div className="flex items-center space-x-2 pointer-events-auto order-2" onClick={(e) => e.stopPropagation()}>
               <Input
                 type="time"
-                placeholder="Add time"
+                placeholder="Add time (optional)"
                 value={timeInput}
                 onChange={handleTimeInputChange}
-                className="h-7 py-1"
+                className={cn(
+                  "h-8 py-1 text-sm",
+                  isMobile && "time-input-mobile"
+                )}
                 onClick={(e) => e.stopPropagation()}
               />
               {timeInput && (
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-7 w-7 p-0" 
+                  className="h-8 w-8 p-0" 
                   onClick={handleClearTime}
                 >
                   <X className="h-3.5 w-3.5 text-muted-foreground" />
@@ -193,6 +197,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
               )}
             </div>
             
+            {/* Calendar - show first, more prominent */}
             <Calendar
               mode="single"
               selected={dueDate}
@@ -200,7 +205,7 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
               initialFocus
               showQuickOptions={true}
               onQuickOptionSelect={handleQuickDateSelection}
-              className="rounded-md border shadow-sm bg-background pointer-events-auto"
+              className="rounded-md border shadow-sm bg-background pointer-events-auto order-1"
             />
           </div>
         </PopoverContent>

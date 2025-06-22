@@ -1,141 +1,94 @@
 
-import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { useAuth } from "@/hooks/use-auth-context"
-import { Task } from "@/components/tasks/TaskItem"
-import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
-import { fetchProjectTasks } from "@/utils/taskOperations"
-import { useTaskRealtime } from "@/hooks/useTaskRealtime"
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Task } from "@/components/tasks/taskTypes";
+import { useCallback } from "react";
+import { queryClient } from "@/lib/react-query";
+import { toast } from "sonner";
 
-export function useProjectTasks(projectId?: string) {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [unsectionedTasks, setUnsectionedTasks] = useState<Task[]>([])
-  const { user } = useAuth()
-  
-  // Fetch tasks using React Query
-  const { data: projectTasks, isLoading, refetch } = useQuery({
-    queryKey: ['projectTasks', projectId, user?.id],
+export const useProjectTasks = (projectId: string) => {
+  const { user } = useAuth();
+
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ['project-tasks', projectId, user?.id],
     queryFn: async () => {
-      if (!projectId || !user) return []
-      return fetchProjectTasks(projectId, user.id)
+      if (!user || !projectId) return [];
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          projects (
+            name,
+            color
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map((task: any): Task => ({
+        id: task.id,
+        title: task.title,
+        notes: task.notes,
+        dueDate: task.due_date ? new Date(task.due_date) : undefined,
+        priority: task.priority || 4,
+        projectId: task.project_id,
+        projectName: task.projects?.name,
+        projectColor: task.projects?.color,
+        completed: task.completed || false,
+        favorite: task.favorite || false
+      }));
     },
-    enabled: !!projectId && !!user
-  })
-  
-  // Set up realtime subscription
-  useTaskRealtime(user, async () => {
-    refetch();
-  })
-  
-  // Process tasks when data is fetched
-  useEffect(() => {
-    if (projectTasks) {
-      setTasks(projectTasks)
-      
-      // Filter out completed tasks and organize by section
-      const incompleteTasks = projectTasks.filter(task => !task.completed)
-      setUnsectionedTasks(incompleteTasks)
-    }
-  }, [projectTasks])
-  
-  // Handle marking task as complete/incomplete
-  const handleComplete = async (taskId: string, completed: boolean) => {
+    enabled: !!user && !!projectId,
+  });
+
+  const completeTask = useCallback(async (taskId: string, completed: boolean) => {
+    if (!user) return;
+
     try {
-      // Find the task to get its title for toast
-      const task = tasks.find(t => t.id === taskId);
-      const taskTitle = task?.title;
-      
       const { error } = await supabase
         .from('tasks')
         .update({ completed })
         .eq('id', taskId)
-      
-      if (error) throw error
-      
-      // Optimistic UI update
-      setTasks(tasks.map(task => 
-        task.id === taskId ? { ...task, completed } : task
-      ))
-      
-      setUnsectionedTasks(prevTasks => 
-        completed
-          ? prevTasks.filter(task => task.id !== taskId)
-          : [...prevTasks.filter(task => task.id !== taskId), 
-             { ...tasks.find(t => t.id === taskId)!, completed }]
-      )
-      
-      // Show toast with undo action
-      if (taskTitle) {
-        toast(`"${taskTitle}" ${completed ? 'completed' : 'marked incomplete'}`, {
-          id: `task-complete-${taskId}`,
-          action: {
-            label: "Undo",
-            onClick: async () => {
-              try {
-                const { error } = await supabase
-                  .from('tasks')
-                  .update({ completed: !completed })
-                  .eq('id', taskId)
-                
-                if (error) throw error
-                
-                // Refetch to update UI
-                refetch()
-              } catch (err) {
-                console.error("Failed to undo task completion", err)
-                toast.error("Failed to undo action")
-              }
-            }
-          }
-        })
-      }
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
+      toast.success(completed ? "Task completed!" : "Task uncompleted!");
     } catch (error: any) {
-      toast.error("Failed to update task", {
-        description: error.message
-      })
+      toast.error(`Failed to ${completed ? 'complete' : 'uncomplete'} task: ${error.message}`);
     }
-  }
-  
-  // Handle task deletion
-  const handleDelete = async (taskId: string) => {
+  }, [user, projectId]);
+
+  const deleteTask = useCallback(async (taskId: string) => {
+    if (!user) return;
+
     try {
-      // Store deleted task data for potential restore
-      const deletedTask = tasks.find(task => task.id === taskId);
-      const taskTitle = deletedTask?.title;
-      
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId)
-      
-      if (error) throw error
-      
-      // Optimistic UI update
-      setTasks(tasks.filter(task => task.id !== taskId))
-      setUnsectionedTasks(prevTasks => prevTasks.filter(task => task.id !== taskId))
-      
-      // Show toast with success message
-      if (taskTitle) {
-        toast(`"${taskTitle}" deleted`, {
-          description: "Task has been permanently deleted."
-        })
-      } else {
-        toast.success("Task deleted")
-      }
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
+      toast.success("Task deleted!");
     } catch (error: any) {
-      toast.error("Failed to delete task", {
-        description: error.message
-      })
+      toast.error(`Failed to delete task: ${error.message}`);
     }
-  }
-  
+  }, [user, projectId]);
+
   return {
     tasks,
-    unsectionedTasks,
-    isLoadingTasks: isLoading,
-    handleComplete,
-    handleDelete,
-    refetch
-  }
-}
+    isLoading,
+    error,
+    completeTask,
+    deleteTask
+  };
+};
