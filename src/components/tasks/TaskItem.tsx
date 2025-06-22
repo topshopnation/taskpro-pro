@@ -126,7 +126,7 @@ export function TaskItem({
         taskCompleted={task.completed}
         onOpenChange={setIsDeleteDialogOpen}
         onDelete={handleDeleteTask}
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
         isUpdating={isUpdating}
         onConfirm={handleDelete}
       />
