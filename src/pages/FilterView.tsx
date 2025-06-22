@@ -7,10 +7,8 @@ import { FilterHeader } from "@/components/filters/FilterHeader";
 import { useFetchFilter } from "@/hooks/useFetchFilter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilterOperations } from "@/hooks/filter/useFilterOperations";
-import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Task } from "@/components/tasks/taskTypes";
 
 export default function FilterView() {
   const { filterId } = useParams<{ filterId: string }>();
@@ -24,13 +22,30 @@ export default function FilterView() {
   const { currentFilter, isLoading: isFilterLoading } = useFetchFilter(filterId || "");
   const { data: tasks = [], isLoading: isTasksLoading } = useFilteredTasks(filterId || "");
   const { completeTask, deleteTask } = useTaskOperations();
-  const { deleteFilter, updateFilter } = useFilterOperations();
+  const { deleteFilter, updateFilter } = useFilterOperations(filterId || "");
 
   const handleEdit = () => {
     if (currentFilter) {
       setFilterName(currentFilter.name);
       setFilterColor(currentFilter.color || "");
-      setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
+      
+      // Properly handle conditions type conversion
+      const conditions = currentFilter.conditions;
+      if (conditions && typeof conditions === 'object' && !Array.isArray(conditions)) {
+        // If conditions is an object with items property
+        if ('items' in conditions && Array.isArray(conditions.items)) {
+          setFilterConditions(conditions as { items: any[]; logic: string; });
+        } else {
+          // If conditions is a plain object, wrap it
+          setFilterConditions({ items: [conditions], logic: "and" });
+        }
+      } else if (Array.isArray(conditions)) {
+        // If conditions is an array, wrap it in the expected structure
+        setFilterConditions({ items: conditions, logic: "and" });
+      } else {
+        setFilterConditions({ items: [], logic: "and" });
+      }
+      
       setIsEditDialogOpen(true);
     }
   };
@@ -41,19 +56,24 @@ export default function FilterView() {
 
   const handleRename = async () => {
     if (filterId && currentFilter) {
-      await updateFilter(filterId, {
-        name: filterName,
-        color: filterColor,
-        conditions: filterConditions
-      });
+      await updateFilter(filterName, filterConditions, filterColor);
       setIsEditDialogOpen(false);
     }
   };
 
   const handleConfirmDelete = async () => {
     if (filterId) {
-      await deleteFilter(filterId);
+      await deleteFilter();
     }
+  };
+
+  const handleFavoriteToggle = () => {
+    // Implementation for favorite toggle
+    console.log("Toggle favorite");
+  };
+
+  const handleColorChange = (color: string) => {
+    setFilterColor(color);
   };
 
   if (isFilterLoading) {
@@ -83,6 +103,10 @@ export default function FilterView() {
     <div className="space-y-6">
       <FilterHeader 
         filter={filterWithLogic}
+        onFavoriteToggle={handleFavoriteToggle}
+        onRenameClick={handleEdit}
+        onDeleteClick={handleDelete}
+        onColorChange={handleColorChange}
       />
       
       <TaskList
@@ -93,21 +117,6 @@ export default function FilterView() {
         onComplete={completeTask}
         onDelete={deleteTask}
         hideTitle={true}
-      />
-
-      <FilterDialogs
-        isEditDialogOpen={isEditDialogOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        filterName={filterName}
-        filterColor={filterColor}
-        filterConditions={filterConditions}
-        onEditDialogChange={setIsEditDialogOpen}
-        onDeleteDialogChange={setIsDeleteDialogOpen}
-        onFilterNameChange={setFilterName}
-        onFilterColorChange={setFilterColor}
-        onFilterConditionsChange={setFilterConditions}
-        onRename={handleRename}
-        onDelete={handleConfirmDelete}
       />
     </div>
   );
