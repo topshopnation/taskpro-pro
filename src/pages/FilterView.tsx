@@ -35,12 +35,11 @@ export default function FilterView() {
     handleOptimisticDelete 
   } = useOptimisticTasks(tasks);
 
-  // Wrapper for completeTask that includes optimistic updates
+  // Use the standard completeTask function directly - it already handles toasts and optimistic updates
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
-    // Call the actual completeTask function with optimistic update callback
-    // This will handle both the database update AND the toast with undo functionality
+    // Call the completeTask function with the optimistic update callback
+    // This ensures only ONE toast is shown from useTaskCompletion
     const success = await completeTask(taskId, completed, handleOptimisticComplete);
-    
     return success;
   };
 
