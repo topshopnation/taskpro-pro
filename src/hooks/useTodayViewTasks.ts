@@ -2,13 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { queryClient } from "@/lib/react-query";
 import { Task } from "@/components/tasks/taskTypes";
 import { isToday, startOfToday, endOfToday } from "date-fns";
 
 export const useTodayViewTasks = () => {
   const { user } = useAuth();
+  const [hiddenTaskIds, setHiddenTaskIds] = useState<Set<string>>(new Set());
 
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ['today-tasks', user?.id],
@@ -47,11 +48,26 @@ export const useTodayViewTasks = () => {
     enabled: !!user,
   });
 
+  // Filter out hidden tasks for optimistic UI updates
+  const visibleTasks = tasks.filter(task => !hiddenTaskIds.has(task.id));
+
   const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
-    // Don't show toast here - let the useTaskOperations handle it with undo functionality
-    // Just invalidate queries for UI updates
+    // Optimistically update UI
+    if (completed) {
+      // Hide task immediately when marked as complete
+      setHiddenTaskIds(prev => new Set(prev).add(taskId));
+    } else {
+      // Show task immediately when marked as incomplete (undo)
+      setHiddenTaskIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+    }
+
+    // Invalidate queries for consistency across the app
     queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
@@ -59,8 +75,10 @@ export const useTodayViewTasks = () => {
   const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
-    // Don't show toast here - let the component handle it with undo functionality
-    // Just invalidate queries for UI updates
+    // Optimistically hide the task immediately
+    setHiddenTaskIds(prev => new Set(prev).add(taskId));
+
+    // Invalidate queries for consistency
     queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
@@ -68,14 +86,13 @@ export const useTodayViewTasks = () => {
   const handleFavoriteToggle = useCallback(async (taskId: string, favorite: boolean) => {
     if (!user) return;
 
-    // Don't show toast here - let the component handle it
     // Just invalidate queries for UI updates
     queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
 
   return {
-    tasks,
+    tasks: visibleTasks,
     isLoading,
     error,
     handleComplete,

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "@/components/tasks/taskTypes";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
@@ -33,17 +32,14 @@ export function useTaskItem({
     
     setIsUpdating(true);
     try {
-      // Use completeTask which has built-in undo functionality
-      // This will handle all toast logic internally
-      const success = await completeTask(task.id, !task.completed);
+      // Use completeTask with optimistic update callback
+      const success = await completeTask(task.id, !task.completed, onComplete);
       
-      if (success) {
-        // Only call the parent's onComplete handler for UI updates
-        // Don't show any additional toasts here
-        onComplete(task.id, !task.completed);
+      if (!success) {
+        // If the operation failed, the optimistic update will be reverted by useTaskOperations
+        console.error("Failed to complete task");
       }
     } catch (error: any) {
-      // Only show error toast if completeTask fails completely
       console.error("Error in handleCompletionToggle:", error);
     } finally {
       setIsUpdating(false);

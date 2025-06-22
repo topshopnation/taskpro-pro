@@ -6,7 +6,7 @@ import { queryClient } from "@/lib/react-query";
 export function useTaskOperations() {
   const [isLoading, setIsLoading] = useState(false);
   
-  const completeTask = async (taskId: string, completed: boolean): Promise<boolean> => {
+  const completeTask = async (taskId: string, completed: boolean, onOptimisticUpdate?: (taskId: string, completed: boolean) => void): Promise<boolean> => {
     if (isLoading) return false; // Prevent concurrent operations
     
     setIsLoading(true);
@@ -23,6 +23,11 @@ export function useTaskOperations() {
         
       if (fetchError) throw fetchError;
       taskData = currentTask;
+      
+      // Call optimistic update callback if provided
+      if (onOptimisticUpdate) {
+        onOptimisticUpdate(taskId, completed);
+      }
       
       // Now update the task
       const { error } = await supabase
@@ -57,6 +62,11 @@ export function useTaskOperations() {
               // Dismiss this toast when undo is clicked
               toast.dismiss(uniqueId);
               
+              // Call optimistic update callback for undo if provided
+              if (onOptimisticUpdate) {
+                onOptimisticUpdate(taskId, !completed);
+              }
+              
               // Revert to previous state
               const { error: undoError } = await supabase
                 .from('tasks')
@@ -78,6 +88,10 @@ export function useTaskOperations() {
                 duration: 3000
               });
             } catch (undoError) {
+              // If undo fails, revert the optimistic update
+              if (onOptimisticUpdate) {
+                onOptimisticUpdate(taskId, completed);
+              }
               toast.error("Failed to undo", {
                 id: `task-undo-error-${taskId}-${Date.now()}`,
                 duration: 3000
@@ -100,6 +114,10 @@ export function useTaskOperations() {
       
       return true;
     } catch (error: any) {
+      // If there's an error, revert the optimistic update
+      if (onOptimisticUpdate) {
+        onOptimisticUpdate(taskId, !completed);
+      }
       toast.error("Failed to update task", {
         description: error.message,
         id: `task-error-${taskId}-${Date.now()}`,
