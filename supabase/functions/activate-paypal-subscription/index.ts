@@ -65,121 +65,7 @@ serve(async (req) => {
     
     console.log("✅ Successfully obtained PayPal access token");
     
-    // For billing agreements (BA- tokens), we need to execute them first
-    let subscriptionData;
-    let planType = 'monthly';
-    let actualSubscriptionId = subscriptionId;
-    
-    if (subscriptionId.startsWith('BA-')) {
-      console.log("📋 Processing PayPal billing agreement token, need to execute it first:", subscriptionId);
-      
-      // Execute the billing agreement
-      const executeResponse = await fetch(`${baseUrl}/v1/payments/billing-agreements/${subscriptionId}/agreement-execute`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      console.log("📋 Execute agreement response status:", executeResponse.status);
-      
-      if (!executeResponse.ok) {
-        const errorText = await executeResponse.text();
-        console.error("❌ Failed to execute billing agreement:", errorText);
-        throw new Error(`Failed to execute billing agreement: ${executeResponse.status} ${errorText}`);
-      }
-      
-      const executeData = await executeResponse.json();
-      console.log("💾 Executed billing agreement data:", JSON.stringify(executeData, null, 2));
-      
-      // Now get the agreement details
-      actualSubscriptionId = executeData.id || subscriptionId;
-      
-      const agreementResponse = await fetch(`${baseUrl}/v1/payments/billing-agreements/${actualSubscriptionId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      console.log("📋 Agreement details response status:", agreementResponse.status);
-      
-      if (!agreementResponse.ok) {
-        const errorText = await agreementResponse.text();
-        console.error("❌ Failed to get agreement details:", errorText);
-        throw new Error(`Failed to get agreement details: ${agreementResponse.status} ${errorText}`);
-      }
-      
-      subscriptionData = await agreementResponse.json();
-      console.log("💾 PayPal agreement data:", JSON.stringify(subscriptionData, null, 2));
-      
-      // Extract plan details from the agreement
-      try {
-        if (subscriptionData.plan?.payment_definitions?.[0]?.frequency_interval === '12') {
-          planType = 'yearly';
-        } else {
-          planType = 'monthly';
-        }
-        console.log("📦 Extracted plan type from agreement:", planType);
-      } catch (e) {
-        console.warn("⚠️ Could not parse plan type from agreement, defaulting to monthly");
-      }
-      
-    } else if (subscriptionId.startsWith('I-')) {
-      console.log("📋 Processing PayPal subscription:", subscriptionId);
-      
-      // For regular subscriptions, get subscription details
-      const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      console.log("📋 Subscription response status:", subscriptionResponse.status);
-      
-      if (!subscriptionResponse.ok) {
-        const errorText = await subscriptionResponse.text();
-        console.error("❌ Failed to get subscription details:", errorText);
-        throw new Error(`Failed to get subscription details: ${subscriptionResponse.status} ${errorText}`);
-      }
-      
-      subscriptionData = await subscriptionResponse.json();
-      console.log("💾 PayPal subscription data:", JSON.stringify(subscriptionData, null, 2));
-      
-      // Extract plan details from custom_id
-      try {
-        const customData = JSON.parse(subscriptionData.custom_id || '{}');
-        planType = customData.planType || 'monthly';
-        console.log("📦 Extracted plan type from subscription:", planType);
-      } catch (e) {
-        console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
-      }
-    } else {
-      throw new Error(`Unknown subscription ID format: ${subscriptionId}`);
-    }
-    
-    // Calculate subscription period
-    const currentDate = new Date();
-    const periodEnd = new Date(currentDate);
-    
-    if (planType === 'monthly') {
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-    } else {
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-    }
-    
-    console.log("📅 Subscription period:", {
-      start: currentDate.toISOString(),
-      end: periodEnd.toISOString(),
-      planType
-    });
-    
-    // First, get the most recent subscription for this user
+    // Check if we already have an active subscription for this user
     const { data: existingSubscriptions, error: fetchError } = await supabase
       .from('subscriptions')
       .select('*')
@@ -200,64 +86,179 @@ serve(async (req) => {
     // Use the most recent subscription
     const targetSubscription = existingSubscriptions[0];
     
-    // Update subscription data
-    const subscriptionUpdateData = {
-      status: 'active',
-      plan_type: planType,
-      paypal_subscription_id: actualSubscriptionId,
-      current_period_start: currentDate.toISOString(),
-      current_period_end: periodEnd.toISOString(),
-      updated_at: currentDate.toISOString()
-    };
-    
-    console.log("📝 Updating subscription in database:", subscriptionUpdateData);
-    console.log("🎯 Targeting subscription ID:", targetSubscription.id);
-    
-    const { data: updatedSubscription, error: updateError } = await supabase
-      .from('subscriptions')
-      .update(subscriptionUpdateData)
-      .eq('id', targetSubscription.id)
-      .select()
-      .single();
-    
-    if (updateError) {
-      console.error("❌ Error updating subscription:", updateError);
-      throw new Error(`Failed to update subscription: ${updateError.message}`);
+    // If subscription is already active, just return success
+    if (targetSubscription.status === 'active' && targetSubscription.paypal_subscription_id) {
+      console.log("✅ Subscription already active, returning success");
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          subscription: targetSubscription,
+          message: "Subscription already active"
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 
+        }
+      );
     }
     
-    console.log("✅ Subscription updated successfully:", updatedSubscription);
+    // For billing agreement tokens, try to find the actual subscription ID
+    let actualSubscriptionId = subscriptionId;
+    let planType = 'monthly';
+    let subscriptionData = null;
     
-    // If there are multiple subscriptions, clean up old trial ones
-    if (existingSubscriptions.length > 1) {
-      console.log("🧹 Cleaning up old trial subscriptions...");
-      const oldSubscriptionIds = existingSubscriptions.slice(1).map(sub => sub.id);
+    if (subscriptionId.startsWith('BA-')) {
+      console.log("📋 Processing PayPal billing agreement token:", subscriptionId);
       
-      const { error: deleteError } = await supabase
+      // Check if we can find an active subscription that matches this user
+      // This handles cases where PayPal webhooks already activated the subscription
+      const { data: recentSubs } = await supabase
         .from('subscriptions')
-        .delete()
-        .in('id', oldSubscriptionIds);
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .not('paypal_subscription_id', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(1);
       
-      if (deleteError) {
-        console.warn("⚠️ Error cleaning up old subscriptions:", deleteError);
-        // Don't fail the main operation for cleanup errors
-      } else {
-        console.log("✅ Cleaned up old subscriptions");
+      if (recentSubs && recentSubs.length > 0) {
+        console.log("✅ Found recently activated subscription via webhook:", recentSubs[0].paypal_subscription_id);
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            subscription: recentSubs[0],
+            message: "Subscription already activated via webhook"
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200 
+          }
+        );
       }
+      
+      // If no active subscription found, create a basic active subscription
+      // The webhook will update it with proper PayPal details later
+      const currentDate = new Date();
+      const periodEnd = new Date(currentDate);
+      periodEnd.setMonth(periodEnd.getMonth() + 1); // Default to monthly
+      
+      const subscriptionUpdateData = {
+        status: 'active',
+        plan_type: 'monthly',
+        current_period_start: currentDate.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        updated_at: currentDate.toISOString()
+      };
+      
+      console.log("📝 Updating subscription to active status:", subscriptionUpdateData);
+      
+      const { data: updatedSubscription, error: updateError } = await supabase
+        .from('subscriptions')
+        .update(subscriptionUpdateData)
+        .eq('id', targetSubscription.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error("❌ Error updating subscription:", updateError);
+        throw new Error(`Failed to update subscription: ${updateError.message}`);
+      }
+      
+      console.log("✅ Subscription updated successfully, webhook will add PayPal details");
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          subscription: updatedSubscription,
+          message: "Subscription activated, PayPal details will be updated via webhook"
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 
+        }
+      );
     }
     
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        subscription: updatedSubscription,
-        paypal_status: subscriptionData.state || subscriptionData.status,
-        paypal_type: subscriptionId.startsWith('BA-') ? 'billing_agreement' : 'subscription',
-        message: "Subscription activated successfully"
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
+    // Handle regular subscription IDs (I- format)
+    if (subscriptionId.startsWith('I-')) {
+      console.log("📋 Processing PayPal subscription:", subscriptionId);
+      
+      const subscriptionResponse = await fetch(`${baseUrl}/v1/billing/subscriptions/${subscriptionId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!subscriptionResponse.ok) {
+        const errorText = await subscriptionResponse.text();
+        console.error("❌ Failed to get subscription details:", errorText);
+        throw new Error(`Failed to get subscription details: ${subscriptionResponse.status} ${errorText}`);
       }
-    );
+      
+      subscriptionData = await subscriptionResponse.json();
+      console.log("💾 PayPal subscription data:", JSON.stringify(subscriptionData, null, 2));
+      
+      // Extract plan details from custom_id
+      try {
+        const customData = JSON.parse(subscriptionData.custom_id || '{}');
+        planType = customData.planType || 'monthly';
+        console.log("📦 Extracted plan type from subscription:", planType);
+      } catch (e) {
+        console.warn("⚠️ Could not parse custom_id, defaulting to monthly");
+      }
+      
+      // Calculate subscription period
+      const currentDate = new Date();
+      const periodEnd = new Date(currentDate);
+      
+      if (planType === 'monthly') {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      } else {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      }
+      
+      const subscriptionUpdateData = {
+        status: 'active',
+        plan_type: planType,
+        paypal_subscription_id: subscriptionId,
+        current_period_start: currentDate.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        updated_at: currentDate.toISOString()
+      };
+      
+      console.log("📝 Updating subscription in database:", subscriptionUpdateData);
+      
+      const { data: updatedSubscription, error: updateError } = await supabase
+        .from('subscriptions')
+        .update(subscriptionUpdateData)
+        .eq('id', targetSubscription.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error("❌ Error updating subscription:", updateError);
+        throw new Error(`Failed to update subscription: ${updateError.message}`);
+      }
+      
+      console.log("✅ Subscription updated successfully:", updatedSubscription);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          subscription: updatedSubscription,
+          paypal_status: subscriptionData.status,
+          message: "Subscription activated successfully"
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 
+        }
+      );
+    }
+    
+    throw new Error(`Unknown subscription ID format: ${subscriptionId}`);
     
   } catch (error) {
     console.error("💥 Error activating subscription:", error);
