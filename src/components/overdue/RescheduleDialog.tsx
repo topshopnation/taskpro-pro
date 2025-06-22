@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import { Task } from "@/components/tasks/TaskItem"
+import { Task } from "@/components/tasks/taskTypes"
 
 interface RescheduleDialogProps {
   open: boolean

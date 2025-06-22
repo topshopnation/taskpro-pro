@@ -1,5 +1,4 @@
-
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 

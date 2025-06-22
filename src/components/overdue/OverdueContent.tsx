@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { TaskList } from "@/components/tasks/TaskList";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { EmptyOverdueState } from "@/components/overdue/EmptyOverdueState";

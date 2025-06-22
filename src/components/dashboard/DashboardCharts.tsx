@@ -1,5 +1,4 @@
-
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, 

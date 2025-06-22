@@ -1,11 +1,10 @@
-
 import React from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TaskItemPriority } from "./TaskItemPriority";
 import { TaskItemDueDate } from "./TaskItemDueDate";
 import { TaskItemProject } from "./TaskItemProject";
 import { TaskItemActions } from "./TaskItemActions";
-import { Task } from "./TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { Badge } from "@/components/ui/badge";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 

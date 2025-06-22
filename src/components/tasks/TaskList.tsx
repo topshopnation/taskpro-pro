@@ -1,5 +1,5 @@
-
-import { Task, TaskItem } from "./TaskItem"
+import { Task } from "@/components/tasks/taskTypes"
+import { TaskItem } from "./TaskItem"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 

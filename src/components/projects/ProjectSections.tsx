@@ -1,6 +1,5 @@
-
 import { TaskList } from "@/components/tasks/TaskList"
-import { Task } from "@/components/tasks/TaskItem"
+import { Task } from "@/components/tasks/taskTypes"
 
 interface ProjectSectionsProps {
   tasks: Task[]

@@ -1,7 +1,7 @@
 
 import { TaskList } from "@/components/tasks/TaskList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { DashboardCharts } from "./DashboardCharts";
 
 interface DashboardTabsProps {

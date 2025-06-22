@@ -1,6 +1,6 @@
 
 import { TaskList } from "@/components/tasks/TaskList"
-import { Task } from "@/components/tasks/TaskItem"
+import { Task } from "@/components/tasks/taskTypes"
 import { Button } from "@/components/ui/button"
 
 interface GroupedTaskListsProps {

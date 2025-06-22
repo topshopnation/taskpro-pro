@@ -1,5 +1,5 @@
 
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { format, subDays } from "date-fns";
 
 export const filterCompletedTasksByTime = (tasks: Task[], timeFilter: string = "all"): Task[] => {

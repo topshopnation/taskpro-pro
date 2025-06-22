@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";

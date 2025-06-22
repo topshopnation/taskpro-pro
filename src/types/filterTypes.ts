@@ -1,5 +1,5 @@
 
-import { Task } from "@/components/tasks/TaskItem";
+import { Task } from "@/components/tasks/taskTypes";
 import { Filter } from "@/types/supabase";
 
 export interface CustomFilter extends Omit<Filter, 'favorite' | 'color'> {

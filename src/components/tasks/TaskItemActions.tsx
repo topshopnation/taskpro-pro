@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditTaskDialog } from "./EditTaskDialog"
-import { Task } from "./TaskItem"
+import { Task } from "@/components/tasks/taskTypes"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface TaskItemActionsProps {
