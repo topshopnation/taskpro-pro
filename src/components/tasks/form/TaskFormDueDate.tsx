@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { getDateLabelWithDay } from "@/utils/dateUtils"
+import { useMediaQuery } from "@/hooks/use-mobile"
 
 interface TaskFormDueDateProps {
   dueDate?: Date;
@@ -18,6 +19,7 @@ interface TaskFormDueDateProps {
 export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
   const [timeInput, setTimeInput] = useState<string>("");
   const [open, setOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Initialize timeInput when dueDate changes, but only if it has hours/minutes set
   useEffect(() => {
@@ -138,27 +140,32 @@ export function TaskFormDueDate({ dueDate, onChange }: TaskFormDueDateProps) {
           <Button
             variant="outline"
             className={cn(
-              "justify-start text-left font-normal",
+              "justify-start text-left font-normal date-input-button",
               !dueDate && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dueDate ? (
-              <span>
-                {dateLabel.label}{' '}
-                <span className="text-muted-foreground">{dateLabel.day}</span>
-                {shouldShowTime && <span className="ml-1 text-muted-foreground">at {timeInput}</span>}
-              </span>
-            ) : (
-              <span>Pick a date</span>
-            )}
+            <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">
+              {dueDate ? (
+                <>
+                  {dateLabel.label}{' '}
+                  <span className="text-muted-foreground">{dateLabel.day}</span>
+                  {shouldShowTime && <span className="ml-1 text-muted-foreground">at {timeInput}</span>}
+                </>
+              ) : (
+                "Pick a date"
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-auto p-2 z-50" 
-          align="start" 
-          side="bottom" 
-          sideOffset={5}
+          className={cn(
+            "w-auto p-2 z-50",
+            isMobile && "calendar-popover"
+          )}
+          align={isMobile ? "center" : "start"}
+          side={isMobile ? "bottom" : "bottom"}
+          sideOffset={isMobile ? 20 : 5}
           alignOffset={0}
           avoidCollisions={true}
           onClick={handlePopoverContentClick}
