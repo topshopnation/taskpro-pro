@@ -32,9 +32,9 @@ export function TaskItemProject({
   
   const currentProject = projects?.find(p => p.id === projectId)
   
-  // Helper function to invalidate all relevant queries including filtered tasks
-  const invalidateAllTaskQueries = () => {
-    const queryKeysToInvalidate = [
+  // Helper function to refetch all relevant queries immediately for real-time updates
+  const refetchAllTaskQueries = async () => {
+    const queryKeysToRefetch = [
       ['tasks'],
       ['today-tasks'],
       ['overdue-tasks'],
@@ -45,7 +45,7 @@ export function TaskItemProject({
       ['completedTasks']
     ];
 
-    // Also invalidate all filtered-tasks queries
+    // Also refetch all filtered-tasks queries
     if (user?.id) {
       const queryCache = queryClient.getQueryCache();
       const allQueries = queryCache.getAll();
@@ -53,14 +53,15 @@ export function TaskItemProject({
       allQueries.forEach((query) => {
         const queryKey = query.queryKey;
         if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.invalidateQueries({ queryKey });
+          queryClient.refetchQueries({ queryKey });
         }
       });
     }
 
-    queryKeysToInvalidate.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey });
-    });
+    // Use refetchQueries instead of invalidateQueries for immediate updates
+    await Promise.all(queryKeysToRefetch.map(queryKey => 
+      queryClient.refetchQueries({ queryKey })
+    ));
   };
   
   // Helper function to update task in all query caches including filtered tasks
@@ -138,8 +139,8 @@ export function TaskItemProject({
         throw error;
       }
       
-      // Invalidate queries to ensure consistency
-      invalidateAllTaskQueries();
+      // Force immediate refetch for real-time updates
+      await refetchAllTaskQueries();
       
       // Call the parent handler
       await onProjectChange(selectedProjectId)

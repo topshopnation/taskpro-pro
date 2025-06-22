@@ -28,17 +28,17 @@ export default function FilterView() {
   const { completeTask, deleteTask, toggleTaskFavorite } = useTaskOperations();
   const { deleteFilter, updateFilter, toggleFavorite } = useFilterOperations(filterId || "");
 
-  // Simple completion handler - let useTaskCompletion handle everything including toasts
+  // Simple completion handler - NO optimistic callbacks to prevent duplicate toasts
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
     console.log('FilterView handleCompleteTask:', { taskId, completed });
     
-    // Call completeTask directly - it handles optimistic updates, database updates, and toasts
-    // Do NOT pass any optimistic callback to avoid duplicate handling
+    // Call completeTask WITHOUT any optimistic callback
+    // Let useTaskCompletion handle everything including toasts
     const success = await completeTask(taskId, completed);
     return success;
   };
 
-  // Wrapper for deleteTask that includes optimistic updates
+  // Simple delete handler - let useTaskOperations handle everything
   const handleDeleteTask = async (taskId: string) => {
     console.log('FilterView handleDeleteTask:', taskId);
     

@@ -36,12 +36,12 @@ export function useTaskItem({
     
     setIsUpdating(true);
     try {
-      // Use completeTask with optimistic update callback - NO additional toasts here
-      const success = await completeTask(task.id, !task.completed, onComplete);
+      // Call completeTask WITHOUT any optimistic callback - let it handle everything
+      const success = await completeTask(task.id, !task.completed);
       
-      if (!success) {
-        // If the operation failed, the optimistic update will be reverted by useTaskOperations
-        console.error("Failed to complete task");
+      if (success) {
+        // Call the parent callback for any additional handling
+        onComplete(task.id, !task.completed);
       }
     } catch (error: any) {
       console.error("Error in handleCompletionToggle:", error);
@@ -50,9 +50,9 @@ export function useTaskItem({
     }
   };
 
-  // Helper function to invalidate all relevant queries including filtered tasks
-  const invalidateAllTaskQueries = () => {
-    const queryKeysToInvalidate = [
+  // Helper function to refetch all relevant queries immediately for real-time updates
+  const refetchAllTaskQueries = async () => {
+    const queryKeysToRefetch = [
       ['tasks'],
       ['today-tasks'],
       ['overdue-tasks'],
@@ -63,26 +63,26 @@ export function useTaskItem({
       ['completedTasks']
     ];
 
-    // Also invalidate all filtered-tasks queries
+    // Also refetch all filtered-tasks queries
     if (user?.id) {
-      // Get all query keys that match the filtered-tasks pattern
       const queryCache = queryClient.getQueryCache();
       const allQueries = queryCache.getAll();
       
       allQueries.forEach((query) => {
         const queryKey = query.queryKey;
         if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.invalidateQueries({ queryKey });
+          queryClient.refetchQueries({ queryKey });
         }
       });
     }
 
-    queryKeysToInvalidate.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey });
-    });
+    // Use refetchQueries instead of invalidateQueries for immediate updates
+    await Promise.all(queryKeysToRefetch.map(queryKey => 
+      queryClient.refetchQueries({ queryKey })
+    ));
   };
 
-  // Helper function to update task in all query caches with specific filtered tasks support
+  // Helper function to update task in all query caches with immediate refetch
   const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
     const queryKeys = [
       ['tasks'],
@@ -142,8 +142,8 @@ export function useTaskItem({
           throw error;
         }
         
-        // Invalidate queries to ensure consistency
-        invalidateAllTaskQueries();
+        // Force immediate refetch for real-time updates
+        await refetchAllTaskQueries();
         
         toast.success("Task priority updated", {
           duration: 2000
@@ -182,8 +182,8 @@ export function useTaskItem({
           throw error;
         }
         
-        // Invalidate queries to ensure consistency
-        invalidateAllTaskQueries();
+        // Force immediate refetch for real-time updates
+        await refetchAllTaskQueries();
         
         toast.success(date ? "Due date updated" : "Due date removed", {
           duration: 2000
