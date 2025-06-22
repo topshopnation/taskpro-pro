@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -38,13 +37,10 @@ export default function FilterView() {
 
   // Wrapper for completeTask that includes optimistic updates
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
-    // Apply optimistic update immediately
-    handleOptimisticComplete(taskId, completed);
+    // Call the actual completeTask function with optimistic update callback
+    // This will handle both the database update AND the toast with undo functionality
+    const success = await completeTask(taskId, completed, handleOptimisticComplete);
     
-    // Call the actual completeTask function
-    const success = await completeTask(taskId, completed);
-    
-    // If the operation failed, the optimistic update will be reverted by the toast undo action
     return success;
   };
 
