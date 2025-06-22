@@ -34,58 +34,117 @@
   }
 }
 
-/* Calendar positioning fixes for mobile */
+/* Calendar positioning fixes for mobile - FULL SCREEN LIKE TODOIST */
 @media (max-width: 768px) {
-  /* Ensure popover content is visible and positioned correctly */
+  /* Make popover content full screen on mobile */
   [data-radix-popover-content] {
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
     z-index: 9999 !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 95vw !important;
-    max-width: 400px !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: hidden !important;
     background: white !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     padding: 0 !important;
   }
   
-  /* Calendar specific positioning - force center positioning with scrolling */
+  /* Calendar specific positioning - FULL SCREEN */
   .calendar-popover,
   [data-radix-popover-content]:has(.rdp) {
     position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 95vw !important;
-    max-width: 400px !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
     z-index: 9999 !important;
     background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
-    padding: 16px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
-  /* Ensure dialog calendars are also properly positioned */
+  /* Ensure dialog calendars are also full screen */
   [data-radix-dialog-content] [data-radix-popover-content] {
     position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
     z-index: 10000 !important;
-    width: 95vw !important;
-    max-width: 400px !important;
-    max-height: 90vh !important;
+    overflow: hidden !important;
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Make the calendar container scrollable and fill the screen */
+  [data-radix-popover-content] > div {
+    height: 100% !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px !important;
+    padding-top: 60px !important; /* Account for status bar */
+  }
+  
+  /* Time input at the top */
+  [data-radix-popover-content] > div > div:first-child {
+    order: 1 !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 16px !important;
+  }
+  
+  /* Calendar takes remaining space and is scrollable */
+  [data-radix-popover-content] > div > .rdp,
+  [data-radix-popover-content] .rdp {
+    order: 2 !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  
+  /* Quick options should be at the very top and scrollable */
+  .quick-options-container {
+    order: 0 !important;
+    flex-shrink: 0 !important;
+    max-height: 250px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    margin-bottom: 16px !important;
+    background: white !important;
   }
   
   /* Date input field text spacing - ensure no overlap */
@@ -114,21 +173,23 @@
   /* Calendar container improvements for mobile scrolling */
   .rdp {
     margin: 0 !important;
-    max-width: 100% !important;
     width: 100% !important;
-    min-height: auto !important;
-  }
-  
-  .rdp-months {
-    max-width: 100% !important;
-    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: flex !important;
     flex-direction: column !important;
   }
   
+  .rdp-months {
+    width: 100% !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+  }
+  
   .rdp-month {
-    max-width: 100% !important;
     width: 100% !important;
     margin-bottom: 16px !important;
+    flex-shrink: 0 !important;
   }
   
   /* Improve calendar navigation for mobile */
@@ -137,6 +198,7 @@
     justify-content: space-between !important;
     align-items: center !important;
     margin-bottom: 16px !important;
+    flex-shrink: 0 !important;
   }
   
   .rdp-nav_button {
@@ -153,7 +215,7 @@
     border-radius: 8px !important;
   }
   
-  /* Quick date options styling for mobile */
+  /* Quick date options styling for mobile - like Todoist */
   .quick-date-option {
     padding: 16px !important;
     min-height: 56px !important;
@@ -162,27 +224,38 @@
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
+    background: white !important;
   }
   
   .quick-date-option:last-child {
     border-bottom: none !important;
   }
   
-  /* Time input should be smaller and less prominent */
+  /* Time input should be prominent but not huge */
   .time-input-mobile {
     height: 44px !important;
     font-size: 16px !important;
     padding: 8px 12px !important;
-    margin-bottom: 16px !important;
+    width: 100% !important;
   }
   
-  /* Ensure quick options are visible and scrollable */
-  .quick-options-container {
-    max-height: 300px !important;
+  /* Make sure calendar table is properly sized */
+  .rdp-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  
+  .rdp-head_cell,
+  .rdp-cell {
+    width: calc(100% / 7) !important;
+    text-align: center !important;
+  }
+  
+  /* Ensure the calendar content scrolls properly */
+  .rdp-months {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    margin-bottom: 16px !important;
+    padding-bottom: 20px !important;
   }
 }
 
@@ -204,11 +277,15 @@
     .calendar-popover,
     [data-radix-popover-content]:has(.rdp) {
       background: #1C1C1E !important;
-      border-color: rgba(84, 84, 88, 0.65) !important;
     }
     
     .quick-date-option {
+      background: #1C1C1E !important;
       border-bottom-color: rgba(84, 84, 88, 0.3) !important;
+    }
+    
+    .quick-options-container {
+      background: #1C1C1E !important;
     }
   }
 }
