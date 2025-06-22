@@ -48,45 +48,38 @@ export function useTaskItem({
     }
   };
 
+  // Helper function to update task in all query caches
+  const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
+    const queryKeys = [
+      ['tasks'],
+      ['today-tasks'],
+      ['overdue-tasks'],
+      ['inbox-tasks'],
+      ['project-tasks', task.projectId],
+      ['filtered-tasks']
+    ];
+
+    queryKeys.forEach(queryKey => {
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((t: Task) => t.id === task.id ? updateFn(t) : t);
+      });
+    });
+  };
+
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
+    if (isUpdating) return;
     setIsUpdating(true);
+    
     try {
       if (onPriorityChange) {
         await onPriorityChange(task.id, newPriority);
       } else {
-        // Optimistically update the local task state immediately
-        const previousTask = { ...task };
+        // Store previous state for rollback
+        const previousPriority = task.priority;
         
-        // Update the task in all relevant queries immediately
-        queryClient.setQueryData(['tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
-        
-        queryClient.setQueryData(['today-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
-        
-        queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
-        
-        queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
-        
-        queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
-        
-        queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
-        });
+        // Optimistically update all task queries immediately
+        updateTaskInAllQueries((t: Task) => ({ ...t, priority: newPriority }));
 
         const { error } = await supabase
           .from('tasks')
@@ -95,36 +88,7 @@ export function useTaskItem({
         
         if (error) {
           // Revert optimistic update on error
-          queryClient.setQueryData(['tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['today-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
+          updateTaskInAllQueries((t: Task) => ({ ...t, priority: previousPriority }));
           throw error;
         }
         
@@ -140,45 +104,19 @@ export function useTaskItem({
   };
 
   const handleDateChange = async (date: Date | undefined) => {
+    if (isUpdating) return;
     setIsUpdating(true);
+    
     try {
       if (onDateChange) {
         await onDateChange(task.id, date);
       } else {
-        // Optimistically update the local task state immediately
-        const previousTask = { ...task };
+        // Store previous state for rollback
+        const previousDate = task.dueDate;
         const formattedDate = date ? date.toISOString() : null;
         
-        // Update the task in all relevant queries immediately
-        queryClient.setQueryData(['tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
-        
-        queryClient.setQueryData(['today-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
-        
-        queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
-        
-        queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
-        
-        queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
-        
-        queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
-        });
+        // Optimistically update all task queries immediately
+        updateTaskInAllQueries((t: Task) => ({ ...t, dueDate: date }));
         
         const { error } = await supabase
           .from('tasks')
@@ -187,36 +125,7 @@ export function useTaskItem({
         
         if (error) {
           // Revert optimistic update on error
-          queryClient.setQueryData(['tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['today-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
-          queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
-          });
-          
+          updateTaskInAllQueries((t: Task) => ({ ...t, dueDate: previousDate }));
           throw error;
         }
         

@@ -30,6 +30,26 @@ export function TaskItemProject({
   
   const currentProject = projects?.find(p => p.id === projectId)
   
+  // Helper function to update task in all query caches
+  const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
+    const queryKeys = [
+      ['tasks'],
+      ['today-tasks'],
+      ['overdue-tasks'],
+      ['inbox-tasks'],
+      ['project-tasks', projectId],
+      ['project-tasks', null], // for inbox tasks
+      ['filtered-tasks']
+    ];
+
+    queryKeys.forEach(queryKey => {
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((t: Task) => t.id === taskId ? updateFn(t) : t);
+      });
+    });
+  };
+  
   const handleProjectSelect = async (selectedProjectId: string | null) => {
     try {
       setIsChangingProject(true)
@@ -39,33 +59,35 @@ export function TaskItemProject({
       const projectName = selectedProject?.name || "No Project"
       const projectColor = selectedProject?.color
       
-      // Optimistically update all task queries immediately
-      const updateTaskInQuery = (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((t: Task) => 
-          t.id === taskId 
-            ? { 
-                ...t, 
-                projectId: selectedProjectId, 
-                projectName,
-                projectColor 
-              } 
-            : t
-        );
-      };
-      
       // Store previous state for rollback
       const previousProjectId = projectId;
       const previousProjectName = currentProject?.name || "No Project";
       const previousProjectColor = currentProject?.color;
       
-      queryClient.setQueryData(['tasks'], updateTaskInQuery);
-      queryClient.setQueryData(['today-tasks'], updateTaskInQuery);
-      queryClient.setQueryData(['overdue-tasks'], updateTaskInQuery);
-      queryClient.setQueryData(['inbox-tasks'], updateTaskInQuery);
-      queryClient.setQueryData(['project-tasks', projectId], updateTaskInQuery);
-      queryClient.setQueryData(['project-tasks', selectedProjectId], updateTaskInQuery);
-      queryClient.setQueryData(['filtered-tasks'], updateTaskInQuery);
+      // Optimistically update all task queries immediately
+      updateTaskInAllQueries((t: Task) => ({
+        ...t,
+        projectId: selectedProjectId,
+        projectName,
+        projectColor
+      }));
+      
+      // Also update queries for the new project
+      if (selectedProjectId) {
+        queryClient.setQueryData(['project-tasks', selectedProjectId], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => 
+            t.id === taskId 
+              ? { 
+                  ...t, 
+                  projectId: selectedProjectId, 
+                  projectName,
+                  projectColor 
+                } 
+              : t
+          );
+        });
+      }
       
       // Update in database
       const { error } = await supabase
@@ -75,27 +97,12 @@ export function TaskItemProject({
       
       if (error) {
         // Revert optimistic updates on error
-        const revertTaskInQuery = (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => 
-            t.id === taskId 
-              ? { 
-                  ...t, 
-                  projectId: previousProjectId, 
-                  projectName: previousProjectName,
-                  projectColor: previousProjectColor 
-                } 
-              : t
-          );
-        };
-        
-        queryClient.setQueryData(['tasks'], revertTaskInQuery);
-        queryClient.setQueryData(['today-tasks'], revertTaskInQuery);
-        queryClient.setQueryData(['overdue-tasks'], revertTaskInQuery);
-        queryClient.setQueryData(['inbox-tasks'], revertTaskInQuery);
-        queryClient.setQueryData(['project-tasks', projectId], revertTaskInQuery);
-        queryClient.setQueryData(['project-tasks', selectedProjectId], revertTaskInQuery);
-        queryClient.setQueryData(['filtered-tasks'], revertTaskInQuery);
+        updateTaskInAllQueries((t: Task) => ({
+          ...t,
+          projectId: previousProjectId,
+          projectName: previousProjectName,
+          projectColor: previousProjectColor
+        }));
         
         throw error;
       }
