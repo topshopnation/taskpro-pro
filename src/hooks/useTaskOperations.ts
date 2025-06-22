@@ -7,7 +7,9 @@ import { queryClient } from "@/lib/react-query";
 export function useTaskOperations() {
   const [isLoading, setIsLoading] = useState(false);
   
-  const completeTask = async (taskId: string, completed: boolean, suppressToast = false) => {
+  const completeTask = async (taskId: string, completed: boolean): Promise<boolean> => {
+    if (isLoading) return false; // Prevent concurrent operations
+    
     setIsLoading(true);
     
     // Store task data before update for potential undo
@@ -38,17 +40,24 @@ export function useTaskOperations() {
       queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
       
-      // Generate a unique toast ID to prevent duplicates
-      const uniqueId = `task-complete-${taskId}-${Date.now()}`;
+      // Generate a unique toast ID to prevent duplicates and handle cleanup
+      const uniqueId = `task-${completed ? 'complete' : 'incomplete'}-${taskId}-${Date.now()}`;
       
-      // Always show toast with undo action (removed suppressToast logic)
+      // Dismiss any existing completion toasts for this task to prevent overlaps
+      toast.dismiss(`task-complete-${taskId}`);
+      toast.dismiss(`task-incomplete-${taskId}`);
+      
+      // Show toast with undo action
       toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
         id: uniqueId,
-        duration: 4000, // Give users time to see and use the undo button
+        duration: 5000, // Give users time to see and use the undo button
         action: {
           label: "Undo",
           onClick: async () => {
             try {
+              // Dismiss this toast when undo is clicked
+              toast.dismiss(uniqueId);
+              
               // Revert to previous state
               const { error: undoError } = await supabase
                 .from('tasks')
@@ -64,12 +73,15 @@ export function useTaskOperations() {
               queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
               queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
               
+              // Show success message for undo
               toast.success("Task undone", {
-                id: `task-undo-success-${taskId}-${Date.now()}`
+                id: `task-undo-success-${taskId}-${Date.now()}`,
+                duration: 3000
               });
             } catch (undoError) {
               toast.error("Failed to undo", {
-                id: `task-undo-error-${taskId}-${Date.now()}`
+                id: `task-undo-error-${taskId}-${Date.now()}`,
+                duration: 3000
               });
             }
           }
@@ -80,7 +92,8 @@ export function useTaskOperations() {
     } catch (error: any) {
       toast.error("Failed to update task", {
         description: error.message,
-        id: `task-error-${taskId}-${Date.now()}`
+        id: `task-error-${taskId}-${Date.now()}`,
+        duration: 4000
       });
       return false;
     } finally {
@@ -124,12 +137,15 @@ export function useTaskOperations() {
       // Add toast with undo option
       toast("Task deleted", {
         id: uniqueId,
-        duration: 4000, // Give users time to see and use the undo button
+        duration: 5000, // Give users time to see and use the undo button
         action: {
           label: "Undo",
           onClick: async () => {
             if (taskData) {
               try {
+                // Dismiss this toast when undo is clicked
+                toast.dismiss(uniqueId);
+                
                 const { id, created_at, ...restData } = taskData;
                 
                 // Restore the task with its original data
@@ -147,11 +163,13 @@ export function useTaskOperations() {
                 queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
                 
                 toast.success("Task restored", {
-                  id: `task-restore-success-${taskId}-${Date.now()}`
+                  id: `task-restore-success-${taskId}-${Date.now()}`,
+                  duration: 3000
                 });
               } catch (undoError) {
                 toast.error("Failed to restore task", {
-                  id: `task-restore-error-${taskId}-${Date.now()}`
+                  id: `task-restore-error-${taskId}-${Date.now()}`,
+                  duration: 3000
                 });
               }
             }
@@ -163,7 +181,8 @@ export function useTaskOperations() {
     } catch (error: any) {
       toast.error("Failed to delete task", {
         description: error.message,
-        id: `task-delete-error-${taskId}-${Date.now()}`
+        id: `task-delete-error-${taskId}-${Date.now()}`,
+        duration: 4000
       });
       return false;
     } finally {

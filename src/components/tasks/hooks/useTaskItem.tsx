@@ -29,17 +29,22 @@ export function useTaskItem({
   const { completeTask } = useTaskOperations();
 
   const handleCompletionToggle = async () => {
+    if (isUpdating) return; // Prevent multiple rapid clicks
+    
     setIsUpdating(true);
     try {
       // Use completeTask which has built-in undo functionality
-      // Don't suppress toast so we get the undo action
-      await completeTask(task.id, !task.completed, false);
+      // This will handle all toast logic internally
+      const success = await completeTask(task.id, !task.completed);
       
-      // Call the parent's onComplete handler for UI updates
-      onComplete(task.id, !task.completed);
+      if (success) {
+        // Only call the parent's onComplete handler for UI updates
+        // Don't show any additional toasts here
+        onComplete(task.id, !task.completed);
+      }
     } catch (error: any) {
-      // Show error toast only if it fails
-      toast.error(`Error updating task: ${error.message}`);
+      // Only show error toast if completeTask fails completely
+      console.error("Error in handleCompletionToggle:", error);
     } finally {
       setIsUpdating(false);
     }
