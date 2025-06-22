@@ -116,22 +116,27 @@ export function TaskItem({
               {task.title}
             </h3>
             
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleFavorite}
-              disabled={isUpdating}
-              className="hover:bg-transparent p-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              {isFavorite ? (
-                <Star className="h-4 w-4 text-yellow-500" />
-              ) : (
-                <StarOff className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span className="sr-only">
-                {isFavorite ? "Unfavorite" : "Favorite"}
-              </span>
-            </Button>
+            {(isFavorite || !isMobile) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleFavorite}
+                disabled={isUpdating}
+                className={cn(
+                  "hover:bg-transparent p-0 h-6 w-6 transition-opacity",
+                  isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
+              >
+                {isFavorite ? (
+                  <Star className="h-4 w-4 text-yellow-500" />
+                ) : (
+                  <StarOff className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className="sr-only">
+                  {isFavorite ? "Unfavorite" : "Favorite"}
+                </span>
+              </Button>
+            )}
           </div>
 
           {task.notes && (
