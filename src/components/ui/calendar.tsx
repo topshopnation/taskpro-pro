@@ -70,7 +70,9 @@ function Calendar({
               key={option.value}
               onClick={(e) => handleQuickOptionClick(option.date, e)}
               className={cn(
-                "flex items-center justify-between p-1.5 text-sm hover:bg-muted transition-colors pointer-events-auto",
+                "flex items-center justify-between p-1.5 text-sm transition-colors pointer-events-auto",
+                "text-foreground hover:bg-muted", // Fixed: proper light/dark mode text colors
+                "border-b border-border last:border-b-0", // Fixed: proper border colors
                 option.date && isDateSelected(option.date) && "bg-primary/10",
                 isMobile && "quick-date-option"
               )}
@@ -78,12 +80,12 @@ function Calendar({
             >
               <div className="flex items-center space-x-2">
                 {option.value === "today" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md border text-xs">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md border border-border text-xs text-foreground">
                     {option.date ? format(option.date, "d") : ""}
                   </span>
                 )}
                 {option.value === "tomorrow" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-yellow-500">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-yellow-600 dark:text-yellow-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="4"/>
                       <path d="M12 2v2"/>
@@ -98,7 +100,7 @@ function Calendar({
                   </span>
                 )}
                 {option.value === "next-week" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-purple-500">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-purple-600 dark:text-purple-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
                       <line x1="16" x2="16" y1="2" y2="6"/>
@@ -108,7 +110,7 @@ function Calendar({
                   </span>
                 )}
                 {option.value === "weekend" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-blue-500">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-blue-600 dark:text-blue-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/>
                       <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
@@ -118,7 +120,7 @@ function Calendar({
                   </span>
                 )}
                 {option.value === "no-date" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-gray-500">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md text-xs text-muted-foreground">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"/>
                       <line x1="6" y1="6" x2="18" y2="18"/>
@@ -126,7 +128,7 @@ function Calendar({
                   </span>
                 )}
                 <span className={cn(
-                  "font-medium text-xs",
+                  "font-medium text-xs text-foreground", // Fixed: proper text color
                   isMobile && "text-sm"
                 )}>{option.label}</span>
               </div>
