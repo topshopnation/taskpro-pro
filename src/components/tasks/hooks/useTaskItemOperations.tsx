@@ -1,6 +1,5 @@
 
 import { Task } from "@/components/tasks/taskTypes";
-import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTaskItemQueries } from "./useTaskItemQueries";
@@ -26,7 +25,6 @@ export function useTaskItemOperations({
   setIsUpdating,
   isUpdating
 }: UseTaskItemOperationsProps) {
-  const { completeTask } = useTaskOperations();
   const { invalidateAllTaskQueries } = useTaskItemQueries();
 
   const handleCompletionToggle = async () => {
@@ -34,13 +32,24 @@ export function useTaskItemOperations({
     
     setIsUpdating(true);
     try {
-      const success = await completeTask(task.id, !task.completed);
+      // Update database FIRST
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed: !task.completed })
+        .eq('id', task.id);
+        
+      if (error) throw error;
       
-      if (success) {
-        onComplete(task.id, !task.completed);
-      }
+      // Wait for ALL queries to refresh completely
+      await invalidateAllTaskQueries();
+      
+      // THEN call the parent handler (which may show its own toast)
+      onComplete(task.id, !task.completed);
     } catch (error: any) {
       console.error("Error in handleCompletionToggle:", error);
+      toast.error("Failed to update task", {
+        description: error.message
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -51,24 +60,25 @@ export function useTaskItemOperations({
     setIsUpdating(true);
     
     try {
+      // Always update database directly - no conditional logic
+      const { error } = await supabase
+        .from('tasks')
+        .update({ priority: newPriority })
+        .eq('id', task.id);
+      
+      if (error) throw error;
+      
+      // Wait for ALL queries to refresh completely
+      await invalidateAllTaskQueries();
+      
+      // Call parent handler if provided
       if (onPriorityChange) {
         await onPriorityChange(task.id, newPriority);
-      } else {
-        // Update database FIRST
-        const { error } = await supabase
-          .from('tasks')
-          .update({ priority: newPriority })
-          .eq('id', task.id);
-        
-        if (error) throw error;
-        
-        // THEN refetch queries to force UI update with fresh data
-        await invalidateAllTaskQueries();
-        
-        toast.success("Task priority updated", {
-          duration: 2000
-        });
       }
+      
+      toast.success("Task priority updated", {
+        duration: 2000
+      });
     } catch (error: any) {
       toast.error(`Error updating task priority: ${error.message}`);
     } finally {
@@ -81,26 +91,27 @@ export function useTaskItemOperations({
     setIsUpdating(true);
     
     try {
+      const formattedDate = date ? date.toISOString() : null;
+      
+      // Always update database directly - no conditional logic  
+      const { error } = await supabase
+        .from('tasks')
+        .update({ due_date: formattedDate })
+        .eq('id', task.id);
+      
+      if (error) throw error;
+      
+      // Wait for ALL queries to refresh completely
+      await invalidateAllTaskQueries();
+      
+      // Call parent handler if provided
       if (onDateChange) {
         await onDateChange(task.id, date);
-      } else {
-        const formattedDate = date ? date.toISOString() : null;
-        
-        // Update database FIRST
-        const { error } = await supabase
-          .from('tasks')
-          .update({ due_date: formattedDate })
-          .eq('id', task.id);
-        
-        if (error) throw error;
-        
-        // THEN refetch queries to force UI update with fresh data
-        await invalidateAllTaskQueries();
-        
-        toast.success(date ? "Due date updated" : "Due date removed", {
-          duration: 2000
-        });
       }
+      
+      toast.success(date ? "Due date updated" : "Due date removed", {
+        duration: 2000
+      });
     } catch (error: any) {
       toast.error(`Error updating due date: ${error.message}`);
     } finally {
@@ -117,6 +128,9 @@ export function useTaskItemOperations({
         .eq('id', task.id);
       
       if (error) throw error;
+      
+      // Wait for ALL queries to refresh completely
+      await invalidateAllTaskQueries();
       
       onDelete(task.id);
     } catch (error: any) {

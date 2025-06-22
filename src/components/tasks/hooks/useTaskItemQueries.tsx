@@ -6,6 +6,8 @@ export function useTaskItemQueries() {
   const { user } = useAuth();
 
   const invalidateAllTaskQueries = async () => {
+    if (!user?.id) return;
+
     const queryKeysToInvalidate = [
       ['tasks'],
       ['today-tasks'],
@@ -17,23 +19,29 @@ export function useTaskItemQueries() {
       ['filtered-tasks']
     ];
 
-    // Invalidate all filtered-tasks queries
-    if (user?.id) {
-      const queryCache = queryClient.getQueryCache();
-      const allQueries = queryCache.getAll();
-      
-      allQueries.forEach((query) => {
-        const queryKey = query.queryKey;
-        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.refetchQueries({ queryKey });
-        }
-      });
-    }
+    // Get all filtered-tasks queries
+    const queryCache = queryClient.getQueryCache();
+    const allQueries = queryCache.getAll();
+    
+    const filteredTaskQueries = allQueries.filter((query) => {
+      const queryKey = query.queryKey;
+      return Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks';
+    });
 
-    // Refetch all relevant queries immediately
-    await Promise.all(queryKeysToInvalidate.map(queryKey => 
-      queryClient.refetchQueries({ queryKey })
-    ));
+    // Create promises for all refetch operations
+    const refetchPromises = [
+      // Standard query refetches
+      ...queryKeysToInvalidate.map(queryKey => 
+        queryClient.refetchQueries({ queryKey })
+      ),
+      // Filtered task query refetches
+      ...filteredTaskQueries.map(query => 
+        queryClient.refetchQueries({ queryKey: query.queryKey })
+      )
+    ];
+
+    // Wait for ALL queries to complete before returning
+    await Promise.all(refetchPromises);
   };
 
   return { invalidateAllTaskQueries };

@@ -1,7 +1,7 @@
+
 import { useParams } from "react-router-dom";
 import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
-import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { FilterHeader } from "@/components/filters/FilterHeader";
 import { useFetchFilter } from "@/hooks/filter/useFetchFilter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,19 +24,24 @@ export default function FilterView() {
   
   const { currentFilter, isLoading: isFilterLoading } = useFetchFilter();
   const { data: tasks = [], isLoading: isTasksLoading } = useFilteredTasks(filterId || "");
-  const { completeTask, deleteTask, toggleTaskFavorite } = useTaskOperations();
   const { deleteFilter, updateFilter, toggleFavorite } = useFilterOperations(filterId || "");
 
-  // Simple completion handler - pass through to useTaskOperations without modification
+  // Simple completion handler - just pass through to TaskList without any additional logic
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
-    console.log('FilterView handleCompleteTask:', { taskId, completed });
-    return await completeTask(taskId, completed);
+    // Do nothing here - let TaskItem handle everything including toasts
+    console.log('FilterView handleCompleteTask passthrough:', { taskId, completed });
   };
 
-  // Simple delete handler - pass through to useTaskOperations without modification
+  // Simple delete handler - just pass through to TaskList
   const handleDeleteTask = async (taskId: string) => {
-    console.log('FilterView handleDeleteTask:', taskId);
-    await deleteTask(taskId);
+    // Do nothing here - let TaskItem handle everything
+    console.log('FilterView handleDeleteTask passthrough:', taskId);
+  };
+
+  // Simple favorite toggle - just pass through to TaskList
+  const handleFavoriteToggle = async (taskId: string, favorite: boolean) => {
+    // Do nothing here - let TaskItem handle everything
+    console.log('FilterView handleFavoriteToggle passthrough:', { taskId, favorite });
   };
 
   const handleEdit = () => {
@@ -95,7 +100,7 @@ export default function FilterView() {
     }
   };
 
-  const handleFavoriteToggle = async () => {
+  const handleFavoriteToggleFilter = async () => {
     if (isStandardFilter(filterId || "")) {
       toast.error("Cannot modify standard filters");
       return;
@@ -142,7 +147,7 @@ export default function FilterView() {
       <div className="space-y-6">
         <FilterHeader 
           filter={filterWithLogic}
-          onFavoriteToggle={handleFavoriteToggle}
+          onFavoriteToggle={handleFavoriteToggleFilter}
           onRenameClick={handleEdit}
           onDeleteClick={handleDelete}
           onColorChange={handleColorChange}
@@ -155,7 +160,7 @@ export default function FilterView() {
           emptyMessage="No tasks match this filter"
           onComplete={handleCompleteTask}
           onDelete={handleDeleteTask}
-          onFavoriteToggle={toggleTaskFavorite}
+          onFavoriteToggle={handleFavoriteToggle}
           hideTitle={true}
         />
 
