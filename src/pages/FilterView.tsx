@@ -17,18 +17,37 @@ export default function FilterView() {
   const { user } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [filterName, setFilterName] = useState("");
+  const [filterColor, setFilterColor] = useState("");
+  const [filterConditions, setFilterConditions] = useState({ items: [], logic: "and" });
   
-  const { filter, isLoading: isFilterLoading } = useFetchFilter(filterId || "");
+  const { currentFilter, isLoading: isFilterLoading } = useFetchFilter(filterId || "");
   const { data: tasks = [], isLoading: isTasksLoading } = useFilteredTasks(filterId || "");
   const { completeTask, deleteTask } = useTaskOperations();
-  const { deleteFilter } = useFilterOperations();
+  const { deleteFilter, updateFilter } = useFilterOperations();
 
   const handleEdit = () => {
-    setIsEditDialogOpen(true);
+    if (currentFilter) {
+      setFilterName(currentFilter.name);
+      setFilterColor(currentFilter.color || "");
+      setFilterConditions(currentFilter.conditions || { items: [], logic: "and" });
+      setIsEditDialogOpen(true);
+    }
   };
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleRename = async () => {
+    if (filterId && currentFilter) {
+      await updateFilter(filterId, {
+        name: filterName,
+        color: filterColor,
+        conditions: filterConditions
+      });
+      setIsEditDialogOpen(false);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -46,7 +65,7 @@ export default function FilterView() {
     );
   }
 
-  if (!filter) {
+  if (!currentFilter) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">Filter not found</p>
@@ -54,12 +73,16 @@ export default function FilterView() {
     );
   }
 
+  // Add logic property if missing
+  const filterWithLogic = {
+    ...currentFilter,
+    logic: (currentFilter as any).logic || "and"
+  };
+
   return (
     <div className="space-y-6">
       <FilterHeader 
-        filter={filter}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        filter={filterWithLogic}
       />
       
       <TaskList
@@ -73,12 +96,18 @@ export default function FilterView() {
       />
 
       <FilterDialogs
-        filter={filter}
         isEditDialogOpen={isEditDialogOpen}
-        setIsEditDialogOpen={setIsEditDialogOpen}
         isDeleteDialogOpen={isDeleteDialogOpen}
-        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-        onConfirmDelete={handleConfirmDelete}
+        filterName={filterName}
+        filterColor={filterColor}
+        filterConditions={filterConditions}
+        onEditDialogChange={setIsEditDialogOpen}
+        onDeleteDialogChange={setIsDeleteDialogOpen}
+        onFilterNameChange={setFilterName}
+        onFilterColorChange={setFilterColor}
+        onFilterConditionsChange={setFilterConditions}
+        onRename={handleRename}
+        onDelete={handleConfirmDelete}
       />
     </div>
   );

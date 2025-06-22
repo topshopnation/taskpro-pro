@@ -85,7 +85,7 @@ export function useProjectTasks(projectId: string | undefined) {
   }, [user]);
 
   // Filter tasks that are not in sections (unsectioned tasks)
-  const unsectionedTasks = tasks.filter(task => !task.sectionId);
+  const unsectionedTasks = tasks.filter(task => !task.section);
 
   return {
     tasks,

@@ -9,7 +9,7 @@ import { Task } from "@/components/tasks/taskTypes";
 
 const Stats = () => {
   const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardTasks();
-  const { data: completedData, isLoading: isCompletedLoading } = useCompletedTasks();
+  const { totalCompleted, isLoading: isCompletedLoading } = useCompletedTasks();
 
   if (isDashboardLoading || isCompletedLoading) {
     return (
@@ -28,7 +28,6 @@ const Stats = () => {
   }
 
   const { todayTasks = [], highPriorityTasks = [], allTasks = [] } = dashboardData || {};
-  const { totalCompleted = 0 } = completedData || {};
 
   return (
     <div className="space-y-6">
@@ -38,6 +37,7 @@ const Stats = () => {
       
       <StatCards 
         todayCount={todayTasks.length}
+        overdueCount={0}
         highPriorityCount={highPriorityTasks.length}
         totalCount={allTasks.length}
         completedCount={totalCompleted}
