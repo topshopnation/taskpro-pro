@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -28,21 +27,15 @@ export default function FilterView() {
   const { completeTask, deleteTask, toggleTaskFavorite } = useTaskOperations();
   const { deleteFilter, updateFilter, toggleFavorite } = useFilterOperations(filterId || "");
 
-  // Simple completion handler - NO optimistic callbacks to prevent duplicate toasts
+  // Simple completion handler - pass through to useTaskOperations without modification
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
     console.log('FilterView handleCompleteTask:', { taskId, completed });
-    
-    // Call completeTask WITHOUT any optimistic callback
-    // Let useTaskCompletion handle everything including toasts
-    const success = await completeTask(taskId, completed);
-    return success;
+    return await completeTask(taskId, completed);
   };
 
-  // Simple delete handler - let useTaskOperations handle everything
+  // Simple delete handler - pass through to useTaskOperations without modification
   const handleDeleteTask = async (taskId: string) => {
     console.log('FilterView handleDeleteTask:', taskId);
-    
-    // Call the actual deleteTask function - it handles everything
     await deleteTask(taskId);
   };
 

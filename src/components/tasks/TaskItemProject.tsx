@@ -9,7 +9,6 @@ import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { queryClient } from "@/lib/react-query"
-import { Task } from "@/components/tasks/taskTypes"
 import { useAuth } from "@/hooks/use-auth"
 
 interface TaskItemProjectProps {
@@ -32,20 +31,20 @@ export function TaskItemProject({
   
   const currentProject = projects?.find(p => p.id === projectId)
   
-  // Helper function to refetch all relevant queries immediately for real-time updates
-  const refetchAllTaskQueries = async () => {
-    const queryKeysToRefetch = [
+  // Helper function to invalidate all relevant queries after successful database updates
+  const invalidateAllTaskQueries = async () => {
+    const queryKeysToInvalidate = [
       ['tasks'],
       ['today-tasks'],
       ['overdue-tasks'],
       ['inbox-tasks'],
       ['project-tasks', projectId],
-      ['project-tasks', null], // for inbox tasks
+      ['project-tasks', null],
       ['search-tasks'],
       ['completedTasks']
     ];
 
-    // Also refetch all filtered-tasks queries
+    // Invalidate all filtered-tasks queries
     if (user?.id) {
       const queryCache = queryClient.getQueryCache();
       const allQueries = queryCache.getAll();
@@ -53,94 +52,31 @@ export function TaskItemProject({
       allQueries.forEach((query) => {
         const queryKey = query.queryKey;
         if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.refetchQueries({ queryKey });
+          queryClient.invalidateQueries({ queryKey });
         }
       });
     }
 
-    // Use refetchQueries instead of invalidateQueries for immediate updates
-    await Promise.all(queryKeysToRefetch.map(queryKey => 
-      queryClient.refetchQueries({ queryKey })
+    // Invalidate all relevant queries
+    await Promise.all(queryKeysToInvalidate.map(queryKey => 
+      queryClient.invalidateQueries({ queryKey })
     ));
-  };
-  
-  // Helper function to update task in all query caches including filtered tasks
-  const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
-    const queryKeys = [
-      ['tasks'],
-      ['today-tasks'],
-      ['overdue-tasks'],
-      ['inbox-tasks'],
-      ['project-tasks', projectId],
-      ['project-tasks', null], // for inbox tasks
-    ];
-
-    queryKeys.forEach(queryKey => {
-      queryClient.setQueryData(queryKey, (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((t: Task) => t.id === taskId ? updateFn(t) : t);
-      });
-    });
-
-    // Update all filtered-tasks queries
-    if (user?.id) {
-      const queryCache = queryClient.getQueryCache();
-      const allQueries = queryCache.getAll();
-      
-      allQueries.forEach((query) => {
-        const queryKey = query.queryKey;
-        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.setQueryData(queryKey, (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === taskId ? updateFn(t) : t);
-          });
-        }
-      });
-    }
   };
   
   const handleProjectSelect = async (selectedProjectId: string | null) => {
     try {
       setIsChangingProject(true)
       
-      // Get the project name for optimistic updates
-      const selectedProject = projects?.find(p => p.id === selectedProjectId)
-      const projectName = selectedProject?.name || "No Project"
-      const projectColor = selectedProject?.color
-      
-      // Store previous state for rollback
-      const previousProjectId = projectId;
-      const previousProjectName = currentProject?.name || "No Project";
-      const previousProjectColor = currentProject?.color;
-      
-      // Optimistically update all task queries immediately
-      updateTaskInAllQueries((t: Task) => ({
-        ...t,
-        projectId: selectedProjectId,
-        projectName,
-        projectColor
-      }));
-      
-      // Update in database
+      // Update database FIRST
       const { error } = await supabase
         .from('tasks')
         .update({ project_id: selectedProjectId })
         .eq('id', taskId);
       
-      if (error) {
-        // Revert optimistic updates on error
-        updateTaskInAllQueries((t: Task) => ({
-          ...t,
-          projectId: previousProjectId,
-          projectName: previousProjectName,
-          projectColor: previousProjectColor
-        }));
-        
-        throw error;
-      }
+      if (error) throw error;
       
-      // Force immediate refetch for real-time updates
-      await refetchAllTaskQueries();
+      // THEN invalidate queries to force refetch with fresh data
+      await invalidateAllTaskQueries();
       
       // Call the parent handler
       await onProjectChange(selectedProjectId)

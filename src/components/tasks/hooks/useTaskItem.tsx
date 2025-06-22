@@ -32,15 +32,13 @@ export function useTaskItem({
   const { completeTask } = useTaskOperations();
 
   const handleCompletionToggle = async () => {
-    if (isUpdating) return; // Prevent multiple rapid clicks
+    if (isUpdating) return;
     
     setIsUpdating(true);
     try {
-      // Call completeTask WITHOUT any optimistic callback - let it handle everything
       const success = await completeTask(task.id, !task.completed);
       
       if (success) {
-        // Call the parent callback for any additional handling
         onComplete(task.id, !task.completed);
       }
     } catch (error: any) {
@@ -50,20 +48,20 @@ export function useTaskItem({
     }
   };
 
-  // Helper function to refetch all relevant queries immediately for real-time updates
-  const refetchAllTaskQueries = async () => {
-    const queryKeysToRefetch = [
+  // Helper function to invalidate all relevant queries after successful database updates
+  const invalidateAllTaskQueries = async () => {
+    const queryKeysToInvalidate = [
       ['tasks'],
       ['today-tasks'],
       ['overdue-tasks'],
       ['inbox-tasks'],
       ['project-tasks', task.projectId],
-      ['project-tasks', null], // for inbox tasks
+      ['project-tasks', null],
       ['search-tasks'],
       ['completedTasks']
     ];
 
-    // Also refetch all filtered-tasks queries
+    // Invalidate all filtered-tasks queries
     if (user?.id) {
       const queryCache = queryClient.getQueryCache();
       const allQueries = queryCache.getAll();
@@ -71,50 +69,15 @@ export function useTaskItem({
       allQueries.forEach((query) => {
         const queryKey = query.queryKey;
         if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.refetchQueries({ queryKey });
+          queryClient.invalidateQueries({ queryKey });
         }
       });
     }
 
-    // Use refetchQueries instead of invalidateQueries for immediate updates
-    await Promise.all(queryKeysToRefetch.map(queryKey => 
-      queryClient.refetchQueries({ queryKey })
+    // Invalidate all relevant queries
+    await Promise.all(queryKeysToInvalidate.map(queryKey => 
+      queryClient.invalidateQueries({ queryKey })
     ));
-  };
-
-  // Helper function to update task in all query caches with immediate refetch
-  const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
-    const queryKeys = [
-      ['tasks'],
-      ['today-tasks'],
-      ['overdue-tasks'],
-      ['inbox-tasks'],
-      ['project-tasks', task.projectId],
-      ['project-tasks', null], // for inbox tasks
-    ];
-
-    queryKeys.forEach(queryKey => {
-      queryClient.setQueryData(queryKey, (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((t: Task) => t.id === task.id ? updateFn(t) : t);
-      });
-    });
-
-    // Update all filtered-tasks queries
-    if (user?.id) {
-      const queryCache = queryClient.getQueryCache();
-      const allQueries = queryCache.getAll();
-      
-      allQueries.forEach((query) => {
-        const queryKey = query.queryKey;
-        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
-          queryClient.setQueryData(queryKey, (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((t: Task) => t.id === task.id ? updateFn(t) : t);
-          });
-        }
-      });
-    }
   };
 
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
@@ -125,25 +88,16 @@ export function useTaskItem({
       if (onPriorityChange) {
         await onPriorityChange(task.id, newPriority);
       } else {
-        // Store previous state for rollback
-        const previousPriority = task.priority;
-        
-        // Optimistically update all task queries immediately
-        updateTaskInAllQueries((t: Task) => ({ ...t, priority: newPriority }));
-
+        // Update database FIRST
         const { error } = await supabase
           .from('tasks')
           .update({ priority: newPriority })
           .eq('id', task.id);
         
-        if (error) {
-          // Revert optimistic update on error
-          updateTaskInAllQueries((t: Task) => ({ ...t, priority: previousPriority }));
-          throw error;
-        }
+        if (error) throw error;
         
-        // Force immediate refetch for real-time updates
-        await refetchAllTaskQueries();
+        // THEN invalidate queries to force refetch with fresh data
+        await invalidateAllTaskQueries();
         
         toast.success("Task priority updated", {
           duration: 2000
@@ -164,26 +118,18 @@ export function useTaskItem({
       if (onDateChange) {
         await onDateChange(task.id, date);
       } else {
-        // Store previous state for rollback
-        const previousDate = task.dueDate;
         const formattedDate = date ? date.toISOString() : null;
         
-        // Optimistically update all task queries immediately
-        updateTaskInAllQueries((t: Task) => ({ ...t, dueDate: date }));
-        
+        // Update database FIRST
         const { error } = await supabase
           .from('tasks')
           .update({ due_date: formattedDate })
           .eq('id', task.id);
         
-        if (error) {
-          // Revert optimistic update on error
-          updateTaskInAllQueries((t: Task) => ({ ...t, dueDate: previousDate }));
-          throw error;
-        }
+        if (error) throw error;
         
-        // Force immediate refetch for real-time updates
-        await refetchAllTaskQueries();
+        // THEN invalidate queries to force refetch with fresh data
+        await invalidateAllTaskQueries();
         
         toast.success(date ? "Due date updated" : "Due date removed", {
           duration: 2000
@@ -208,7 +154,6 @@ export function useTaskItem({
       
       setIsDeleteDialogOpen(false);
       onDelete(task.id);
-      // No toast here - the deleteTask function in useTaskOperations handles this
     } catch (error: any) {
       toast.error(`Error deleting task: ${error.message}`);
     } finally {
