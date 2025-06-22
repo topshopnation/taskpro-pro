@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 import { useTaskProjects } from "@/components/tasks/useTaskProjects"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { queryClient } from "@/lib/react-query"
+import { Task } from "@/components/tasks/taskTypes"
 
 interface TaskItemProjectProps {
   taskId: string
@@ -32,12 +34,83 @@ export function TaskItemProject({
     try {
       setIsChangingProject(true)
       
+      // Get the project name for optimistic updates
+      const selectedProject = projects?.find(p => p.id === selectedProjectId)
+      const projectName = selectedProject?.name || "No Project"
+      const projectColor = selectedProject?.color
+      
+      // Optimistically update all task queries immediately
+      const updateTaskInQuery = (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((t: Task) => 
+          t.id === taskId 
+            ? { 
+                ...t, 
+                projectId: selectedProjectId, 
+                projectName,
+                projectColor 
+              } 
+            : t
+        );
+      };
+      
+      // Store previous state for rollback
+      const previousProjectId = projectId;
+      const previousProjectName = currentProject?.name || "No Project";
+      const previousProjectColor = currentProject?.color;
+      
+      queryClient.setQueryData(['tasks'], updateTaskInQuery);
+      queryClient.setQueryData(['today-tasks'], updateTaskInQuery);
+      queryClient.setQueryData(['overdue-tasks'], updateTaskInQuery);
+      queryClient.setQueryData(['inbox-tasks'], updateTaskInQuery);
+      queryClient.setQueryData(['project-tasks', projectId], updateTaskInQuery);
+      queryClient.setQueryData(['project-tasks', selectedProjectId], updateTaskInQuery);
+      queryClient.setQueryData(['filtered-tasks'], updateTaskInQuery);
+      
+      // Update in database
+      const { error } = await supabase
+        .from('tasks')
+        .update({ project_id: selectedProjectId })
+        .eq('id', taskId);
+      
+      if (error) {
+        // Revert optimistic updates on error
+        const revertTaskInQuery = (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => 
+            t.id === taskId 
+              ? { 
+                  ...t, 
+                  projectId: previousProjectId, 
+                  projectName: previousProjectName,
+                  projectColor: previousProjectColor 
+                } 
+              : t
+          );
+        };
+        
+        queryClient.setQueryData(['tasks'], revertTaskInQuery);
+        queryClient.setQueryData(['today-tasks'], revertTaskInQuery);
+        queryClient.setQueryData(['overdue-tasks'], revertTaskInQuery);
+        queryClient.setQueryData(['inbox-tasks'], revertTaskInQuery);
+        queryClient.setQueryData(['project-tasks', projectId], revertTaskInQuery);
+        queryClient.setQueryData(['project-tasks', selectedProjectId], revertTaskInQuery);
+        queryClient.setQueryData(['filtered-tasks'], revertTaskInQuery);
+        
+        throw error;
+      }
+      
       // Call the parent handler
       await onProjectChange(selectedProjectId)
+      
+      toast.success(selectedProjectId ? "Task moved to project" : "Task moved to inbox", {
+        duration: 2000
+      });
       
       setOpen(false)
     } catch (error) {
       console.error("Failed to change project:", error)
+      toast.error("Failed to change project");
     } finally {
       setIsChangingProject(false)
     }

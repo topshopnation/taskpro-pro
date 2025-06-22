@@ -54,23 +54,79 @@ export function useTaskItem({
       if (onPriorityChange) {
         await onPriorityChange(task.id, newPriority);
       } else {
+        // Optimistically update the local task state immediately
+        const previousTask = { ...task };
+        
+        // Update the task in all relevant queries immediately
+        queryClient.setQueryData(['tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+        
+        queryClient.setQueryData(['today-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+        
+        queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+        
+        queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+        
+        queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+        
+        queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, priority: newPriority } : t);
+        });
+
         const { error } = await supabase
           .from('tasks')
           .update({ priority: newPriority })
           .eq('id', task.id);
         
-        if (error) throw error;
-        
-        // Invalidate all task queries to ensure all components get fresh data
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-        queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['filtered-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['filter'] });
+        if (error) {
+          // Revert optimistic update on error
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['today-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          throw error;
+        }
         
         toast.success("Task priority updated", {
           duration: 2000
@@ -89,25 +145,80 @@ export function useTaskItem({
       if (onDateChange) {
         await onDateChange(task.id, date);
       } else {
+        // Optimistically update the local task state immediately
+        const previousTask = { ...task };
         const formattedDate = date ? date.toISOString() : null;
+        
+        // Update the task in all relevant queries immediately
+        queryClient.setQueryData(['tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
+        
+        queryClient.setQueryData(['today-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
+        
+        queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
+        
+        queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
+        
+        queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
+        
+        queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((t: Task) => t.id === task.id ? { ...t, dueDate: date } : t);
+        });
         
         const { error } = await supabase
           .from('tasks')
           .update({ due_date: formattedDate })
           .eq('id', task.id);
         
-        if (error) throw error;
-        
-        // Invalidate all task queries to ensure all components get fresh data
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-        queryClient.invalidateQueries({ queryKey: ['inbox-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['filtered-tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['filter'] });
+        if (error) {
+          // Revert optimistic update on error
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['today-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['overdue-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['inbox-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['project-tasks', task.projectId], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          queryClient.setQueryData(['filtered-tasks'], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? previousTask : t);
+          });
+          
+          throw error;
+        }
         
         toast.success(date ? "Due date updated" : "Due date removed", {
           duration: 2000
