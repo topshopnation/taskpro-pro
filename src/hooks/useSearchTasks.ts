@@ -2,16 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useMemo } from "react";
 import { Task } from "@/components/tasks/taskTypes";
 
 export function useSearchTasks(searchQuery: string) {
   const { user } = useAuth();
 
-  const { data: allTasks = [], isLoading } = useQuery({
-    queryKey: ['search-tasks', user?.id],
+  const { data, isLoading } = useQuery({
+    queryKey: ['search-tasks', searchQuery, user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !searchQuery.trim()) return { tasks: [], allTasks: [] };
 
       const { data, error } = await supabase
         .from('tasks')
@@ -23,11 +22,12 @@ export function useSearchTasks(searchQuery: string) {
           )
         `)
         .eq('user_id', user.id)
-        .eq('completed', false);
+        .or(`title.ilike.%${searchQuery}%,notes.ilike.%${searchQuery}%`)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return data.map((task: any): Task => ({
+      const tasks: Task[] = data.map((task: any) => ({
         id: task.id,
         title: task.title,
         notes: task.notes,
@@ -39,24 +39,19 @@ export function useSearchTasks(searchQuery: string) {
         completed: task.completed || false,
         favorite: task.favorite || false
       }));
+
+      return {
+        tasks,
+        allTasks: tasks
+      };
     },
-    enabled: !!user,
+    enabled: !!user && !!searchQuery.trim(),
   });
 
-  const filteredTasks = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
-    const query = searchQuery.toLowerCase();
-    return allTasks.filter(task => 
-      task.title.toLowerCase().includes(query) ||
-      task.notes?.toLowerCase().includes(query) ||
-      task.projectName?.toLowerCase().includes(query)
-    );
-  }, [allTasks, searchQuery]);
-
   return {
-    tasks: filteredTasks,
-    isLoading,
-    allTasks
+    results: data?.tasks || [],
+    tasks: data?.tasks || [],
+    allTasks: data?.allTasks || [],
+    isLoading: isLoading && !!searchQuery.trim()
   };
 }

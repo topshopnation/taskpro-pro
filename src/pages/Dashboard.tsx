@@ -7,7 +7,6 @@ import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
 import { CompletedTasksStats } from "@/components/dashboard/CompletedTasksStats";
-import { useSubscription } from "@/contexts/subscription";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { Task } from "@/components/tasks/taskTypes";
@@ -16,7 +15,6 @@ const Dashboard = () => {
   const { data, isLoading: isTasksLoading } = useDashboardTasks();
   const { data: completedData, isLoading: isCompletedLoading } = useCompletedTasks();
   const { completeTask, deleteTask } = useTaskOperations();
-  const subscription = useSubscription();
 
   if (isTasksLoading || isCompletedLoading) {
     return <DashboardSkeleton />;

@@ -2,15 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Task } from "@/components/tasks/taskTypes";
+import { toast } from "sonner";
 import { useCallback } from "react";
 import { queryClient } from "@/lib/react-query";
-import { toast } from "sonner";
+import { Task } from "@/components/tasks/taskTypes";
 
-export const useProjectTasks = (projectId: string) => {
+export function useProjectTasks(projectId: string | undefined) {
   const { user } = useAuth();
 
-  const { data: tasks = [], isLoading, error } = useQuery({
+  const { data: tasks = [], isLoading, error, refetch } = useQuery({
     queryKey: ['project-tasks', projectId, user?.id],
     queryFn: async () => {
       if (!user || !projectId) return [];
@@ -46,7 +46,7 @@ export const useProjectTasks = (projectId: string) => {
     enabled: !!user && !!projectId,
   });
 
-  const completeTask = useCallback(async (taskId: string, completed: boolean) => {
+  const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
     try {
@@ -58,14 +58,14 @@ export const useProjectTasks = (projectId: string) => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
       toast.success(completed ? "Task completed!" : "Task uncompleted!");
     } catch (error: any) {
       toast.error(`Failed to ${completed ? 'complete' : 'uncomplete'} task: ${error.message}`);
     }
-  }, [user, projectId]);
+  }, [user]);
 
-  const deleteTask = useCallback(async (taskId: string) => {
+  const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
     try {
@@ -77,18 +77,24 @@ export const useProjectTasks = (projectId: string) => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-tasks'] });
       toast.success("Task deleted!");
     } catch (error: any) {
       toast.error(`Failed to delete task: ${error.message}`);
     }
-  }, [user, projectId]);
+  }, [user]);
+
+  // Filter tasks that are not in sections (unsectioned tasks)
+  const unsectionedTasks = tasks.filter(task => !task.sectionId);
 
   return {
     tasks,
+    unsectionedTasks,
+    isLoadingTasks: isLoading,
     isLoading,
     error,
-    completeTask,
-    deleteTask
+    handleComplete,
+    handleDelete,
+    refetch
   };
-};
+}

@@ -43,8 +43,42 @@ export const sortTasks = (tasks: Task[], sortBy: SortOption) => {
   }
 };
 
-export const groupTasks = (tasks: Task[]) => {
-  return {
-    all: tasks
-  };
+export const groupTasks = (
+  tasks: Task[], 
+  groupBy?: string | null, 
+  sortBy?: string, 
+  sortDirection?: "asc" | "desc"
+) => {
+  if (!groupBy) {
+    return { "All Tasks": tasks };
+  }
+  
+  const groups: Record<string, Task[]> = {};
+  
+  tasks.forEach(task => {
+    let groupKey = "Ungrouped";
+    
+    switch (groupBy) {
+      case 'priority':
+        groupKey = `Priority ${task.priority}`;
+        break;
+      case 'project':
+        groupKey = task.projectName || "No Project";
+        break;
+      case 'dueDate':
+        if (task.dueDate) {
+          groupKey = task.dueDate.toDateString();
+        } else {
+          groupKey = "No Due Date";
+        }
+        break;
+    }
+    
+    if (!groups[groupKey]) {
+      groups[groupKey] = [];
+    }
+    groups[groupKey].push(task);
+  });
+  
+  return groups;
 };

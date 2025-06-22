@@ -25,9 +25,7 @@ export default function TodayView() {
   };
 
   // Group tasks when needed
-  const groupedTasks = groupBy 
-    ? groupTasks(tasks, groupBy, sortField, sortDirection)
-    : { "Today's Tasks": tasks };
+  const groupedTasks = groupTasks(tasks, groupBy, sortField, sortDirection);
 
   if (isLoading) {
     return (

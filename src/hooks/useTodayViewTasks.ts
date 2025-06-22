@@ -48,7 +48,7 @@ export const useTodayViewTasks = () => {
     enabled: !!user,
   });
 
-  const completeTask = useCallback(async (taskId: string, completed: boolean) => {
+  const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
     try {
@@ -68,7 +68,7 @@ export const useTodayViewTasks = () => {
     }
   }, [user]);
 
-  const deleteTask = useCallback(async (taskId: string) => {
+  const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
     try {
@@ -88,11 +88,32 @@ export const useTodayViewTasks = () => {
     }
   }, [user]);
 
+  const handleFavoriteToggle = useCallback(async (taskId: string, favorite: boolean) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ favorite })
+        .eq('id', taskId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success(favorite ? "Task added to favorites!" : "Task removed from favorites!");
+    } catch (error: any) {
+      toast.error(`Failed to update favorite status: ${error.message}`);
+    }
+  }, [user]);
+
   return {
     tasks,
     isLoading,
     error,
-    completeTask,
-    deleteTask
+    handleComplete,
+    handleDelete,
+    handleFavoriteToggle
   };
 };

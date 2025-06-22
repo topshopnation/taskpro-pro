@@ -36,6 +36,15 @@ export const formatTaskTime = (date: Date): string => {
   return format(date, "h:mm a");
 };
 
-export const groupTasks = (tasks: Task[]) => {
+export const groupTasks = (
+  tasks: Task[], 
+  groupBy?: string | null, 
+  sortBy?: string, 
+  sortDirection?: "asc" | "desc"
+) => {
+  if (!groupBy) {
+    return { "Today's Tasks": tasks };
+  }
+  
   return groupTasksByStatus(tasks);
 };

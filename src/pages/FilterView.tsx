@@ -4,7 +4,7 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { FilterHeader } from "@/components/filters/FilterHeader";
-import { useFetchFilter } from "@/hooks/filter/useFetchFilter";
+import { useFetchFilter } from "@/hooks/useFetchFilter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilterOperations } from "@/hooks/filter/useFilterOperations";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";

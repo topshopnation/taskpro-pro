@@ -10,7 +10,7 @@ import { Task } from "@/components/tasks/taskTypes";
 export const useInboxTasks = () => {
   const { user } = useAuth();
 
-  const { data: tasks = [], isLoading, error } = useQuery({
+  const { data: tasks = [], isLoading, error, refetch } = useQuery({
     queryKey: ['tasks', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -47,7 +47,7 @@ export const useInboxTasks = () => {
     enabled: !!user,
   });
 
-  const completeTask = useCallback(async (taskId: string, completed: boolean) => {
+  const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
     try {
@@ -66,7 +66,7 @@ export const useInboxTasks = () => {
     }
   }, [user]);
 
-  const deleteTask = useCallback(async (taskId: string) => {
+  const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
     try {
@@ -89,7 +89,8 @@ export const useInboxTasks = () => {
     tasks,
     isLoading,
     error,
-    completeTask,
-    deleteTask
+    handleComplete,
+    handleDelete,
+    refetch
   };
 };

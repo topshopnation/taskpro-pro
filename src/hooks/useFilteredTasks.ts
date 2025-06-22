@@ -52,6 +52,8 @@ export function useFilteredTasks(filterId: string) {
 
       // Apply filter conditions (simplified filtering logic)
       const filteredTasks = allTasks.filter(task => {
+        if (!filter.conditions || !Array.isArray(filter.conditions)) return true;
+        
         return filter.conditions.some((condition: any) => {
           switch (condition.type) {
             case 'priority':

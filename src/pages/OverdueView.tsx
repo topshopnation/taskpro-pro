@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/react-query";
 export default function OverdueView() {
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const { user } = useAuth();
-  const { data: tasks, isLoading, refetch } = useOverdueTasks(user?.id);
+  const { data: tasks, isLoading, refetch } = useOverdueTasks();
   const { 
     handleComplete, 
     handleDelete, 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom" 
 import { AppLayout } from "@/components/layout/AppLayout"
@@ -55,8 +56,8 @@ export default function ProjectView() {
 
   const {
     tasks,
-    isLoadingTasks,
     unsectionedTasks,
+    isLoadingTasks,
     handleComplete,
     handleDelete,
     refetch
