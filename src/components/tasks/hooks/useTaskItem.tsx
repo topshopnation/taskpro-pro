@@ -5,6 +5,7 @@ import { useTaskOperations } from "@/hooks/useTaskOperations";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { queryClient } from "@/lib/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 interface UseTaskItemProps {
   task: Task;
@@ -26,6 +27,7 @@ export function useTaskItem({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { user } = useAuth();
   
   const { completeTask } = useTaskOperations();
 
@@ -48,7 +50,39 @@ export function useTaskItem({
     }
   };
 
-  // Helper function to update task in all query caches
+  // Helper function to invalidate all relevant queries including filtered tasks
+  const invalidateAllTaskQueries = () => {
+    const queryKeysToInvalidate = [
+      ['tasks'],
+      ['today-tasks'],
+      ['overdue-tasks'],
+      ['inbox-tasks'],
+      ['project-tasks', task.projectId],
+      ['project-tasks', null], // for inbox tasks
+      ['search-tasks'],
+      ['completedTasks']
+    ];
+
+    // Also invalidate all filtered-tasks queries
+    if (user?.id) {
+      // Get all query keys that match the filtered-tasks pattern
+      const queryCache = queryClient.getQueryCache();
+      const allQueries = queryCache.getAll();
+      
+      allQueries.forEach((query) => {
+        const queryKey = query.queryKey;
+        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      });
+    }
+
+    queryKeysToInvalidate.forEach(queryKey => {
+      queryClient.invalidateQueries({ queryKey });
+    });
+  };
+
+  // Helper function to update task in all query caches with specific filtered tasks support
   const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
     const queryKeys = [
       ['tasks'],
@@ -56,7 +90,7 @@ export function useTaskItem({
       ['overdue-tasks'],
       ['inbox-tasks'],
       ['project-tasks', task.projectId],
-      ['filtered-tasks']
+      ['project-tasks', null], // for inbox tasks
     ];
 
     queryKeys.forEach(queryKey => {
@@ -65,6 +99,22 @@ export function useTaskItem({
         return oldData.map((t: Task) => t.id === task.id ? updateFn(t) : t);
       });
     });
+
+    // Update all filtered-tasks queries
+    if (user?.id) {
+      const queryCache = queryClient.getQueryCache();
+      const allQueries = queryCache.getAll();
+      
+      allQueries.forEach((query) => {
+        const queryKey = query.queryKey;
+        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
+          queryClient.setQueryData(queryKey, (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === task.id ? updateFn(t) : t);
+          });
+        }
+      });
+    }
   };
 
   const handlePriorityChange = async (newPriority: 1 | 2 | 3 | 4) => {
@@ -91,6 +141,9 @@ export function useTaskItem({
           updateTaskInAllQueries((t: Task) => ({ ...t, priority: previousPriority }));
           throw error;
         }
+        
+        // Invalidate queries to ensure consistency
+        invalidateAllTaskQueries();
         
         toast.success("Task priority updated", {
           duration: 2000
@@ -128,6 +181,9 @@ export function useTaskItem({
           updateTaskInAllQueries((t: Task) => ({ ...t, dueDate: previousDate }));
           throw error;
         }
+        
+        // Invalidate queries to ensure consistency
+        invalidateAllTaskQueries();
         
         toast.success(date ? "Due date updated" : "Due date removed", {
           duration: 2000

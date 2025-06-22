@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { queryClient } from "@/lib/react-query"
 import { Task } from "@/components/tasks/taskTypes"
+import { useAuth } from "@/hooks/use-auth"
 
 interface TaskItemProjectProps {
   taskId: string
@@ -27,10 +28,42 @@ export function TaskItemProject({
   const [open, setOpen] = useState(false)
   const [isChangingProject, setIsChangingProject] = useState(false)
   const { projects, isLoading } = useTaskProjects()
+  const { user } = useAuth()
   
   const currentProject = projects?.find(p => p.id === projectId)
   
-  // Helper function to update task in all query caches
+  // Helper function to invalidate all relevant queries including filtered tasks
+  const invalidateAllTaskQueries = () => {
+    const queryKeysToInvalidate = [
+      ['tasks'],
+      ['today-tasks'],
+      ['overdue-tasks'],
+      ['inbox-tasks'],
+      ['project-tasks', projectId],
+      ['project-tasks', null], // for inbox tasks
+      ['search-tasks'],
+      ['completedTasks']
+    ];
+
+    // Also invalidate all filtered-tasks queries
+    if (user?.id) {
+      const queryCache = queryClient.getQueryCache();
+      const allQueries = queryCache.getAll();
+      
+      allQueries.forEach((query) => {
+        const queryKey = query.queryKey;
+        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      });
+    }
+
+    queryKeysToInvalidate.forEach(queryKey => {
+      queryClient.invalidateQueries({ queryKey });
+    });
+  };
+  
+  // Helper function to update task in all query caches including filtered tasks
   const updateTaskInAllQueries = (updateFn: (task: Task) => Task) => {
     const queryKeys = [
       ['tasks'],
@@ -39,7 +72,6 @@ export function TaskItemProject({
       ['inbox-tasks'],
       ['project-tasks', projectId],
       ['project-tasks', null], // for inbox tasks
-      ['filtered-tasks']
     ];
 
     queryKeys.forEach(queryKey => {
@@ -48,6 +80,22 @@ export function TaskItemProject({
         return oldData.map((t: Task) => t.id === taskId ? updateFn(t) : t);
       });
     });
+
+    // Update all filtered-tasks queries
+    if (user?.id) {
+      const queryCache = queryClient.getQueryCache();
+      const allQueries = queryCache.getAll();
+      
+      allQueries.forEach((query) => {
+        const queryKey = query.queryKey;
+        if (Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks') {
+          queryClient.setQueryData(queryKey, (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((t: Task) => t.id === taskId ? updateFn(t) : t);
+          });
+        }
+      });
+    }
   };
   
   const handleProjectSelect = async (selectedProjectId: string | null) => {
@@ -72,23 +120,6 @@ export function TaskItemProject({
         projectColor
       }));
       
-      // Also update queries for the new project
-      if (selectedProjectId) {
-        queryClient.setQueryData(['project-tasks', selectedProjectId], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((t: Task) => 
-            t.id === taskId 
-              ? { 
-                  ...t, 
-                  projectId: selectedProjectId, 
-                  projectName,
-                  projectColor 
-                } 
-              : t
-          );
-        });
-      }
-      
       // Update in database
       const { error } = await supabase
         .from('tasks')
@@ -106,6 +137,9 @@ export function TaskItemProject({
         
         throw error;
       }
+      
+      // Invalidate queries to ensure consistency
+      invalidateAllTaskQueries();
       
       // Call the parent handler
       await onProjectChange(selectedProjectId)

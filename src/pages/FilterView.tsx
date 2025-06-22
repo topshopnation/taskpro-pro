@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { TaskList } from "@/components/tasks/TaskList";
 import { useFilteredTasks } from "@/hooks/useFilteredTasks";
@@ -12,7 +13,6 @@ import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { isStandardFilter } from "@/utils/filterUtils";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useOptimisticTasks } from "@/hooks/useOptimisticTasks";
 
 export default function FilterView() {
   const { id: filterId } = useParams<{ id: string }>();
@@ -28,27 +28,21 @@ export default function FilterView() {
   const { completeTask, deleteTask, toggleTaskFavorite } = useTaskOperations();
   const { deleteFilter, updateFilter, toggleFavorite } = useFilterOperations(filterId || "");
 
-  // Add optimistic task handling
-  const { 
-    visibleTasks, 
-    handleOptimisticComplete, 
-    handleOptimisticDelete 
-  } = useOptimisticTasks(tasks);
-
-  // Use the standard completeTask function directly - it already handles toasts and optimistic updates
+  // Simple completion handler - let useTaskCompletion handle everything including toasts
   const handleCompleteTask = async (taskId: string, completed: boolean) => {
-    // Call the completeTask function with the optimistic update callback
-    // This ensures only ONE toast is shown from useTaskCompletion
-    const success = await completeTask(taskId, completed, handleOptimisticComplete);
+    console.log('FilterView handleCompleteTask:', { taskId, completed });
+    
+    // Call completeTask directly - it handles optimistic updates, database updates, and toasts
+    // Do NOT pass any optimistic callback to avoid duplicate handling
+    const success = await completeTask(taskId, completed);
     return success;
   };
 
   // Wrapper for deleteTask that includes optimistic updates
   const handleDeleteTask = async (taskId: string) => {
-    // Apply optimistic update immediately
-    handleOptimisticDelete(taskId);
+    console.log('FilterView handleDeleteTask:', taskId);
     
-    // Call the actual deleteTask function
+    // Call the actual deleteTask function - it handles everything
     await deleteTask(taskId);
   };
 
@@ -163,7 +157,7 @@ export default function FilterView() {
         
         <TaskList
           title=""
-          tasks={visibleTasks}
+          tasks={tasks}
           isLoading={isTasksLoading}
           emptyMessage="No tasks match this filter"
           onComplete={handleCompleteTask}
