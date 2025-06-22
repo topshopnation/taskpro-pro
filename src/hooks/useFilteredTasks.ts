@@ -9,13 +9,17 @@ export function useFilteredTasks(filterId: string) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['filter', filterId, user?.id],
+    queryKey: ['filtered-tasks', filterId, user?.id],
     queryFn: async () => {
       if (!user || !filterId) return [];
+
+      console.log('Fetching tasks for filter:', filterId);
 
       // Check if it's a standard filter first
       const standardFilter = standardFilters.find(filter => filter.id === filterId);
       if (standardFilter) {
+        console.log('Processing standard filter:', standardFilter.name);
+        
         // Fetch all tasks for standard filters
         const { data: tasksData, error: tasksError } = await supabase
           .from('tasks')
@@ -46,7 +50,7 @@ export function useFilteredTasks(filterId: string) {
         }));
 
         // Apply standard filter logic
-        return allTasks.filter(task => {
+        const filteredTasks = allTasks.filter(task => {
           if (filterId === 'today') {
             const today = new Date();
             return task.dueDate && 
@@ -62,9 +66,13 @@ export function useFilteredTasks(filterId: string) {
           }
           return true;
         });
+
+        console.log('Standard filter results:', filteredTasks.length, 'tasks');
+        return filteredTasks;
       }
 
       // Fetch custom filter details
+      console.log('Fetching custom filter details for:', filterId);
       const { data: filter, error: filterError } = await supabase
         .from('filters')
         .select('*')
@@ -73,12 +81,15 @@ export function useFilteredTasks(filterId: string) {
         .single();
 
       if (filterError) {
+        console.error('Filter fetch error:', filterError);
         if (filterError.code === 'PGRST116') {
           // Filter not found, return empty array
           return [];
         }
         throw filterError;
       }
+
+      console.log('Custom filter found:', filter.name, 'conditions:', filter.conditions);
 
       // Fetch all tasks for the user
       const { data: tasksData, error: tasksError } = await supabase
@@ -108,6 +119,8 @@ export function useFilteredTasks(filterId: string) {
         favorite: task.favorite || false
       }));
 
+      console.log('Total tasks fetched:', allTasks.length);
+
       // Parse filter conditions - handle both array and object formats
       let conditions: any[] = [];
       let logic = "and";
@@ -128,16 +141,23 @@ export function useFilteredTasks(filterId: string) {
         }
       }
 
+      console.log('Parsed conditions:', conditions, 'logic:', logic);
+
       if (conditions.length === 0) {
+        console.log('No conditions, returning all tasks');
         return allTasks;
       }
 
       // Apply filter conditions
       const filteredTasks = allTasks.filter(task => {
         const conditionResults = conditions.map((condition: any) => {
+          console.log('Evaluating condition:', condition, 'for task:', task.title);
+          
           switch (condition.type) {
             case 'priority':
-              return task.priority.toString() === condition.value;
+              const result = task.priority.toString() === condition.value;
+              console.log('Priority condition result:', result, 'task priority:', task.priority, 'condition value:', condition.value);
+              return result;
             case 'project':
               if (condition.value === 'inbox') {
                 return !task.projectId || task.projectId === null;
@@ -167,13 +187,18 @@ export function useFilteredTasks(filterId: string) {
         });
 
         // Apply logic (AND/OR)
-        if (logic === 'and') {
-          return conditionResults.every(result => result);
-        } else {
-          return conditionResults.some(result => result);
+        const finalResult = logic === 'and' 
+          ? conditionResults.every(result => result)
+          : conditionResults.some(result => result);
+          
+        if (finalResult) {
+          console.log('Task matches filter:', task.title);
         }
+        
+        return finalResult;
       });
 
+      console.log('Custom filter results:', filteredTasks.length, 'tasks match the filter');
       return filteredTasks;
     },
     enabled: !!user && !!filterId,

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { isStandardFilter } from "@/utils/filterUtils";
 import { toast } from "sonner";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function FilterView() {
   const { id: filterId } = useParams<{ id: string }>();
@@ -100,18 +101,22 @@ export default function FilterView() {
 
   if (isFilterLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-96 w-full" />
-      </div>
+      <AppLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </AppLayout>
     );
   }
 
   if (!currentFilter) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Filter not found</p>
-      </div>
+      <AppLayout>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Filter not found</p>
+        </div>
+      </AppLayout>
     );
   }
 
@@ -122,40 +127,42 @@ export default function FilterView() {
   };
 
   return (
-    <div className="space-y-6">
-      <FilterHeader 
-        filter={filterWithLogic}
-        onFavoriteToggle={handleFavoriteToggle}
-        onRenameClick={handleEdit}
-        onDeleteClick={handleDelete}
-        onColorChange={handleColorChange}
-      />
-      
-      <TaskList
-        title=""
-        tasks={tasks}
-        isLoading={isTasksLoading}
-        emptyMessage="No tasks match this filter"
-        onComplete={completeTask}
-        onDelete={deleteTask}
-        onFavoriteToggle={toggleTaskFavorite}
-        hideTitle={true}
-      />
+    <AppLayout>
+      <div className="space-y-6">
+        <FilterHeader 
+          filter={filterWithLogic}
+          onFavoriteToggle={handleFavoriteToggle}
+          onRenameClick={handleEdit}
+          onDeleteClick={handleDelete}
+          onColorChange={handleColorChange}
+        />
+        
+        <TaskList
+          title=""
+          tasks={tasks}
+          isLoading={isTasksLoading}
+          emptyMessage="No tasks match this filter"
+          onComplete={completeTask}
+          onDelete={deleteTask}
+          onFavoriteToggle={toggleTaskFavorite}
+          hideTitle={true}
+        />
 
-      <FilterDialogs
-        isEditDialogOpen={isEditDialogOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        filterName={filterName}
-        filterColor={filterColor}
-        filterConditions={filterConditions}
-        onEditDialogChange={setIsEditDialogOpen}
-        onDeleteDialogChange={setIsDeleteDialogOpen}
-        onFilterNameChange={setFilterName}
-        onFilterColorChange={handleColorChange}
-        onFilterConditionsChange={setFilterConditions}
-        onRename={handleRename}
-        onDelete={handleConfirmDelete}
-      />
-    </div>
+        <FilterDialogs
+          isEditDialogOpen={isEditDialogOpen}
+          isDeleteDialogOpen={isDeleteDialogOpen}
+          filterName={filterName}
+          filterColor={filterColor}
+          filterConditions={filterConditions}
+          onEditDialogChange={setIsEditDialogOpen}
+          onDeleteDialogChange={setIsDeleteDialogOpen}
+          onFilterNameChange={setFilterName}
+          onFilterColorChange={handleColorChange}
+          onFilterConditionsChange={setFilterConditions}
+          onRename={handleRename}
+          onDelete={handleConfirmDelete}
+        />
+      </div>
+    </AppLayout>
   );
 }
