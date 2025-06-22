@@ -48,20 +48,35 @@
     left: 50% !important;
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
   }
   
-  /* Calendar specific positioning */
-  .calendar-popover {
+  /* Calendar specific positioning - force center positioning */
+  .calendar-popover,
+  [data-radix-popover-content]:has(.rdp) {
     position: fixed !important;
-    top: 20% !important;
+    top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, 0) !important;
+    transform: translate(-50%, -50%) !important;
     max-width: 95vw !important;
-    max-height: 75vh !important;
+    max-height: 80vh !important;
     z-index: 9999 !important;
     background: white !important;
     border-radius: 12px !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    padding: 16px !important;
+  }
+  
+  /* Ensure dialog calendars are also properly positioned */
+  [data-radix-dialog-content] [data-radix-popover-content] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10000 !important;
   }
   
   /* Date input field text spacing - ensure no overlap */
@@ -134,8 +149,10 @@
       border-color: rgba(84, 84, 88, 0.65);
     }
     
-    .calendar-popover {
+    .calendar-popover,
+    [data-radix-popover-content]:has(.rdp) {
       background: #1C1C1E !important;
+      border-color: rgba(84, 84, 88, 0.65) !important;
     }
   }
 }
