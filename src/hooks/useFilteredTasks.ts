@@ -103,14 +103,21 @@ export function useFilteredTasks(filterId: string) {
       }));
 
       // Parse filter conditions - handle both array and object formats
-      let conditions = [];
+      let conditions: any[] = [];
+      let logic = "and";
+      
       if (filter.conditions) {
         if (Array.isArray(filter.conditions)) {
           conditions = filter.conditions;
-        } else if (typeof filter.conditions === 'object' && filter.conditions.items) {
-          conditions = filter.conditions.items;
-        } else if (typeof filter.conditions === 'object') {
-          conditions = [filter.conditions];
+        } else if (typeof filter.conditions === 'object' && filter.conditions !== null) {
+          // Handle object with items property
+          if ('items' in filter.conditions && Array.isArray(filter.conditions.items)) {
+            conditions = filter.conditions.items;
+            logic = (filter.conditions as any).logic || "and";
+          } else {
+            // Single condition object
+            conditions = [filter.conditions];
+          }
         }
       }
 
@@ -152,8 +159,7 @@ export function useFilteredTasks(filterId: string) {
           }
         });
 
-        // Apply logic (AND/OR) - get logic from filter conditions or default to 'and'
-        const logic = (filter.conditions && typeof filter.conditions === 'object' && filter.conditions.logic) || 'and';
+        // Apply logic (AND/OR)
         if (logic === 'and') {
           return conditionResults.every(result => result);
         } else {
