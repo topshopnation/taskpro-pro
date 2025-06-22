@@ -1,5 +1,5 @@
 
-import { ListTodo, Plus, ChevronRight, Star, StarOff, Loader2, ChevronDown } from "lucide-react";
+import { FolderOpen, Plus, Star, StarOff, Loader2, ChevronDown } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,12 +77,9 @@ export function SidebarProjects({
     }
   };
 
-  const filteredProjects = projects.filter(project => project.id !== "inbox");
-  
-  const topProjects = filteredProjects.slice(0, 5);
-  const hasMoreProjects = filteredProjects.length > 5;
-
   const isProjectsPageActive = location.pathname === '/projects';
+  
+  const hasMoreProjects = projects.length > 5;
 
   return (
     <SidebarGroup>
@@ -125,36 +122,37 @@ export function SidebarProjects({
                 <div className="flex justify-center py-2">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
-              ) : topProjects.length === 0 ? (
+              ) : projects.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-muted-foreground">
                   No projects found
                 </div>
               ) : (
                 <>
-                  {topProjects.map((project) => {
+                  {projects.slice(0, 5).map((project) => {
+                    const slugName = project.name.toLowerCase().replace(/\s+/g, '-');
                     const isActive = location.pathname.includes(`/projects/${project.id}`);
                     
                     return (
                       <SidebarMenuItem key={project.id} className="group">
                         <SidebarMenuButton asChild>
-                          <button
-                            className={cn(
+                          <NavLink
+                            to={`/projects/${project.id}/${slugName}`}
+                            className={({ isActive }) => cn(
                               "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors relative",
                               isActive
                                 ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_2px_5px_rgba(0,0,0,0.08)]" 
                                 : "transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                             )}
-                            onClick={(e) => handleProjectClick(project, e)}
+                            onClick={onMobileMenuClose}
                           >
-                            <ListTodo 
+                            <FolderOpen 
                               className="h-4 w-4" 
                               style={project.color ? { color: project.color } : undefined}
                             />
                             <span className="truncate">{project.name}</span>
-                            <ChevronRight className="h-4 w-4 ml-auto" />
                             <button
                               onClick={(e) => handleFavoriteToggle(project, e)}
-                              className="absolute right-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                               title={project.favorite ? "Remove from favorites" : "Add to favorites"}
                             >
                               <div className="group/star">
@@ -174,7 +172,7 @@ export function SidebarProjects({
                                 </div>
                               </div>
                             </button>
-                          </button>
+                          </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
