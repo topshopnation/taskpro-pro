@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Task } from "@/components/tasks/taskTypes";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
@@ -30,13 +31,12 @@ export function useTaskItem({
   const handleCompletionToggle = async () => {
     setIsUpdating(true);
     try {
-      // First call the parent component's onComplete handler
-      // This will handle the UI update
-      onComplete(task.id, !task.completed);
+      // Use completeTask which has built-in undo functionality
+      // Don't suppress toast so we get the undo action
+      await completeTask(task.id, !task.completed, false);
       
-      // Then use completeTask with suppressToast=true since the parent handlers 
-      // should already show a toast at the view level, preventing double toasts
-      await completeTask(task.id, !task.completed, true);
+      // Call the parent's onComplete handler for UI updates
+      onComplete(task.id, !task.completed);
     } catch (error: any) {
       // Show error toast only if it fails
       toast.error(`Error updating task: ${error.message}`);

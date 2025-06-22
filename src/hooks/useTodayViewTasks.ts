@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCallback } from "react";
 import { queryClient } from "@/lib/react-query";
-import { toast } from "sonner";
 import { Task } from "@/components/tasks/taskTypes";
 import { isToday, startOfToday, endOfToday } from "date-fns";
 
@@ -51,61 +50,28 @@ export const useTodayViewTasks = () => {
   const handleComplete = useCallback(async (taskId: string, completed: boolean) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed })
-        .eq('id', taskId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success(completed ? "Task completed!" : "Task uncompleted!");
-    } catch (error: any) {
-      toast.error(`Failed to ${completed ? 'complete' : 'uncomplete'} task: ${error.message}`);
-    }
+    // Don't show toast here - let the useTaskOperations handle it with undo functionality
+    // Just invalidate queries for UI updates
+    queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
 
   const handleDelete = useCallback(async (taskId: string) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success("Task deleted!");
-    } catch (error: any) {
-      toast.error(`Failed to delete task: ${error.message}`);
-    }
+    // Don't show toast here - let the component handle it with undo functionality
+    // Just invalidate queries for UI updates
+    queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
 
   const handleFavoriteToggle = useCallback(async (taskId: string, favorite: boolean) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ favorite })
-        .eq('id', taskId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success(favorite ? "Task added to favorites!" : "Task removed from favorites!");
-    } catch (error: any) {
-      toast.error(`Failed to update favorite status: ${error.message}`);
-    }
+    // Don't show toast here - let the component handle it
+    // Just invalidate queries for UI updates
+    queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
   }, [user]);
 
   return {

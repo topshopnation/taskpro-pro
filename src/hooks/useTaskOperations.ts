@@ -41,38 +41,40 @@ export function useTaskOperations() {
       // Generate a unique toast ID to prevent duplicates
       const uniqueId = `task-complete-${taskId}-${Date.now()}`;
       
-      // Only show toast with undo action if not suppressed
-      if (!suppressToast) {
-        toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
-          id: uniqueId,
-          duration: 3000, // Ensure toast stays for 3 seconds
-          action: {
-            label: "Undo",
-            onClick: async () => {
-              try {
-                // Revert to previous state
-                const { error: undoError } = await supabase
-                  .from('tasks')
-                  .update({ completed: !completed })
-                  .eq('id', taskId);
-                
-                if (undoError) throw undoError;
-                
-                // Re-invalidate queries after undoing
-                queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
-                queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
-                queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
-                queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
-              } catch (undoError) {
-                toast.error("Failed to undo", {
-                  id: `task-undo-error-${taskId}-${Date.now()}`
-                });
-              }
+      // Always show toast with undo action (removed suppressToast logic)
+      toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
+        id: uniqueId,
+        duration: 4000, // Give users time to see and use the undo button
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              // Revert to previous state
+              const { error: undoError } = await supabase
+                .from('tasks')
+                .update({ completed: !completed })
+                .eq('id', taskId);
+              
+              if (undoError) throw undoError;
+              
+              // Re-invalidate queries after undoing
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['today-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+              
+              toast.success("Task undone", {
+                id: `task-undo-success-${taskId}-${Date.now()}`
+              });
+            } catch (undoError) {
+              toast.error("Failed to undo", {
+                id: `task-undo-error-${taskId}-${Date.now()}`
+              });
             }
           }
-        });
-      }
+        }
+      });
       
       return true;
     } catch (error: any) {
@@ -122,7 +124,7 @@ export function useTaskOperations() {
       // Add toast with undo option
       toast("Task deleted", {
         id: uniqueId,
-        duration: 3000, // Ensure toast stays for 3 seconds
+        duration: 4000, // Give users time to see and use the undo button
         action: {
           label: "Undo",
           onClick: async () => {
@@ -143,6 +145,10 @@ export function useTaskOperations() {
                 queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['search-tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['completedTasks'] });
+                
+                toast.success("Task restored", {
+                  id: `task-restore-success-${taskId}-${Date.now()}`
+                });
               } catch (undoError) {
                 toast.error("Failed to restore task", {
                   id: `task-restore-error-${taskId}-${Date.now()}`
