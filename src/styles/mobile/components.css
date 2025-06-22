@@ -1,24 +1,39 @@
 
 /* Mobile component optimizations */
 @media (max-width: 768px) {
-  /* Make checkboxes MUCH smaller on mobile - REDUCED SIZE */
-  .mobile-checkbox {
-    height: 12px !important;
-    width: 12px !important;
-  }
-  
-  /* Checkbox container adjustments - REDUCED SIZE */
+  /* Force smaller checkboxes on mobile with higher specificity */
   [data-radix-checkbox-root] {
+    height: 16px !important;
+    width: 16px !important;
+    min-height: 16px !important;
+    min-width: 16px !important;
+  }
+  
+  /* Ensure check icon is proportional */
+  [data-radix-checkbox-root] svg {
     height: 12px !important;
     width: 12px !important;
   }
   
-  /* Task item spacing adjustments - TIGHTER SPACING */
+  /* Mobile checkbox class override */
+  .mobile-checkbox {
+    height: 16px !important;
+    width: 16px !important;
+    min-height: 16px !important;
+    min-width: 16px !important;
+  }
+  
+  .mobile-checkbox svg {
+    height: 12px !important;
+    width: 12px !important;
+  }
+  
+  /* Task item spacing adjustments */
   .task-item-mobile {
     padding: 4px 8px !important;
   }
   
-  /* Reduce task row spacing - MUCH TIGHTER */
+  /* Reduce task row spacing */
   .task-list-mobile .space-y-1 > * + * {
     margin-top: 2px !important;
   }
