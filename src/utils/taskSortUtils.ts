@@ -42,3 +42,9 @@ export const sortTasks = (tasks: Task[], sortBy: SortOption) => {
       return tasks;
   }
 };
+
+export const groupTasks = (tasks: Task[]) => {
+  return {
+    all: tasks
+  };
+};

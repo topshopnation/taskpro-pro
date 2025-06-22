@@ -39,47 +39,71 @@
 @media (max-width: 768px) {
   /* Task names should be larger on mobile */
   .task-title {
-    font-size: 18px !important;
-    line-height: 1.4 !important;
+    font-size: 16px !important;
+    line-height: 1.3 !important;
     font-weight: 500 !important;
   }
   
-  /* Menu items should be larger on mobile */
+  /* Menu items should be larger on mobile - INCREASED FONT SIZE */
   .menu-item,
   .sidebar-menu-item,
   .nav-item {
-    font-size: 18px !important;
+    font-size: 20px !important;
     min-height: 48px !important;
   }
   
-  /* Sidebar text improvements */
+  /* Sidebar text improvements - INCREASED FONT SIZE */
   [data-sidebar] .sidebar-menu-button {
-    font-size: 18px !important;
+    font-size: 20px !important;
     padding: 14px 18px !important;
     min-height: 52px !important;
   }
   
   /* Navigation text */
   .sidebar-group-label {
-    font-size: 16px !important;
+    font-size: 18px !important;
     font-weight: 600 !important;
   }
   
-  /* Make checkboxes smaller on mobile */
+  /* Make checkboxes MUCH smaller on mobile - REDUCED SIZE */
   .mobile-checkbox {
-    height: 20px !important;
-    width: 20px !important;
+    height: 16px !important;
+    width: 16px !important;
   }
   
-  /* Checkbox container adjustments */
+  /* Checkbox container adjustments - REDUCED SIZE */
   [data-radix-checkbox-root] {
-    height: 20px !important;
-    width: 20px !important;
+    height: 16px !important;
+    width: 16px !important;
   }
   
-  /* Task item spacing adjustments */
+  /* Task item spacing adjustments - TIGHTER SPACING */
   .task-item-mobile {
-    padding: 16px 12px !important;
+    padding: 8px 12px !important;
+  }
+  
+  /* Reduce task row spacing - MUCH TIGHTER */
+  .task-list-mobile .space-y-1 > * + * {
+    margin-top: 4px !important;
+  }
+  
+  /* Compact task item layout */
+  .task-item-compact {
+    min-height: 44px !important;
+    padding: 6px 12px !important;
+  }
+  
+  /* Badge text size adjustments */
+  .badge-mobile {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Task notes text size */
+  .task-notes-mobile {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
   }
   
   /* Form input text should not overlap icons */

@@ -16,7 +16,7 @@ const Dashboard = () => {
   const { data, isLoading: isTasksLoading } = useDashboardTasks();
   const { data: completedData, isLoading: isCompletedLoading } = useCompletedTasks();
   const { completeTask, deleteTask } = useTaskOperations();
-  const { user } = useSubscription();
+  const subscription = useSubscription();
 
   if (isTasksLoading || isCompletedLoading) {
     return <DashboardSkeleton />;
@@ -34,10 +34,10 @@ const Dashboard = () => {
       <SubscriptionBanner />
       
       <StatCards 
-        todayTasksCount={todayTasks.length}
-        highPriorityTasksCount={highPriorityTasks.length}
-        totalTasksCount={allTasks.length}
-        completedTasksCount={totalCompleted}
+        todayCount={todayTasks.length}
+        highPriorityCount={highPriorityTasks.length}
+        totalCount={allTasks.length}
+        completedCount={totalCompleted}
       />
 
       <DashboardTabs

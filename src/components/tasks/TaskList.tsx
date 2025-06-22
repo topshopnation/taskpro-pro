@@ -1,7 +1,10 @@
+
 import { Task } from "@/components/tasks/taskTypes"
 import { TaskItem } from "./TaskItem"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useMediaQuery } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
 
 interface TaskListProps {
   title: string
@@ -32,6 +35,8 @@ export function TaskList({
   onDateChange,
   onProjectChange
 }: TaskListProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  
   return (
     <Card className="overflow-hidden">
       {title && !hideTitle && (
@@ -39,7 +44,10 @@ export function TaskList({
           <CardTitle className="text-base md:text-lg">{title}</CardTitle>
         </CardHeader>
       )}
-      <CardContent className={!title || hideTitle ? "pt-3 px-3 pb-3" : "py-2 px-3"}>
+      <CardContent className={cn(
+        !title || hideTitle ? "pt-3 px-3 pb-3" : "py-2 px-3",
+        isMobile && "task-list-mobile"
+      )}>
         {isLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -55,7 +63,7 @@ export function TaskList({
         ) : tasks.length === 0 ? (
           <p className="text-xs md:text-sm text-muted-foreground py-3 text-center">{emptyMessage}</p>
         ) : (
-          <div className="space-y-1">
+          <div className={cn("space-y-1", isMobile && "space-y-0")}>
             {tasks.map((task) => (
               <TaskItem 
                 key={task.id} 

@@ -36,3 +36,21 @@ export const calculateOverdueDays = (dueDate: Date): number => {
   
   return diffDays;
 };
+
+export const groupTasks = (tasks: Task[]) => {
+  return groupOverdueTasksByDate(tasks);
+};
+
+export const sortTasks = (tasks: Task[], sortBy: string) => {
+  switch (sortBy) {
+    case 'date':
+      return [...tasks].sort((a, b) => {
+        if (!a.dueDate || !b.dueDate) return 0;
+        return a.dueDate.getTime() - b.dueDate.getTime();
+      });
+    case 'priority':
+      return [...tasks].sort((a, b) => a.priority - b.priority);
+    default:
+      return tasks;
+  }
+};

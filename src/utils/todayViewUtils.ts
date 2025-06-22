@@ -35,3 +35,7 @@ export const formatTaskTime = (date: Date): string => {
   
   return format(date, "h:mm a");
 };
+
+export const groupTasks = (tasks: Task[]) => {
+  return groupTasksByStatus(tasks);
+};

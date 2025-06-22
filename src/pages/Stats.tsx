@@ -37,10 +37,10 @@ const Stats = () => {
       </div>
       
       <StatCards 
-        todayTasksCount={todayTasks.length}
-        highPriorityTasksCount={highPriorityTasks.length}
-        totalTasksCount={allTasks.length}
-        completedTasksCount={totalCompleted}
+        todayCount={todayTasks.length}
+        highPriorityCount={highPriorityTasks.length}
+        totalCount={allTasks.length}
+        completedCount={totalCompleted}
       />
 
       <Card>

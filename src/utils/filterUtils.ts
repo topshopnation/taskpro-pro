@@ -37,11 +37,17 @@ export function applyFilter(tasks: Task[], filter: Filter): Task[] {
       }
     });
 
-    // Apply logic (AND/OR)
-    if (filter.logic === 'and') {
+    // Apply logic (AND/OR) - using 'and' as default if logic property doesn't exist
+    const logic = (filter as any).logic || 'and';
+    if (logic === 'and') {
       return conditionResults.every(result => result);
     } else {
       return conditionResults.some(result => result);
     }
   });
+}
+
+export function isStandardFilter(filterId: string): boolean {
+  const standardFilters = ['today', 'upcoming', 'all', 'completed', 'high-priority'];
+  return standardFilters.includes(filterId);
 }

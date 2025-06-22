@@ -72,7 +72,7 @@ export function TaskItem({
   return (
     <div className={cn(
       "group flex items-center gap-3 bg-background border-b border-border/50 hover:bg-accent/50 transition-colors",
-      isMobile ? "task-item-mobile" : "p-4",
+      isMobile ? "task-item-compact" : "p-4",
       isCompleted && "opacity-60"
     )}>
       <Checkbox
@@ -88,7 +88,7 @@ export function TaskItem({
         <div className="flex items-center gap-2 mb-1">
           <h3 className={cn(
             "task-title font-medium truncate",
-            isMobile ? "text-lg" : "text-base",
+            isMobile ? "text-base" : "text-base",
             isCompleted && "line-through text-muted-foreground"
           )}>
             {task.title}
@@ -115,15 +115,15 @@ export function TaskItem({
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           {task.notes && (
             <span className={cn(
-              "truncate",
-              isMobile ? "text-base" : "text-sm"
+              "truncate task-notes-mobile",
+              isMobile ? "text-sm" : "text-sm"
             )}>{task.notes}</span>
           )}
           
           {task.dueDate && (
             <Badge variant="outline" className={cn(
-              "whitespace-nowrap",
-              isMobile ? "text-sm px-3 py-1" : "text-[11px] px-2 py-0.5"
+              "whitespace-nowrap badge-mobile",
+              isMobile ? "text-xs px-2 py-1" : "text-[11px] px-2 py-0.5"
             )}>
               {formatDueDate(task.dueDate)}
               {task.dueTime && ` ${task.dueTime}`}
@@ -132,8 +132,8 @@ export function TaskItem({
           
           {showProject && task.projectName && task.projectName !== "No Project" && (
             <Badge variant="secondary" className={cn(
-              "whitespace-nowrap",
-              isMobile ? "text-sm px-3 py-1" : "text-[11px] px-2 py-0.5"
+              "whitespace-nowrap badge-mobile",
+              isMobile ? "text-xs px-2 py-1" : "text-[11px] px-2 py-0.5"
             )}>
               {task.projectName}
             </Badge>
