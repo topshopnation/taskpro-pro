@@ -91,7 +91,7 @@ export function useFilteredTasks(filterId: string) {
 
       console.log('Custom filter found:', filter.name, 'conditions:', filter.conditions);
 
-      // Fetch all tasks for the user
+      // Fetch only uncompleted tasks for custom filters
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select(`
@@ -101,7 +101,8 @@ export function useFilteredTasks(filterId: string) {
             color
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('completed', false); // Only fetch uncompleted tasks for custom filters
 
       if (tasksError) throw tasksError;
 
@@ -119,7 +120,7 @@ export function useFilteredTasks(filterId: string) {
         favorite: task.favorite || false
       }));
 
-      console.log('Total tasks fetched:', allTasks.length);
+      console.log('Total uncompleted tasks fetched:', allTasks.length);
 
       // Parse filter conditions - handle both array and object formats
       let conditions: any[] = [];
@@ -144,7 +145,7 @@ export function useFilteredTasks(filterId: string) {
       console.log('Parsed conditions:', conditions, 'logic:', logic);
 
       if (conditions.length === 0) {
-        console.log('No conditions, returning all tasks');
+        console.log('No conditions, returning all uncompleted tasks');
         return allTasks;
       }
 
@@ -198,7 +199,7 @@ export function useFilteredTasks(filterId: string) {
         return finalResult;
       });
 
-      console.log('Custom filter results:', filteredTasks.length, 'tasks match the filter');
+      console.log('Custom filter results:', filteredTasks.length, 'uncompleted tasks match the filter');
       return filteredTasks;
     },
     enabled: !!user && !!filterId,
