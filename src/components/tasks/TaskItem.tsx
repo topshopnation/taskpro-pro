@@ -3,10 +3,6 @@ import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Task } from "@/components/tasks/taskTypes"
 import { cn } from "@/lib/utils"
-import { MoreHorizontal, Star, StarOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { format, isToday, isTomorrow, isYesterday } from "date-fns"
 import { useMediaQuery } from "@/hooks/use-mobile"
 import { TaskItemActionContainer } from "./TaskItemActionContainer"
 import { useTaskItem } from "./hooks/useTaskItem"
@@ -39,7 +35,6 @@ export function TaskItem({
   onProjectChange
 }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed)
-  const [isFavorite, setIsFavorite] = useState(task.favorite)
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   const {
@@ -61,25 +56,11 @@ export function TaskItem({
     onDateChange,
   });
 
-  const handleFavorite = async () => {
-    setIsFavorite(!isFavorite)
-    if (onFavoriteToggle) {
-      onFavoriteToggle(task.id, !isFavorite)
-    }
-  }
-
   const handleProjectChange = async (projectId: string | null) => {
     if (onProjectChange) {
       await onProjectChange(task.id, projectId)
     }
   }
-
-  const formatDueDate = (date: Date) => {
-    if (isToday(date)) return "Today";
-    if (isTomorrow(date)) return "Tomorrow";
-    if (isYesterday(date)) return "Yesterday";
-    return format(date, "MMM d");
-  };
 
   const handleDeleteTask = async (taskId: string): Promise<boolean> => {
     try {
@@ -115,28 +96,6 @@ export function TaskItem({
             )}>
               {task.title}
             </h3>
-            
-            {(isFavorite || !isMobile) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleFavorite}
-                disabled={isUpdating}
-                className={cn(
-                  "hover:bg-transparent p-0 h-6 w-6 transition-opacity",
-                  isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                )}
-              >
-                {isFavorite ? (
-                  <Star className="h-4 w-4 text-yellow-500" />
-                ) : (
-                  <StarOff className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="sr-only">
-                  {isFavorite ? "Unfavorite" : "Favorite"}
-                </span>
-              </Button>
-            )}
           </div>
 
           {task.notes && (
@@ -156,7 +115,7 @@ export function TaskItem({
             onPriorityChange={handlePriorityChange}
             onDateChange={handleDateChange}
             onProjectChange={onProjectChange ? handleProjectChange : undefined}
-            onFavoriteToggle={onFavoriteToggle}
+            onFavoriteToggle={undefined}
           />
         </div>
       </div>
@@ -167,7 +126,7 @@ export function TaskItem({
         taskCompleted={task.completed}
         onOpenChange={setIsDeleteDialogOpen}
         onDelete={handleDeleteTask}
-        open={isDeleteDialogOpen}
+        isOpen={isDeleteDialogOpen}
         isUpdating={isUpdating}
         onConfirm={handleDelete}
       />
