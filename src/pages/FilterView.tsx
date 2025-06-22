@@ -13,6 +13,7 @@ import { FilterDialogs } from "@/components/filters/FilterDialogs";
 import { isStandardFilter } from "@/utils/filterUtils";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useOptimisticTasks } from "@/hooks/useOptimisticTasks";
 
 export default function FilterView() {
   const { id: filterId } = useParams<{ id: string }>();
@@ -27,6 +28,34 @@ export default function FilterView() {
   const { data: tasks = [], isLoading: isTasksLoading } = useFilteredTasks(filterId || "");
   const { completeTask, deleteTask, toggleTaskFavorite } = useTaskOperations();
   const { deleteFilter, updateFilter, toggleFavorite } = useFilterOperations(filterId || "");
+
+  // Add optimistic task handling
+  const { 
+    visibleTasks, 
+    handleOptimisticComplete, 
+    handleOptimisticDelete 
+  } = useOptimisticTasks(tasks);
+
+  // Wrapper for completeTask that includes optimistic updates
+  const handleCompleteTask = async (taskId: string, completed: boolean) => {
+    // Apply optimistic update immediately
+    handleOptimisticComplete(taskId, completed);
+    
+    // Call the actual completeTask function
+    const success = await completeTask(taskId, completed);
+    
+    // If the operation failed, the optimistic update will be reverted by the toast undo action
+    return success;
+  };
+
+  // Wrapper for deleteTask that includes optimistic updates
+  const handleDeleteTask = async (taskId: string) => {
+    // Apply optimistic update immediately
+    handleOptimisticDelete(taskId);
+    
+    // Call the actual deleteTask function
+    await deleteTask(taskId);
+  };
 
   const handleEdit = () => {
     if (!currentFilter) return;
@@ -139,11 +168,11 @@ export default function FilterView() {
         
         <TaskList
           title=""
-          tasks={tasks}
+          tasks={visibleTasks}
           isLoading={isTasksLoading}
           emptyMessage="No tasks match this filter"
-          onComplete={completeTask}
-          onDelete={deleteTask}
+          onComplete={handleCompleteTask}
+          onDelete={handleDeleteTask}
           onFavoriteToggle={toggleTaskFavorite}
           hideTitle={true}
         />
