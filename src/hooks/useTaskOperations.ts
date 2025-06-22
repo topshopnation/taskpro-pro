@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -47,7 +46,7 @@ export function useTaskOperations() {
       toast.dismiss(`task-complete-${taskId}`);
       toast.dismiss(`task-incomplete-${taskId}`);
       
-      // Show toast with undo action
+      // Only show undo toast - no immediate completion message
       toast(`"${taskData.title}" ${completed ? 'completed' : 'marked incomplete'}`, {
         id: uniqueId,
         duration: 5000, // Give users time to see and use the undo button
@@ -85,6 +84,17 @@ export function useTaskOperations() {
               });
             }
           }
+        },
+        onDismiss: () => {
+          // Only show completion confirmation after undo toast is dismissed (either by timeout or manual close)
+          setTimeout(() => {
+            if (completed) {
+              toast.success("Task completed!", {
+                id: `task-completion-confirm-${taskId}-${Date.now()}`,
+                duration: 2000
+              });
+            }
+          }, 100); // Small delay to ensure proper sequencing
         }
       });
       
