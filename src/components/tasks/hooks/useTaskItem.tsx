@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Task } from "@/components/tasks/taskTypes";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
@@ -32,7 +33,7 @@ export function useTaskItem({
     
     setIsUpdating(true);
     try {
-      // Use completeTask with optimistic update callback
+      // Use completeTask with optimistic update callback - NO additional toasts here
       const success = await completeTask(task.id, !task.completed, onComplete);
       
       if (!success) {
@@ -104,7 +105,7 @@ export function useTaskItem({
       
       setIsDeleteDialogOpen(false);
       onDelete(task.id);
-      toast.success("Task deleted");
+      // Removed duplicate toast - the deleteTask function in useTaskOperations handles this
     } catch (error: any) {
       toast.error(`Error deleting task: ${error.message}`);
     } finally {

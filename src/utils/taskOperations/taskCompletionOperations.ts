@@ -11,20 +11,9 @@ export const updateTaskCompletion = async (taskId: string, completed: boolean, t
       
     if (error) throw error;
     
-    if (taskTitle) {
-      toast(`"${taskTitle}" ${completed ? 'completed' : 'marked incomplete'}`, {
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              await updateTaskCompletion(taskId, !completed, taskTitle);
-            } catch (error) {
-              console.error("Failed to undo task completion", error);
-            }
-          }
-        }
-      });
-    }
+    // Removed toast notifications from here to prevent duplicates
+    // The useTaskOperations hook should handle all task completion toasts
+    
   } catch (error: any) {
     toast.error("Failed to update task", {
       description: error.message
