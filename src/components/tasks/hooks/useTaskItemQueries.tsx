@@ -28,19 +28,32 @@ export function useTaskItemQueries() {
       return Array.isArray(queryKey) && queryKey[0] === 'filtered-tasks';
     });
 
-    // Create promises for all refetch operations
+    // Create promises for all invalidation operations (not refetch)
+    const invalidationPromises = [
+      // Standard query invalidations
+      ...queryKeysToInvalidate.map(queryKey => 
+        queryClient.invalidateQueries({ queryKey })
+      ),
+      // Filtered task query invalidations
+      ...filteredTaskQueries.map(query => 
+        queryClient.invalidateQueries({ queryKey: query.queryKey })
+      )
+    ];
+
+    // Wait for ALL invalidations to complete
+    await Promise.all(invalidationPromises);
+    
+    // Then force a refetch of all queries to ensure fresh data
     const refetchPromises = [
-      // Standard query refetches
       ...queryKeysToInvalidate.map(queryKey => 
         queryClient.refetchQueries({ queryKey })
       ),
-      // Filtered task query refetches
       ...filteredTaskQueries.map(query => 
         queryClient.refetchQueries({ queryKey: query.queryKey })
       )
     ];
 
-    // Wait for ALL queries to complete before returning
+    // Wait for ALL refetches to complete before returning
     await Promise.all(refetchPromises);
   };
 

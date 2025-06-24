@@ -31,20 +31,68 @@ export function useTaskItemOperations({
     if (isUpdating) return;
     
     setIsUpdating(true);
+    
+    // Store task data for undo functionality
+    const taskTitle = task.title;
+    const newCompletedState = !task.completed;
+    
     try {
       // Update database FIRST
       const { error } = await supabase
         .from('tasks')
-        .update({ completed: !task.completed })
+        .update({ completed: newCompletedState })
         .eq('id', task.id);
         
       if (error) throw error;
       
-      // Wait for ALL queries to refresh completely
+      // Wait for ALL queries to refresh completely before proceeding
       await invalidateAllTaskQueries();
       
-      // THEN call the parent handler (which may show its own toast)
-      onComplete(task.id, !task.completed);
+      // Call the parent handler
+      onComplete(task.id, newCompletedState);
+      
+      // Generate unique toast ID
+      const uniqueId = `task-${newCompletedState ? 'complete' : 'incomplete'}-${task.id}-${Date.now()}`;
+      
+      // Show completion toast with undo functionality
+      toast(`"${taskTitle}" ${newCompletedState ? 'completed' : 'marked incomplete'}`, {
+        id: uniqueId,
+        duration: 5000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              // Dismiss this toast when undo is clicked
+              toast.dismiss(uniqueId);
+              
+              // Revert to previous state in database
+              const { error: undoError } = await supabase
+                .from('tasks')
+                .update({ completed: !newCompletedState })
+                .eq('id', task.id);
+              
+              if (undoError) throw undoError;
+              
+              // Re-invalidate queries after undoing
+              await invalidateAllTaskQueries();
+              
+              // Call parent handler for undo
+              onComplete(task.id, !newCompletedState);
+              
+              // Show success message for undo
+              toast.success("Task undone", {
+                duration: 3000
+              });
+            } catch (undoError) {
+              console.error("Undo failed:", undoError);
+              toast.error("Failed to undo", {
+                duration: 3000
+              });
+            }
+          }
+        }
+      });
+      
     } catch (error: any) {
       console.error("Error in handleCompletionToggle:", error);
       toast.error("Failed to update task", {
@@ -60,7 +108,7 @@ export function useTaskItemOperations({
     setIsUpdating(true);
     
     try {
-      // Always update database directly - no conditional logic
+      // Update database FIRST
       const { error } = await supabase
         .from('tasks')
         .update({ priority: newPriority })
@@ -93,7 +141,7 @@ export function useTaskItemOperations({
     try {
       const formattedDate = date ? date.toISOString() : null;
       
-      // Always update database directly - no conditional logic  
+      // Update database FIRST
       const { error } = await supabase
         .from('tasks')
         .update({ due_date: formattedDate })
